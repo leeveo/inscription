@@ -82,13 +82,13 @@ async function sendEmailViaMailerSend(to: string, subject: string, html: string)
     let result;
     try {
       result = JSON.parse(responseText);
-    } catch (e) {
-      console.log('Could not parse response as JSON');
+    } catch (error) {
+      console.log('Could not parse response as JSON', error);
     }
     
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error sending via MailerSend:', error);
+    console.error("Error sending email:", error)
     return { 
       success: false, 
       reason: 'exception',
@@ -113,11 +113,28 @@ async function getEmailTemplate(eventId: string) {
   return data
 }
 
-// Fonction pour remplacer les variables dans le modèle
+// Define proper types instead of using 'any'
+interface EventData {
+  id: string;
+  nom: string;
+  date_debut: string;
+  lieu: string;
+  description?: string;
+}
+
+interface ParticipantData {
+  id: string;
+  prenom: string;
+  nom: string;
+  email: string;
+  telephone?: string;
+}
+
+// Update the function signature to use the new interfaces
 function replaceTemplateVariables(
   template: string, 
-  event: any, 
-  participant: any, 
+  event: EventData, 
+  participant: ParticipantData, 
   ticketUrl: string
 ) {
   return template

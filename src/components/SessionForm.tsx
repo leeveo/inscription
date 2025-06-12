@@ -92,8 +92,8 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         
         onSessionSaved(newSession as Session)
       }
-    } catch (err: any) {
-      console.error('Erreur lors de l\'enregistrement de la session:', err)
+    } catch (err: FormSubmitError | Error) {
+      console.error('Error saving session:', err)
       setError(err.message || 'Une erreur est survenue lors de l\'enregistrement')
     } finally {
       setIsSubmitting(false)

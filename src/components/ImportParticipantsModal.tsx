@@ -54,7 +54,7 @@ export default function ImportParticipantsModal({
       // Read file content to preview data
       const data = await readFileData(selectedFile)
       setPreviewData(data.slice(0, 5)) // Preview first 5 rows
-    } catch (err: any) {
+    } catch (err: FileReadError | Error) {
       setError(`Erreur lors de la lecture du fichier: ${err.message}`)
       setFile(null)
     }
@@ -151,7 +151,7 @@ export default function ImportParticipantsModal({
       // Notify parent component
       onImportComplete(result.imported || 0)
       
-    } catch (err: any) {
+    } catch (err: ImportError | Error) {
       console.error('Error during import:', err)
       setError(err.message || 'Une erreur est survenue lors de l\'importation')
       setImportStatus(prev => ({
@@ -179,7 +179,7 @@ export default function ImportParticipantsModal({
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
         <h2 className="text-xl font-bold">Importer des participants</h2>
         <p className="mt-1 text-sm text-blue-100">
-          Importez plusieurs participants à partir d'un fichier Excel ou CSV
+          Importez plusieurs participants à partir d&apos;un fichier Excel ou CSV
         </p>
       </div>
       

@@ -14,7 +14,7 @@ export default function ConfirmationPage() {
       const supabase = supabaseBrowser()
       const { data: { user } } = await supabase.auth.getUser()
 
-      const { data, error } = await supabase
+      const { data, /* error */ } = await supabase
         .from('inscription_inscriptions')
         .select('id')
         .eq('evenement_id', evenementId)
@@ -32,7 +32,7 @@ export default function ConfirmationPage() {
   return (
     <div className="max-w-xl mx-auto mt-8 text-center">
       <h2 className="text-xl font-bold mb-4">Votre badge QR</h2>
-      <p>Montrez ce QR Code lors de votre arrivée à l'événement.</p>
+      <p>Montrez ce QR Code lors de votre arrivée à l&apos;événement.</p>
       <div className="mt-4">
         <QrCodeCard value={inscriptionId} />
       </div>

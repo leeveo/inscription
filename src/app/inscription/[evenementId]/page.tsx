@@ -29,7 +29,7 @@ export default function InscriptionPage() {
     <div className="max-w-xl mx-auto mt-8">
       <h2 className="text-xl font-bold mb-4">Confirmez votre inscription</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <button type="submit" className="btn btn-primary">S'inscrire</button>
+        <button type="submit" className="btn btn-primary">S&apos;inscrire</button>
       </form>
     </div>
   )

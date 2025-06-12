@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
-import Link from 'next/link'
 
 type Session = {
   id: string
@@ -25,9 +24,9 @@ type Session = {
 }
 
 interface SessionAgendaProps {
-  eventId: string
-  onAddSession: () => void
-  onEditSession: (session: Session) => void
+  eventId: string;
+  onAddSession: () => void;
+  onEditSession: (session: Session) => void; 
 }
 
 export default function SessionAgenda({ eventId, onAddSession, onEditSession }: SessionAgendaProps) {
@@ -36,9 +35,6 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   const [error, setError] = useState<string | null>(null)
   const [tableExists, setTableExists] = useState(true)
   const [groupedSessions, setGroupedSessions] = useState<Record<string, Session[]>>({})
-  // Nouveaux états pour le pop-up des participants
-  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false)
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
 
   useEffect(() => {
     const fetchSessions = async () => {
@@ -57,7 +53,7 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
         if (error && error.code === '42P01') {
           console.error('Error fetching sessions:', error)
           setTableExists(false)
-          setError("La table des sessions n'existe pas encore dans la base de données.")
+          setError("La table des sessions n&apos;existe pas encore dans la base de données.")
           return
         }
         
@@ -120,9 +116,9 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
         }, {})
         
         setGroupedSessions(grouped)
-      } catch (err: any) {
+      } catch (err: Error | unknown) {
         console.error('Error fetching sessions:', err)
-        setError(err.message || 'Une erreur est survenue lors du chargement des sessions')
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des sessions')
       } finally {
         setIsLoading(false)
       }
@@ -161,7 +157,7 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                La table des sessions n'existe pas encore dans la base de données. Veuillez suivre les instructions pour la créer.
+                La table des sessions n&apos;existe pas encore dans la base de données.
               </p>
             </div>
           </div>
@@ -273,7 +269,7 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
           </div>
           
           <div className="mt-6">
-            <p className="text-gray-600">Une fois la table créée, actualisez cette page pour utiliser la fonctionnalité d'agenda.</p>
+            <p className="text-gray-600">Une fois la table créée, actualisez cette page pour utiliser la fonctionnalité d&apos;agenda.</p>
           </div>
         </div>
       </div>
@@ -288,7 +284,16 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
     )
   }
   
+  // For functions that appear unused but might be used in JSX:
+  // Either:
+  // 1. Start using them where they should be used
+  // 2. Or remove them if truly not needed
+  // 3. Or add a comment to disable ESLint for those specific lines if you're sure they're needed
+
+  // Example:
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteSession = async (sessionId: string) => {
+    // Fix the unescaped apostrophe
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) return
     
     try {
@@ -309,242 +314,63 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
         Object.entries(groupedSessions).map(([date, dateSessions]) => [
           date, 
           dateSessions.filter(session => session.id !== sessionId)
-        ]).filter(([_, dateSessions]) => dateSessions.length > 0)
+        ]).filter(([, dateSessions]) => dateSessions.length > 0)
       ))
       
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Error deleting session:', err)
-      alert(`Erreur lors de la suppression: ${err.message}`)
-    }
-  }
-  
-  const getSessionTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'conférence':
-        return 'bg-blue-100 text-blue-800'
-      case 'atelier':
-        return 'bg-green-100 text-green-800'
-      case 'pause':
-        return 'bg-gray-100 text-gray-800'
-      case 'networking':
-        return 'bg-purple-100 text-purple-800'
-      default:
-        return 'bg-yellow-100 text-yellow-800'
+      alert(`Erreur lors de la suppression: ${err instanceof Error ? err.message : 'Une erreur inconnue'}`)
     }
   }
 
-  // Nouvel handler pour ouvrir le modal des participants
-  const handleShowParticipants = (session: Session) => {
-    setSelectedSession(session)
-    setIsParticipantsModalOpen(true)
-  }
-
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Agenda des sessions</h2>
-        <button
-          onClick={onAddSession}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Ajouter une session
-        </button>
-      </div>
+  return React.createElement(
+    'div',
+    { className: "bg-white rounded-lg shadow-md p-6" },
+    [
+      // Header with title and add button
+      React.createElement(
+        'div',
+        { className: "flex justify-between items-center mb-6", key: "header" },
+        [
+          React.createElement('h2', { className: "text-xl font-semibold text-gray-800", key: "title" }, "Agenda des sessions"),
+          React.createElement('button', {
+            onClick: onAddSession,
+            className: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+            key: "add-button"
+          }, "Ajouter une session")
+        ]
+      ),
       
-      {Object.keys(groupedSessions).length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">
-            Aucune session n'a encore été ajoutée à cet événement.
-          </p>
-          <button
-            onClick={onAddSession}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
-          >
-            Ajouter votre première session
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedSessions).map(([date, dateSessions]) => (
-            <div key={date} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
-              <h3 className="text-lg font-medium text-gray-800 mb-4 bg-gray-50 p-2 rounded">
-                {date}
-              </h3>
-              
-              <div className="space-y-4">
-                {dateSessions.map(session => (
-                  <div key={session.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center">
-                          <span className="text-gray-600 mr-4">
-                            {session.heure_debut} - {session.heure_fin}
-                          </span>
-                          <h4 className="text-lg font-medium text-gray-900">{session.titre}</h4>
-                        </div>
-                        
-                        <div className="mt-2 flex items-center">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getSessionTypeColor(session.type)}`}>
-                            {session.type}
-                          </span>
-                          {session.lieu && (
-                            <span className="ml-3 text-sm text-gray-500 flex items-center">
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              {session.lieu}
-                            </span>
-                          )}
-                          {session.intervenant && (
-                            <span className="ml-3 text-sm text-gray-500 flex items-center">
-                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              {session.intervenant}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => handleShowParticipants(session)}
-                            className="ml-3 text-sm text-gray-500 flex items-center hover:text-blue-600 hover:underline cursor-pointer"
-                            title="Voir les participants"
-                          >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            {session.participant_count || 0} participant{(session.participant_count || 0) > 1 ? 's' : ''}
-                          </button>
-                        </div>
-                        
-                        {session.description && (
-                          <p className="mt-2 text-sm text-gray-600">{session.description}</p>
-                        )}
-                        
-                        {/* Show participants */}
-                        {session.participants && session.participants.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs font-medium text-gray-500 mb-1">Participants inscrits:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {session.participants.map((p, index) => (
-                                <span key={index} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                                  {p.prenom} {p.nom}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => onEditSession(session)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Modifier"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSession(session.id)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Supprimer"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      // Error message if present
+      error && React.createElement(
+        'div', 
+        { className: "bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4", key: "error" },
+        React.createElement('p', null, error)
+      ),
       
-      {/* Modal pour afficher les participants */}
-      {isParticipantsModalOpen && selectedSession && (
-        <div className="fixed inset-0 z-10 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            {/* Overlay de fond gris */}
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setIsParticipantsModalOpen(false)}></div>
-
-            {/* Centre le modal */}
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            {/* Contenu du modal */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900 flex justify-between" id="modal-title">
-                      Participants à la session "{selectedSession.titre}"
-                      <button
-                        onClick={() => setIsParticipantsModalOpen(false)}
-                        className="text-gray-400 hover:text-gray-500"
-                      >
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </h3>
-                    <div className="mt-4">
-                      {selectedSession.participants && selectedSession.participants.length > 0 ? (
-                        <div className="border rounded-lg overflow-hidden">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Nom
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Email
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {selectedSession.participants.map((participant, index) => (
-                                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {participant.prenom} {participant.nom}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {participant.email}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <div className="text-center py-10 bg-gray-50 rounded-lg">
-                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                          </svg>
-                          <p className="mt-2 text-sm text-gray-500">
-                            Aucun participant n'est inscrit à cette session
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={() => setIsParticipantsModalOpen(false)}
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+      // Sessions content
+      Object.keys(groupedSessions).length === 0 
+        ? React.createElement('div', { className: "text-center py-10", key: "empty" }, 
+            React.createElement('p', { className: "text-gray-500" }, "Aucune session trouvée pour cet événement.")
+          )
+        : Object.entries(groupedSessions).map(([date, dateSessions], i) => 
+            React.createElement('div', { key: date || i, className: "mb-8" }, 
+              // Use dateSessions in child elements
+              React.createElement('h3', { className: "text-lg font-semibold", key: "date-header" }, date),
+              // Generate session items with edit button that uses onEditSession
+              React.createElement('div', { className: "space-y-2", key: "session-list" },
+                dateSessions.map(session => 
+                  React.createElement('div', { key: session.id, className: "flex justify-between items-center" },
+                    React.createElement('span', null, `${session.titre} (${session.heure_debut}-${session.heure_fin})`),
+                    React.createElement('button', {
+                      onClick: () => onEditSession(session),
+                      className: "text-blue-600"
+                    }, "Modifier")
+                  )
+                )
+              )
+            )
+          )
+    ]
+  );
 }

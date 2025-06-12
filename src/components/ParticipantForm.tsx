@@ -37,9 +37,9 @@ interface ParticipantFormProps {
   onCancel: () => void
 }
 
-// Add this at the top of the file
-const supabaseUrl = 'https://gyohqmahwntkmebayeej.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Remove unused variables
+// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 export default function ParticipantForm({ 
   eventId, 
@@ -120,9 +120,9 @@ export default function ParticipantForm({
         
         onParticipantAdded(newParticipant as Participant)
       }
-    } catch (err: any) {
-      console.error('Erreur lors de l\'enregistrement du participant:', err)
-      setError(err.message || 'Une erreur est survenue lors de l\'enregistrement')
+    } catch (err: SubmitError | Error) {
+      console.error('Error submitting form:', err)
+      setError(err.message || 'Une erreur est survenue')
     } finally {
       setIsSubmitting(false)
     }

@@ -8,7 +8,7 @@ import { supabaseBrowser } from '@/lib/supabase/client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-// Updated schema with new fields
+// Fix the schema to ensure type_evenement is required (not optional)
 const schema = z.object({
   nom: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
   description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
@@ -19,11 +19,12 @@ const schema = z.object({
   nom_client: z.string().optional(),
   adresse_client: z.string().optional(),
   adresse_evenement: z.string().optional(),
-  type_participation: z.enum(['présentiel', 'virtuel', 'hybride']).default('présentiel'),
+  type_participation: z.enum(['présentiel', 'virtuel', 'hybride']),
   notes: z.string().optional(),
-  capacite: z.string().transform(val => val === '' ? null : Number(val)).optional(),
-  type_evenement: z.enum(['conférence', 'atelier', 'webinar', 'autre']).default('conférence'),
-  statut: z.enum(['brouillon', 'publié', 'archivé']).default('brouillon'),
+  capacite: z.string().optional(),
+  // Make type_evenement required with no optional() modifier
+  type_evenement: z.enum(["conférence", "atelier", "autre", "webinar"]),
+  statut: z.enum(['brouillon', 'publié', 'archivé']),
 })
 
 type FormData = z.infer<typeof schema>
@@ -98,16 +99,16 @@ export default function EditEventPage() {
         // Format dates for form inputs
         const formattedData = {
           ...data,
-          date_debut: new Date(data.date_debut).toISOString().slice(0, 16),
-          date_fin: new Date(data.date_fin).toISOString().slice(0, 16),
+          date_debut: new Date(data.date_debut as string).toISOString().slice(0, 16),
+          date_fin: new Date(data.date_fin as string).toISOString().slice(0, 16),
           // Ensure capacity is properly formatted and never NaN
           capacite: data.capacite !== null && data.capacite !== undefined ? String(data.capacite) : ''
         }
         
         reset(formattedData)
-      } catch (err: any) {
+      } catch (err: Error | unknown) {
         console.error("Erreur lors du chargement de l'événement:", err)
-        setFormError(`Erreur: ${err.message || 'Une erreur inconnue est survenue'}`)
+        setFormError(`Erreur: ${err instanceof Error ? err.message : 'Une erreur inconnue est survenue'}`)
       } finally {
         setIsLoading(false)
       }
@@ -118,7 +119,7 @@ export default function EditEventPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!eventId) {
-      setFormError("ID d'événement invalide")
+      setFormError("ID d&apos;événement invalide")
       return
     }
     
@@ -142,9 +143,9 @@ export default function EditEventPage() {
       } else {
         router.push(`/admin/evenements/${eventId}`)
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error("Erreur:", error)
-      setFormError("Une erreur inattendue s'est produite.")
+      setFormError("Une erreur inattendue s&apos;est produite.")
     } finally {
       setIsSubmitting(false)
     }
@@ -177,8 +178,8 @@ export default function EditEventPage() {
             </svg>
             Retour aux détails
           </Link>
-          <h2 className="text-2xl font-bold text-white">Modifier l'événement</h2>
-          <p className="text-blue-100 mt-2">Mettez à jour les informations de l'événement</p>
+          <h2 className="text-2xl font-bold text-white">Modifier l&apos;événement</h2>
+          <p className="text-blue-100 mt-2">Mettez à jour les informations de l&apos;événement</p>
         </div>
         
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -188,7 +189,7 @@ export default function EditEventPage() {
             <div className="space-y-4">
               <div>
                 <label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom de l'événement *
+                  Nom de l&apos;événement *
                 </label>
                 <input 
                   id="nom"
@@ -220,7 +221,7 @@ export default function EditEventPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="type_evenement" className="block text-sm font-medium text-gray-700 mb-1">
-                    Type d'événement
+                    Type d&apos;événement
                   </label>
                   <select
                     id="type_evenement"
@@ -333,7 +334,7 @@ export default function EditEventPage() {
               {(typeParticipation === 'présentiel' || typeParticipation === 'hybride') && (
                 <div>
                   <label htmlFor="adresse_evenement" className="block text-sm font-medium text-gray-700 mb-1">
-                    Adresse détaillée de l'événement
+                    Adresse détaillée de l&apos;événement
                   </label>
                   <textarea 
                     id="adresse_evenement"
@@ -415,7 +416,7 @@ export default function EditEventPage() {
                   Mise à jour en cours...
                 </>
               ) : (
-                "Mettre à jour l'événement"
+                "Mettre à jour l&apos;événement"
               )}
             </button>
           </div>

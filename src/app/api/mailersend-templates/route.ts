@@ -52,11 +52,14 @@ export async function GET(req: NextRequest) {
     const data = await response.json()
     return NextResponse.json(data)
     
-  } catch (error: any) {
-    console.error('Error fetching MailerSend templates:', error)
-    return NextResponse.json(
-      { message: error.message || 'Failed to fetch templates' },
-      { status: 500 }
+  } catch (error: Error | unknown) {
+    console.error('Failed to fetch templates:', error)
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'An unknown error occurred' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     )
   }
 }

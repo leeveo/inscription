@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 // Type pour les événements
 type Evenement = {
@@ -20,7 +19,6 @@ export default function EvenementsPage() {
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
     const fetchEvenements = async () => {
@@ -39,10 +37,11 @@ export default function EvenementsPage() {
         }
         
         console.log('Events fetched successfully:', data)
-        setEvenements(data || [])
-      } catch (err: any) {
+        // Add a type assertion to fix the type error
+        setEvenements(data as Evenement[] || [])
+      } catch (err: Error | unknown) {
         console.error('Erreur lors du chargement des événements:', err)
-        setError(err.message || 'Une erreur est survenue lors du chargement des événements')
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des événements')
       } finally {
         setIsLoading(false)
       }
@@ -67,9 +66,9 @@ export default function EvenementsPage() {
       
       // Mettre à jour la liste des événements
       setEvenements(prev => prev.filter(event => event.id !== id))
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Erreur lors de la suppression:', err)
-      alert('Erreur lors de la suppression: ' + err.message)
+      alert('Erreur lors de la suppression: ' + (err instanceof Error ? err.message : 'Une erreur inconnue'))
     }
   }
 

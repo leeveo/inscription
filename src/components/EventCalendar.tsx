@@ -22,13 +22,12 @@ type Event = {
   statut?: 'brouillon' | 'publié' | 'archivé'
 }
 
-type CalendarEvent = {
-  id: number
+interface CalendarEvent {
   title: string
   start: Date
   end: Date
   allDay?: boolean
-  resource?: any
+  resource?: unknown
 }
 
 interface EventCalendarProps {

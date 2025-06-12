@@ -9,38 +9,36 @@ import ParticipantForm from '@/components/ParticipantForm'
 import SessionAgenda from '@/components/SessionAgenda'
 import SessionForm from '@/components/SessionForm'
 
+// Update the Event type definition to include client information properties
 type Event = {
-  id: string // Changé de number à string car c'est un UUID
-  nom: string
-  description: string
-  lieu: string
-  date_debut: string
-  date_fin: string
-  nom_client?: string
-  adresse_client?: string
-  adresse_evenement?: string
-  type_participation?: 'présentiel' | 'virtuel' | 'hybride'
-  type_evenement?: 'conférence' | 'atelier' | 'webinar' | 'autre'
-  notes?: string
-  capacite?: number
-  statut?: 'brouillon' | 'publié' | 'archivé'
-}
+  id: string;
+  nom: string;
+  description: string;
+  lieu: string;
+  date_debut: string;
+  date_fin: string;
+  statut: string;
+  type_evenement: string; // Add type_evenement property
+  type_participation: string; // Add type_participation property
+  adresse_evenement?: string; // Add adresse_evenement property (optional)
+  capacite?: number | string; // Add capacite property (optional, could be number or string)
+  nom_client?: string;      // Add nom_client property
+  adresse_client?: string;  // Add adresse_client property
+  notes?: string; // Add notes property (optional)
+  // ...other properties
+};
 
-type Participant = {
-  id: string // Changé de number à string car c'est un UUID
-  evenement_id: string // Changé de number à string car c'est un UUID
-  nom: string
-  prenom: string
-  email: string
-  telephone: string
-  site_web?: string
-  profession?: string
-  date_naissance?: string
-  url_linkedin?: string
-  url_facebook?: string
-  url_twitter?: string
-  url_instagram?: string
-  created_at: string
+// Create a consistent Participant type that works for all usages
+interface Participant {
+  id: string; // Use string type for ID to ensure compatibility
+  evenement_id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  profession?: string;
+  created_at: string;
+  // ...other properties
 }
 
 type Session = {
@@ -66,7 +64,7 @@ export default function EventDetailPage() {
   const eventId = pathSegments[pathSegments.length - 1]
   
   const [event, setEvent] = useState<Event | null>(null)
-  const [participants, setParticipants] = useState<Participant[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'details' | 'participants' | 'agenda'>('details')
@@ -98,7 +96,7 @@ export default function EventDetailPage() {
         
         if (eventError) throw eventError
         
-        setEvent(eventData)
+        setEvent(eventData as Event)
         
         // Fetch participants
         const { data: participantsData, error: participantsError } = await supabase
@@ -109,10 +107,14 @@ export default function EventDetailPage() {
         
         if (participantsError) throw participantsError
         
-        setParticipants(participantsData || [])
-      } catch (err: any) {
+        // Convert participant IDs to strings when needed
+        setParticipants(participantsData.map(p => ({
+          ...p,
+          id: String(p.id) // Ensure ID is a string
+        })) as Participant[] || [])
+      } catch (err: Error | unknown) {
         console.error('Error fetching event details:', err)
-        setError(err.message || 'Une erreur est survenue lors du chargement des données')
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des données')
       } finally {
         setIsLoading(false)
       }
@@ -142,14 +144,14 @@ export default function EventDetailPage() {
       
       // Redirect to events list
       router.push('/admin/evenements')
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Error deleting event:', err)
-      setError(err.message || 'Une erreur est survenue lors de la suppression')
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression')
       setIsLoading(false)
     }
   }
   
-  const handleDeleteParticipant = async (participantId: string) => { // Changé de number à string
+  const handleDeleteParticipant = async (participantId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce participant ?')) {
       return
     }
@@ -165,10 +167,17 @@ export default function EventDetailPage() {
       if (error) throw error
       
       // Update participants list
+      // Fix the comparison by converting types to match
       setParticipants(participants.filter(p => p.id !== participantId))
-    } catch (err: any) {
+      
+      // Alternatively, if p.id is a string and participantId is a number:
+      // setParticipants(participants.filter(p => Number(p.id) !== participantId))
+      
+      // Or if you prefer string comparison:
+      // setParticipants(participants.filter(p => String(p.id) !== participantId))
+    } catch (err: Error | unknown) {
       console.error('Error deleting participant:', err)
-      setError(err.message || 'Une erreur est survenue lors de la suppression')
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la suppression')
     }
   }
   
@@ -208,7 +217,8 @@ export default function EventDetailPage() {
     setIsSessionModalOpen(true)
   }
   
-  const handleSessionSaved = (session: Session) => {
+  // Remove unused 'session' parameter or use it
+  const handleSessionSaved = () => {
     // Close modal
     setIsSessionModalOpen(false)
     setSelectedSession(null)
@@ -350,14 +360,14 @@ export default function EventDetailPage() {
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {activeTab === 'details' && (
           <div className="p-6 animate-fadeIn">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 border-l-4 border-blue-500 pl-3">Informations de l'événement</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 border-l-4 border-blue-500 pl-3">Informations de l&apos;événement</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Description</h3>
                 <p className="mt-1 text-gray-900">{event.description}</p>
                 
-                <h3 className="text-sm font-medium text-gray-500 mt-4">Type d'événement</h3>
+                <h3 className="text-sm font-medium text-gray-500 mt-4">Type d&apos;événement</h3>
                 <p className="mt-1 text-gray-900">{event.type_evenement || 'Non spécifié'}</p>
                 
                 <h3 className="text-sm font-medium text-gray-500 mt-4">Type de participation</h3>
@@ -456,7 +466,7 @@ export default function EventDetailPage() {
                   </svg>
                   <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun participant</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    Aucun participant n'a encore été ajouté à cet événement.
+                    Aucun participant n&apos;a encore été ajouté à cet événement.
                   </p>
                   <div className="mt-6">
                     <button
@@ -488,7 +498,7 @@ export default function EventDetailPage() {
                           Profession
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date d'inscription
+                          Date d&apos;inscription
                         </th>
                         <th scope="col" className="relative px-6 py-3">
                           <span className="sr-only">Actions</span>
@@ -525,7 +535,7 @@ export default function EventDetailPage() {
                               Modifier
                             </button>
                             <button
-                              onClick={() => handleDeleteParticipant(participant.id)}
+                              onClick={() => handleDeleteParticipant(String(participant.id))}
                               className="text-red-600 hover:text-red-900"
                             >
                               Supprimer

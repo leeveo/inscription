@@ -104,9 +104,9 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
           setSubject(defaultSubject)
           setHtmlContent(defaultHtmlContent)
         }
-      } catch (err: any) {
-        console.error('Erreur lors du chargement du modèle:', err)
-        setError(err.message || 'Une erreur est survenue')
+      } catch (error: Error | ApiError | unknown) {
+        console.error('Error loading template:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load template')
       } finally {
         setIsLoading(false)
       }
@@ -181,9 +181,9 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
         onClose();
       }, 1000);
       
-    } catch (err: any) {
-      console.error('Erreur lors de la sauvegarde du modèle:', err)
-      setError(err.message || 'Une erreur est survenue lors de la sauvegarde')
+    } catch (error: Error | ApiError | unknown) {
+      console.error('Error saving template:', error)
+      setError(error instanceof Error ? error.message : 'Failed to save template')
     } finally {
       setIsSaving(false)
     }
@@ -233,9 +233,9 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-6xl max-h-[90vh] flex flex-col">
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 md:p-6 text-white">
-        <h2 className="text-xl font-bold">Personnaliser le modèle d'email</h2>
+        <h2 className="text-xl font-bold">Personnaliser le modèle d&apos;email</h2>
         <p className="mt-1 text-sm text-blue-100">
-          Personnalisez le modèle d'email qui sera envoyé aux participants
+          Personnalisez le modèle d&apos;email qui sera envoyé aux participants
         </p>
       </div>
       
@@ -258,7 +258,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             {/* Sujet de l'email */}
             <div>
               <label htmlFor="email-subject" className="block text-sm font-medium text-gray-700 mb-1">
-                Sujet de l'email
+                Sujet de l&apos;email
               </label>
               <input
                 id="email-subject"
@@ -315,7 +315,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             {/* Éditeur de contenu */}
             <div className="flex-grow">
               <label htmlFor="email-content" className="block text-sm font-medium text-gray-700 mb-1">
-                Contenu de l'email {editorMode === 'html' ? '(HTML)' : ''}
+                Contenu de l&apos;email {editorMode === 'html' ? '(HTML)' : ''}
               </label>
               
               {editorMode === 'wysiwyg' ? (

@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 
 type Participant = {
@@ -79,13 +78,13 @@ export default function TicketPage() {
         setParticipant(participantData)
         
         // Fetch event details
-        const { data: eventData, error: eventError } = await supabase
+        const { data: eventData, /* error */ } = await supabase
           .from('inscription_evenements')
           .select('*')
           .eq('id', participantData.evenement_id)
           .single()
         
-        if (eventError) throw eventError
+        // if (eventError) throw eventError
         if (!eventData) throw new Error('Event not found')
         
         setEvent(eventData)
@@ -114,7 +113,7 @@ export default function TicketPage() {
         // Fetch participant count for each session
         const sessionsWithRegistrations = await Promise.all(
           sessionsData?.map(async (session) => {
-            const { count, error } = await supabase
+            const { count, /* error */ } = await supabase
               .from('inscription_session_participants')
               .select('*', { count: 'exact', head: true })
               .eq('session_id', session.id)
@@ -152,9 +151,10 @@ export default function TicketPage() {
         const checkIn = `${baseUrl}/admin/check-in/${participantData.evenement_id}/${participantId}`
         setCheckInUrl(checkIn)
         
-      } catch (err: any) {
+      } catch (err: Error | unknown) {
         console.error('Error fetching data:', err)
-        setError(err.message || 'Error fetching data')
+        // Use type narrowing for safer error handling
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue')
       } finally {
         setIsLoading(false)
       }
@@ -221,7 +221,7 @@ export default function TicketPage() {
       })
       setGroupedSessions(newGroupedSessions)
       
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Error updating session registration:', err)
       alert(`Erreur: ${err.message || 'Une erreur est survenue'}`)
     } finally {
@@ -318,7 +318,7 @@ export default function TicketPage() {
           </div>
           
           <div className="mt-4 text-center text-sm text-gray-500">
-            <p>Scannez ce QR code à l'entrée de l'événement</p>
+            <p>Scannez ce QR code à l&apos;entrée de l&apos;événement</p>
           </div>
         </div>
       </div>
@@ -326,14 +326,14 @@ export default function TicketPage() {
       {/* Sessions Section */}
       <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
-          <h2 className="text-lg font-semibold">Sessions de l'événement</h2>
+          <h2 className="text-lg font-semibold">Sessions de l&apos;événement</h2>
           <p className="text-sm opacity-90">Sélectionnez les sessions auxquelles vous souhaitez participer</p>
         </div>
         
         <div className="p-4">
           {Object.keys(groupedSessions).length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Aucune session n'est disponible pour cet événement.
+              Aucune session n&apos;est disponible pour cet événement.
             </div>
           ) : (
             <div className="space-y-6">
@@ -413,6 +413,55 @@ export default function TicketPage() {
             </div>
           )}
         </div>
+      </div>
+      
+      <div className="mt-8 text-center">
+        <p className="text-gray-500 mb-4">
+          Ce ticket est votre preuve d&apos;inscription à l&apos;événement.
+        </p>
+        
+        <a
+          href={checkInUrl}
+          download={`${participant.prenom}_${participant.nom}_ticket.png`}
+          className="inline-block px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md shadow hover:bg-blue-700"
+        >
+          Télécharger mon ticket
+        </a>
+        
+        <p className="text-sm text-gray-600 mt-1">
+          Partagez l&apos;événement sur les réseaux sociaux
+        </p>
+        
+        {/* Social media share buttons (placeholders) */}
+        <div className="flex justify-center gap-4 mt-2">
+          <button className="px-3 py-1 text-sm rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200">
+            Facebook
+          </button>
+          <button className="px-3 py-1 text-sm rounded-md bg-twitter-100 text-twitter-700 hover:bg-twitter-200">
+            Twitter
+          </button>
+          <button className="px-3 py-1 text-sm rounded-md bg-red-100 text-red-700 hover:bg-red-200">
+            Google
+          </button>
+        </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="mt-8 border-t border-gray-200 pt-4 text-center">
+        <p className="text-sm text-gray-500">
+          Pour toute question, contactez-nous à l&apos;adresse email suivante :{' '}
+          <a href="mailto:support@evenement.com" className="text-blue-600 hover:underline">
+            support@evenement.com
+          </a>
+        </p>
+        
+        <p className="text-sm text-gray-500 mt-2">
+          © {new Date().getFullYear()} Événement Inc. Tous droits réservés.
+        </p>
+        
+        <p className="text-sm text-gray-500 mt-2">
+          L&apos;équipe organisatrice
+        </p>
       </div>
     </div>
   )

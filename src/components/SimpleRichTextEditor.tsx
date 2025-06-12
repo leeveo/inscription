@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 interface SimpleRichTextEditorProps {
   value: string
@@ -19,10 +19,10 @@ export default function SimpleRichTextEditor({
   
   // Initialize the editor with the content
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && value) {
       editorRef.current.innerHTML = value
     }
-  }, [])
+  }, [value])
   
   // Handle content changes
   const handleInput = () => {

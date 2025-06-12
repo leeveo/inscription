@@ -1,24 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import EventCalendar from '@/components/EventCalendar'
 import Link from 'next/link'
 
-type Event = {
-  id: number
-  nom: string
-  description: string
-  lieu: string
-  date_debut: string
-  date_fin: string
-  type_participation?: 'présentiel' | 'virtuel' | 'hybride'
-  statut?: 'brouillon' | 'publié' | 'archivé'
-  capacite?: number
+// Rename your Event type to something more specific to avoid collision with DOM Event
+type EventData = {
+  id: string;
+  nom: string;
+  description: string;
+  lieu: string;
+  date_debut: string;
+  date_fin: string;
+  statut: string; // Add the missing statut property
+  // ...other properties
 }
 
 export default function DashboardPage() {
-  const [events, setEvents] = useState<Event[]>([])
+  // Move useState inside the component function
+  const [events, setEvents] = useState<EventData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState({
@@ -42,11 +43,23 @@ export default function DashboardPage() {
         
         if (eventsError) throw eventsError
         
-        setEvents(eventsData || [])
+        setEvents((eventsData as EventData[]) || [])
+
+        // Or use a mapping function if needed:
+        // setEvents((eventsData?.map(event => ({
+        //   id: event.id,
+        //   nom: event.nom,
+        //   description: event.description,
+        //   lieu: event.lieu,
+        //   date_debut: event.date_debut,
+        //   date_fin: event.date_fin,
+        //   // ...map other required fields
+        // })) as Event[]) || [])
         
         // Calculate stats
         const now = new Date()
-        const upcomingEvents = eventsData?.filter(event => new Date(event.date_debut) >= now) || []
+        const typedEventsData = eventsData as EventData[] || [];
+        const upcomingEvents = typedEventsData.filter(event => new Date(event.date_debut) >= now);
         
         // Fetch participant stats
         const { count: totalParticipants, error: countError } = await supabase
@@ -71,9 +84,9 @@ export default function DashboardPage() {
           participantsThisMonth: monthParticipants || 0
         })
         
-      } catch (err: any) {
-        console.error('Error fetching data:', err)
-        setError(err.message || 'Une erreur est survenue lors du chargement des données')
+      } catch (err: Error | unknown) {
+        console.error('Error fetching dashboard data:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
         setIsLoading(false)
       }
@@ -171,7 +184,7 @@ export default function DashboardPage() {
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-gray-800">Campagne d'emails</h3>
+              <h3 className="font-semibold text-gray-800">Campagne d&apos;emails</h3>
               <p className="text-sm text-gray-500">Envoyer des communications</p>
             </div>
           </div>
@@ -191,7 +204,18 @@ export default function DashboardPage() {
         </div>
         
         <div className="h-[600px]">
-          <EventCalendar events={events} />
+          <EventCalendar 
+            events={events.map(event => ({
+              id: Number(event.id), // Convert string ID to number if needed
+              title: event.nom,
+              nom: event.nom,
+              description: event.description,
+              lieu: event.lieu,
+              date_debut: event.date_debut,
+              date_fin: event.date_fin,
+              // Add any other properties required by the Event type
+            }))} 
+          />
         </div>
       </div>
       

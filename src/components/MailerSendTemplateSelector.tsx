@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 type Template = {
   id: string
@@ -20,7 +21,6 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [templateHtml, setTemplateHtml] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   
   // Load demo templates since the API might not be working
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
   return (
     <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-4xl">
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 md:p-6 text-white">
-        <h2 className="text-xl font-bold">Modèles d'email disponibles</h2>
+        <h2 className="text-xl font-bold">Modèles d&apos;email disponibles</h2>
         <p className="mt-1 text-sm text-blue-100">
           Choisissez un modèle pour votre email de billet
         </p>
@@ -333,16 +333,18 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
                       onClick={() => handleTemplateSelect(template)}
                     >
                       <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                        <img
+                        <Image 
                           src={template.image_path}
                           alt={template.name}
-                          className="w-full h-full object-cover"
+                          width={320}
+                          height={240}
+                          className="w-full h-auto rounded-md border border-gray-200"
                         />
                       </div>
                       <div className="p-3">
                         <h3 className="font-medium text-gray-800 truncate">{template.name}</h3>
                         <p className="text-xs text-gray-500 mt-1">
-                          Modèle d'email
+                          Modèle d&apos;email
                         </p>
                       </div>
                     </div>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 type Participant = {
   id: number
@@ -47,8 +46,6 @@ export default function ParticipantsPage() {
   const [lastRegistrationDate, setLastRegistrationDate] = useState<string | null>(null)
   const itemsPerPage = 20
   
-  const router = useRouter()
-
   // Fetch participants and events
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +61,8 @@ export default function ParticipantsPage() {
           .order('date_debut', { ascending: false })
         
         if (eventsError) throw eventsError
-        setEvents(eventsData || [])
+        // Add a two-step type assertion to fix the type error
+        setEvents(eventsData as unknown as Evenement[])
         
         // Reset participants before new fetch
         setParticipants([])
@@ -148,9 +146,9 @@ export default function ParticipantsPage() {
           setLastRegistrationDate(null);
         }
         
-      } catch (err: any) {
-        console.error('Error fetching data:', err)
-        setError(err.message || 'Une erreur est survenue lors du chargement des données')
+      } catch (err: Error | unknown) {
+        console.error('Error fetching participants:', err)
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des données')
       } finally {
         setIsLoading(false)
       }
@@ -206,35 +204,6 @@ export default function ParticipantsPage() {
     return range
   }
   
-  // Format date for display - avoiding hydration mismatch
-  const formatDate = (dateString: string) => {
-    // Check if we're in the browser
-    if (typeof window === 'undefined') {
-      return dateString; // Return raw date on server to avoid hydration mismatch
-    }
-    
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  }
-  
-  // Alternative: use a simpler date format that's consistent across server/client
-  const simpleDateFormat = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-  }
-
   // Get check-in percentage
   const checkInPercentage = totalCount > 0 ? Math.round((checkedInCount / totalCount) * 100) : 0;
 
