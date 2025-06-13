@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
-    domains: ['chart.googleapis.com'],
+    domains: ['chart.googleapis.com', 'via.placeholder.com'],
   },
 }
 

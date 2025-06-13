@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
+import Modal from '@/components/Modal'
+import SessionParticipantsList from '@/components/SessionParticipantsList'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 type SessionParticipant = {
   nom: string;
@@ -42,8 +45,16 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tableExists, setTableExists] = useState(true)
-  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session[]>>({})
+  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session>>({})
 
+  // Add state for participant list modal
+  const [isParticipantListOpen, setIsParticipantListOpen] = useState(false)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+
+  // Add state for confirmation modal
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null)
+  
   const isValidParticipant = (participant: any): participant is ParticipantData => {
     return (
       participant &&
@@ -172,6 +183,34 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
     fetchSessions()
   }, [eventId])
   
+  // New function to format time for display
+  const formatTimeDisplay = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours}h${minutes !== '00' ? minutes : ''}`;
+  };
+
+  // Calculate session duration in minutes
+  const calculateDuration = (startTime: string, endTime: string) => {
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    const endTotalMinutes = endHours * 60 + endMinutes;
+    
+    return endTotalMinutes - startTotalMinutes;
+  };
+
+  // Determine session type color
+  const getSessionTypeColor = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'conférence': return 'bg-blue-100 border-blue-300 text-blue-800';
+      case 'atelier': return 'bg-green-100 border-green-300 text-green-800';
+      case 'pause': return 'bg-gray-100 border-gray-300 text-gray-800';
+      case 'networking': return 'bg-purple-100 border-purple-300 text-purple-800';
+      default: return 'bg-indigo-100 border-indigo-300 text-indigo-800';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -338,8 +377,13 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   // Example:
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteSession = async (sessionId: string) => {
-    // Fix the unescaped apostrophe
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette session ?')) return
+    setSessionToDelete(sessionId)
+    setDeleteConfirmOpen(true)
+  }
+  
+  // New function to actually delete after confirmation
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return
     
     try {
       const supabase = supabaseBrowser()
@@ -347,75 +391,245 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
       const { error } = await supabase
         .from('inscription_sessions')
         .delete()
-        .eq('id', sessionId)
+        .eq('id', sessionToDelete)
       
       if (error) throw error
       
       // Update state after successful deletion
-      setSessions(sessions.filter(session => session.id !== sessionId))
+      setSessions(sessions.filter(session => session.id !== sessionToDelete))
       
       // Update grouped sessions
       setGroupedSessions(Object.fromEntries(
         Object.entries(groupedSessions).map(([date, dateSessions]) => [
           date, 
-          dateSessions.filter(session => session.id !== sessionId)
+          dateSessions.filter(session => session.id !== sessionToDelete)
         ]).filter(([, dateSessions]) => dateSessions.length > 0)
       ))
+      
+      // Show toast notification if you have one
+      // setToast({ message: "Session supprimée avec succès", type: "success" })
       
     } catch (err: Error | unknown) {
       console.error('Error deleting session:', err)
       alert(`Erreur lors de la suppression: ${err instanceof Error ? err.message : 'Une erreur inconnue'}`)
+    } finally {
+      // Close the confirmation modal
+      setDeleteConfirmOpen(false)
+      setSessionToDelete(null)
     }
   }
-
-  return React.createElement(
-    'div',
-    { className: "bg-white rounded-lg shadow-md p-6" },
-    [
-      // Header with title and add button
-      React.createElement(
-        'div',
-        { className: "flex justify-between items-center mb-6", key: "header" },
-        [
-          React.createElement('h2', { className: "text-xl font-semibold text-gray-800", key: "title" }, "Agenda des sessions"),
-          React.createElement('button', {
-            onClick: onAddSession,
-            className: "px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-            key: "add-button"
-          }, "Ajouter une session")
-        ]
-      ),
+  
+  // Function to view participants for a session
+  const handleViewParticipants = (session: Session) => {
+    setSelectedSessionId(session.id)
+    setIsParticipantListOpen(true)
+  }
+  
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      {/* Header with title and add button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">Agenda des sessions</h2>
+        <button
+          onClick={onAddSession}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
+        >
+          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Ajouter une session
+        </button>
+      </div>
       
-      // Error message if present
-      error && React.createElement(
-        'div', 
-        { className: "bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4", key: "error" },
-        React.createElement('p', null, error)
-      ),
+      {/* Error message if present */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <p>{error}</p>
+        </div>
+      )}
       
-      // Sessions content
-      Object.keys(groupedSessions).length === 0 
-        ? React.createElement('div', { className: "text-center py-10", key: "empty" }, 
-            React.createElement('p', { className: "text-gray-500" }, "Aucune session trouvée pour cet événement.")
-          )
-        : Object.entries(groupedSessions).map(([date, dateSessions], i) => 
-            React.createElement('div', { key: date || i, className: "mb-8" }, 
-              // Use dateSessions in child elements
-              React.createElement('h3', { className: "text-lg font-semibold", key: "date-header" }, date),
-              // Generate session items with edit button that uses onEditSession
-              React.createElement('div', { className: "space-y-2", key: "session-list" },
-                dateSessions.map(session => 
-                  React.createElement('div', { key: session.id, className: "flex justify-between items-center" },
-                    React.createElement('span', null, `${session.titre} (${session.heure_debut}-${session.heure_fin})`),
-                    React.createElement('button', {
-                      onClick: () => onEditSession(session),
-                      className: "text-blue-600"
-                    }, "Modifier")
-                  )
-                )
-              )
-            )
-          )
-    ]
-  );
+      {/* Modern calendar view */}
+      {Object.keys(groupedSessions).length === 0 ? (
+        <div className="text-center py-10">
+          <svg className="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p className="text-gray-500 mt-4">Aucune session trouvée pour cet événement.</p>
+          <button
+            onClick={onAddSession}
+            className="mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+          >
+            Créer votre première session
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {Object.entries(groupedSessions).map(([date, dateSessions], i) => {
+            // Sort sessions by start time
+            const sortedSessions = [...dateSessions].sort((a, b) => 
+              a.heure_debut.localeCompare(b.heure_debut)
+            );
+            
+            // Fix the Invalid Date error with proper date formatting
+            const sessionDate = new Date(dateSessions[0]?.date);
+            const isValidDate = !isNaN(sessionDate.getTime());
+            
+            // Format date elements safely
+            const formattedDay = isValidDate ? sessionDate.toLocaleDateString('fr-FR', { day: 'numeric' }) : '--';
+            const formattedMonth = isValidDate ? sessionDate.toLocaleDateString('fr-FR', { month: 'short' }) : '--';
+            const formattedWeekday = isValidDate ? sessionDate.toLocaleDateString('fr-FR', { weekday: 'long' }) : 'Date non définie';
+            
+            return (
+              <div key={date || i} className="rounded-lg border border-gray-200 overflow-hidden">
+                {/* Day header */}
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center">
+                    <div className="mr-4 bg-white p-2 rounded-lg border border-indigo-200 text-center w-14 h-14 flex flex-col justify-center">
+                      <span className="text-xs text-gray-500">{formattedMonth}</span>
+                      <span className="text-xl font-bold text-indigo-700">{formattedDay}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {formattedWeekday}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {sortedSessions.length} session{sortedSessions.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Day timeline */}
+                <div className="p-4 bg-white">
+                  <div className="relative pl-8">
+                    {/* Time axis */}
+                    <div className="absolute top-0 bottom-0 left-0 w-8 border-r border-gray-200">
+                      {sortedSessions.map((session, index) => (
+                        <div key={`time-${session.id}`} className="absolute flex items-center -translate-y-1/2" style={{ top: `${index * 120 + 60}px` }}>
+                          <span className="text-xs font-medium text-gray-500 -translate-x-1/2">
+                            {formatTimeDisplay(session.heure_debut)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Sessions */}
+                    <div className="space-y-4">
+                      {sortedSessions.map((session, sessionIndex) => {
+                        const duration = calculateDuration(session.heure_debut, session.heure_fin);
+                        const typeColor = getSessionTypeColor(session.type);
+                        
+                        return (
+                          <div 
+                            key={session.id}
+                            className={`ml-2 rounded-lg p-4 border ${typeColor} relative`}
+                            style={{ 
+                              minHeight: `${Math.max(duration/4, 90)}px` 
+                            }}
+                          >
+                            <div className="flex justify-between">
+                              <div>
+                                <h4 className="font-medium text-gray-900">{session.titre}</h4>
+                                <div className="flex items-center mt-1 text-sm">
+                                  <span className="text-gray-700">
+                                    {formatTimeDisplay(session.heure_debut)} - {formatTimeDisplay(session.heure_fin)}
+                                  </span>
+                                  {session.lieu && (
+                                    <>
+                                      <span className="mx-2 text-gray-400">•</span>
+                                      <span className="text-gray-700">{session.lieu}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {session.intervenant && (
+                                  <div className="mt-1 text-sm text-gray-600 flex items-center">
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {session.intervenant}
+                                  </div>
+                                )}
+                                {session.description && (
+                                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">{session.description}</p>
+                                )}
+                              </div>
+                              
+                              <div className="flex flex-col items-end justify-between">
+                                <div className="flex space-x-1">
+                                  <button
+                                    onClick={() => handleViewParticipants(session)}
+                                    className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50"
+                                    title="Voir les participants"
+                                  >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => onEditSession(session)}
+                                    className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                                    title="Modifier la session"
+                                  >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteSession(session.id)}
+                                    className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50"
+                                    title="Supprimer la session"
+                                  >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </div>
+                                
+                                <div className="flex items-center mt-2">
+                                  <span className="bg-white text-xs font-medium px-2 py-1 rounded-full border border-current">
+                                    {session.participant_count} inscrit{session.participant_count !== 1 ? 's' : ''}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
+      {/* Confirmation modal for deletion */}
+      <ConfirmationModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={confirmDeleteSession}
+        title="Supprimer la session"
+        message="Êtes-vous sûr de vouloir supprimer cette session ? Cette action est irréversible et supprimera également toutes les inscriptions associées."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        type="danger"
+      />
+      
+      {/* Participant list modal - keep existing code */}
+      {isParticipantListOpen && selectedSessionId && (
+        <Modal
+          isOpen={isParticipantListOpen}
+          onClose={() => setIsParticipantListOpen(false)}
+          title="Participants inscrits"
+          size="lg"
+        >
+          <SessionParticipantsList
+            sessionId={selectedSessionId}
+            onClose={() => setIsParticipantListOpen(false)}
+          />
+        </Modal>
+      )}
+    </div>
+  )
 }

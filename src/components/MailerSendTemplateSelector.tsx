@@ -333,11 +333,9 @@ export default function MailerSendTemplateSelector({ onSelectTemplate, onClose }
                       onClick={() => handleTemplateSelect(template)}
                     >
                       <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                        <Image 
+                        <img 
                           src={template.image_path}
                           alt={template.name}
-                          width={320}
-                          height={240}
                           className="w-full h-auto rounded-md border border-gray-200"
                         />
                       </div>

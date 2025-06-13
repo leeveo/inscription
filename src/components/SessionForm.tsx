@@ -27,7 +27,7 @@ type Session = SessionFormData & {
 }
 
 interface SessionFormProps {
-  eventId: string // Changé de number à string
+  eventId: string
   session?: Session | null
   onSessionSaved: (session: Session) => void
   onCancel: () => void
@@ -41,19 +41,29 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<SessionFormData>({
     resolver: zodResolver(sessionSchema),
     defaultValues: session ? {
-      titre: session.titre,
+      titre: session.titre || '',
       description: session.description || '',
-      date: session.date,
-      heure_debut: session.heure_debut,
-      heure_fin: session.heure_fin,
+      date: session.date || '',
+      heure_debut: session.heure_debut || '',
+      heure_fin: session.heure_fin || '',
       intervenant: session.intervenant || '',
       lieu: session.lieu || '',
-      type: session.type,
-    } : undefined
+      type: session.type || '',
+    } : {
+      // Default values for new sessions
+      type: 'conférence', // Set default type
+      date: new Date().toISOString().split('T')[0], // Today's date
+    }
   })
+
+  // Watch the form values for debugging
+  const formValues = watch();
+  console.log("Current form values:", formValues);
 
   const onSubmit = async (data: SessionFormData) => {
     try {
@@ -65,31 +75,58 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       setError(null)
       const supabase = supabaseBrowser()
       
+      // Log the data we're about to send
+      console.log("Sending session data:", data);
+      
+      // Ensure all fields are included, even if they're empty strings
+      const formattedData = {
+        titre: data.titre,
+        description: data.description || '',
+        date: data.date,
+        heure_debut: data.heure_debut,
+        heure_fin: data.heure_fin,
+        intervenant: data.intervenant || '',
+        lieu: data.lieu || '',
+        type: data.type,
+      };
+      
       if (session) {
         // Update existing session
+        console.log("Updating session with ID:", session.id);
+        
         const { data: updatedSession, error: updateError } = await supabase
           .from('inscription_sessions')
-          .update(data)
+          .update(formattedData)
           .eq('id', session.id)
           .select()
           .single()
         
-        if (updateError) throw updateError
+        if (updateError) {
+          console.error("Error updating session:", updateError);
+          throw updateError;
+        }
         
+        console.log("Session updated successfully:", updatedSession);
         onSessionSaved(updatedSession as Session)
       } else {
         // Create new session
+        console.log("Creating new session for event:", eventId);
+        
         const { data: newSession, error: insertError } = await supabase
           .from('inscription_sessions')
           .insert({
-            ...data,
+            ...formattedData,
             evenement_id: eventId
           })
           .select()
           .single()
         
-        if (insertError) throw insertError
+        if (insertError) {
+          console.error("Error creating session:", insertError);
+          throw insertError;
+        }
         
+        console.log("Session created successfully:", newSession);
         onSessionSaved(newSession as Session)
       }
     } catch (err: unknown) {
@@ -140,6 +177,27 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         </div>
         
         <div>
+          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+            Type de session <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="type"
+            {...register('type')}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Sélectionnez un type</option>
+            <option value="conférence">Conférence</option>
+            <option value="atelier">Atelier</option>
+            <option value="pause">Pause</option>
+            <option value="networking">Networking</option>
+            <option value="autre">Autre</option>
+          </select>
+          {errors.type && (
+            <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+          )}
+        </div>
+        
+        <div>
           <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
             Date <span className="text-red-500">*</span>
           </label>
@@ -184,27 +242,6 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
               <p className="mt-1 text-sm text-red-600">{errors.heure_fin.message}</p>
             )}
           </div>
-        </div>
-        
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-            Type de session <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="type"
-            {...register('type')}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Sélectionnez un type</option>
-            <option value="conférence">Conférence</option>
-            <option value="atelier">Atelier</option>
-            <option value="pause">Pause</option>
-            <option value="networking">Networking</option>
-            <option value="autre">Autre</option>
-          </select>
-          {errors.type && (
-            <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
-          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
