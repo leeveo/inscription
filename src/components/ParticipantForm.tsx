@@ -120,9 +120,10 @@ export default function ParticipantForm({
         
         onParticipantAdded(newParticipant as Participant)
       }
-    } catch (err: SubmitError | Error) {
-      console.error('Error submitting form:', err)
-      setError(err.message || 'Une erreur est survenue')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      console.error('Error submitting participant form:', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false)
     }

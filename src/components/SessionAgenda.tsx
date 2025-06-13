@@ -3,24 +3,23 @@
 import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 
+type SessionParticipant = {
+  nom: string;
+  prenom: string;
+  email: string;
+};
+
 type Session = {
-  id: string
-  evenement_id: string
-  titre: string
-  description: string
-  date: string
-  heure_debut: string
-  heure_fin: string
-  intervenant: string
-  lieu: string
-  type: string
-  created_at?: string
-  participant_count?: number
-  participants?: { 
-    nom: string;
-    prenom: string;
-    email: string;
-  }[]
+  id: string;
+  evenement_id: string;
+  titre: string;
+  description: string;
+  date: string;
+  heure_debut: string;
+  heure_fin: string;
+  participant_count: number;
+  participants: SessionParticipant[];
+  is_registered?: boolean;
 }
 
 interface SessionAgendaProps {
@@ -29,6 +28,15 @@ interface SessionAgendaProps {
   onEditSession: (session: Session) => void; 
 }
 
+type ParticipantData = {
+  participant_id: string;
+  inscription_participants?: {
+    nom: string;
+    prenom: string;
+    email: string;
+  };
+};
+
 export default function SessionAgenda({ eventId, onAddSession, onEditSession }: SessionAgendaProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,91 +44,128 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   const [tableExists, setTableExists] = useState(true)
   const [groupedSessions, setGroupedSessions] = useState<Record<string, Session[]>>({})
 
+  const isValidParticipant = (participant: any): participant is ParticipantData => {
+    return (
+      participant &&
+      typeof participant.participant_id === 'string' &&
+      participant.inscription_participants &&
+      typeof participant.inscription_participants.nom === 'string' &&
+      typeof participant.inscription_participants.prenom === 'string' &&
+      typeof participant.inscription_participants.email === 'string'
+    );
+  };
+
+  const isValidSession = (session: any): session is Session => {
+    return (
+      session &&
+      typeof session.id === 'string' &&
+      typeof session.evenement_id === 'string' &&
+      typeof session.titre === 'string' &&
+      typeof session.description === 'string' &&
+      typeof session.date === 'string' &&
+      typeof session.heure_debut === 'string' &&
+      typeof session.heure_fin === 'string' &&
+      typeof session.participant_count === 'number' &&
+      Array.isArray(session.participants) &&
+      session.participants.every(isValidParticipant)
+    );
+  };
+
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        setIsLoading(true)
-        const supabase = supabaseBrowser()
-        
+        setIsLoading(true);
+        const supabase = supabaseBrowser();
+
         const { data, error } = await supabase
           .from('inscription_sessions')
           .select('*')
           .eq('evenement_id', eventId)
           .order('date')
-          .order('heure_debut')
-        
-        // Vérifier si l'erreur indique que la table n'existe pas
+          .order('heure_debut');
+
         if (error && error.code === '42P01') {
-          console.error('Error fetching sessions:', error)
-          setTableExists(false)
-          setError("La table des sessions n&apos;existe pas encore dans la base de données.")
-          return
+          console.error('Error fetching sessions:', error);
+          setTableExists(false);
+          setError("La table des sessions n'existe pas encore dans la base de données.");
+          return;
         }
-        
-        if (error) throw error
-        
-        // Get participant counts and details for each session
+
+        if (error) throw error;
+
         const sessionsWithParticipants = await Promise.all(
           (data || []).map(async (session) => {
-            // Get count of participants
             const { count, error: countError } = await supabase
               .from('inscription_session_participants')
               .select('*', { count: 'exact', head: true })
-              .eq('session_id', session.id)
-            
-            if (countError) console.error("Error counting participants:", countError)
-            
-            // Get participant details for this session
+              .eq('session_id', session.id);
+
+            if (countError) console.error("Error counting participants:", countError);
+
             const { data: participants, error: participantsError } = await supabase
               .from('inscription_session_participants')
               .select(`
                 participant_id,
-                inscription_participants!inner(
+                inscription_participants (
                   nom, prenom, email
                 )
               `)
-              .eq('session_id', session.id)
-            
-            if (participantsError) console.error("Error fetching participants:", participantsError)
-            
-            const formattedParticipants = participants?.map(p => ({
-              nom: p.inscription_participants.nom,
-              prenom: p.inscription_participants.prenom,
-              email: p.inscription_participants.email
-            })) || []
-            
-            return {
-              ...session,
-              participant_count: count || 0,
-              participants: formattedParticipants
+              .eq('session_id', session.id);
+
+            if (participantsError) {
+              console.error("Error fetching participants:", participantsError);
+              return null;
             }
+
+            const formattedParticipants = (participants as any[])
+              ?.filter(isValidParticipant)
+              ?.map(p => ({
+                nom: p.inscription_participants.nom,
+                prenom: p.inscription_participants.prenom,
+                email: p.inscription_participants.email,
+              })) || [];
+
+            return {
+              id: String(session.id),
+              evenement_id: String(session.evenement_id),
+              titre: String(session.titre),
+              description: String(session.description || ''),
+              date: String(session.date),
+              heure_debut: String(session.heure_debut),
+              heure_fin: String(session.heure_fin),
+              participant_count: Number(count || 0),
+              participants: formattedParticipants,
+              is_registered: Boolean(session.is_registered),
+            };
           })
-        )
-        
-        setSessions(sessionsWithParticipants)
-        
-        // Group sessions by date
-        const grouped = (data || []).reduce((acc: Record<string, Session[]>, session) => {
+        );
+
+        // Filter out invalid sessions using the refined type predicate
+        const validSessions = sessionsWithParticipants.filter(isValidSession);
+
+        setSessions(validSessions);
+
+        const grouped = validSessions.reduce((acc: Record<string, Session[]>, session) => {
           const date = new Date(session.date).toLocaleDateString('fr-FR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
-          })
-          
+            day: 'numeric',
+          });
+
           if (!acc[date]) {
-            acc[date] = []
+            acc[date] = [];
           }
-          acc[date].push(session)
-          return acc
-        }, {})
-        
-        setGroupedSessions(grouped)
-      } catch (err: Error | unknown) {
-        console.error('Error fetching sessions:', err)
-        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des sessions')
+          acc[date].push(session);
+          return acc;
+        }, {});
+
+        setGroupedSessions(grouped);
+      } catch (err: unknown) {
+        console.error('Error fetching sessions:', err);
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du chargement des sessions');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
     

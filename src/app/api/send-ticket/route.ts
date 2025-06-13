@@ -92,7 +92,7 @@ async function sendEmailViaMailerSend(to: string, subject: string, html: string)
     return { 
       success: false, 
       reason: 'exception',
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error)
     };
   }
 }

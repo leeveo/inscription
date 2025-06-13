@@ -37,91 +37,97 @@ export default function ImportParticipantsModal({
   
   // Handle file selection
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null)
-    const selectedFile = e.target.files?.[0]
-    
-    if (!selectedFile) return
-    
+    setError(null);
+    const selectedFile = e.target.files?.[0];
+
+    if (!selectedFile) return;
+
     // Check file type
-    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase()
+    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
     if (fileExt !== 'xlsx' && fileExt !== 'xls' && fileExt !== 'csv') {
-      setError('Format de fichier non supporté. Veuillez utiliser un fichier Excel (.xlsx, .xls) ou CSV (.csv).')
-      return
+      setError('Format de fichier non supporté. Veuillez utiliser un fichier Excel (.xlsx, .xls) ou CSV (.csv).');
+      return;
     }
-    
-    setFile(selectedFile)
+
+    setFile(selectedFile);
     try {
       // Read file content to preview data
-      const data = await readFileData(selectedFile)
-      setPreviewData(data.slice(0, 5)) // Preview first 5 rows
-    } catch (err: FileReadError | Error) {
-      setError(`Erreur lors de la lecture du fichier: ${err.message}`)
-      setFile(null)
+      const data = await readFileData(selectedFile);
+      setPreviewData(data.slice(0, 5)); // Preview first 5 rows
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'importation';
+      console.error('Error importing participants:', errorMessage);
+      setError(errorMessage);
+      setImportStatus(prev => ({
+        ...prev,
+        inProgress: false,
+      }));
+      setFile(null);
     }
   }
   
   // Read file data using SheetJS
   const readFileData = (file: File): Promise<ParticipantRow[]> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      
+      const reader = new FileReader();
+
       reader.onload = (e) => {
         try {
-          const data = e.target?.result
-          if (!data) throw new Error('Failed to read file')
-          
-          const workbook = XLSX.read(data, { type: 'binary' })
-          const firstSheetName = workbook.SheetNames[0]
-          const worksheet = workbook.Sheets[firstSheetName]
-          
+          const data = e.target?.result;
+          if (!data) throw new Error('Failed to read file');
+
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
           // Convert to JSON
           const jsonData = XLSX.utils.sheet_to_json<ParticipantRow>(worksheet, {
             raw: false,
-            defval: ''
-          })
-          
+            defval: '',
+          });
+
           // Validate required fields
-          const validData = jsonData.filter(row => 
+          const validData = jsonData.filter(row =>
             row.nom && row.prenom && row.email && row.telephone
-          )
-          
+          );
+
           if (validData.length === 0) {
-            throw new Error('Aucune donnée valide trouvée dans le fichier')
+            throw new Error('Aucune donnée valide trouvée dans le fichier');
           }
-          
-          resolve(validData)
-        } catch (err) {
-          reject(err)
+
+          resolve(validData);
+        } catch (err: unknown) {
+          reject(err instanceof Error ? err : new Error('Erreur inconnue'));
         }
-      }
-      
+      };
+
       reader.onerror = () => {
-        reject(new Error('Erreur lors de la lecture du fichier'))
-      }
-      
-      reader.readAsBinaryString(file)
+        reject(new Error('Erreur lors de la lecture du fichier'));
+      };
+
+      reader.readAsBinaryString(file);
     })
   }
   
   // Process import
   const handleImport = async () => {
-    if (!file) return
-    
+    if (!file) return;
+
     try {
-      setIsLoading(true)
-      setError(null)
-      
+      setIsLoading(true);
+      setError(null);
+
       // Read all data from file
-      const participantData = await readFileData(file)
-      
+      const participantData = await readFileData(file);
+
       // Update status
       setImportStatus({
         total: participantData.length,
         imported: 0,
         errors: 0,
-        inProgress: true
-      })
-      
+        inProgress: true,
+      });
+
       // Send data to API for import
       const response = await fetch('/api/participants/import', {
         method: 'POST',
@@ -130,36 +136,36 @@ export default function ImportParticipantsModal({
         },
         body: JSON.stringify({
           eventId,
-          participants: participantData
+          participants: participantData,
         }),
-      })
-      
-      const result = await response.json()
-      
+      });
+
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error(result.message || 'Error importing participants')
+        throw new Error(result.message || 'Error importing participants');
       }
-      
+
       // Update status with final results
       setImportStatus({
         total: participantData.length,
         imported: result.imported || 0,
         errors: result.errors || 0,
-        inProgress: false
-      })
-      
+        inProgress: false,
+      });
+
       // Notify parent component
-      onImportComplete(result.imported || 0)
-      
-    } catch (err: ImportError | Error) {
-      console.error('Error during import:', err)
-      setError(err.message || 'Une erreur est survenue lors de l\'importation')
-      setImportStatus(prev => ({
+      onImportComplete(result.imported || 0);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'importation';
+      console.error('Error importing participants:', errorMessage);
+      setError(errorMessage);
+      setImportStatus((prev) => ({
         ...prev,
-        inProgress: false
-      }))
+        inProgress: false,
+      }));
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
   

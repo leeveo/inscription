@@ -39,7 +39,6 @@ export default function CreateEventPage() {
     formState: { errors },
     watch,
   } = useForm<FormData>({
-    // @ts-expect-error - Type mismatch between Zod schema and FormData
     resolver: zodResolver(schema),
     defaultValues: {
       type_participation: 'présentiel',
@@ -98,10 +97,12 @@ export default function CreateEventPage() {
           <p className="text-blue-100 mt-2">Remplissez le formulaire ci-dessous pour créer un événement</p>
         </div>
         
-        {/* @ts-expect-error - Type mismatch between onSubmit and handleSubmit generic types */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
           {/* Basic Information Section */}
           <div className="border-b border-gray-200 pb-5">
+            <div>
+              {/* Commentaire sur la section */}
+            </div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Informations de base</h3>
             <div className="space-y-4">
               <div>

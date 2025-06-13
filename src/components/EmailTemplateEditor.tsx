@@ -64,9 +64,16 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
         
         if (data) {
           // Un modèle existe, l'utiliser
-          setTemplate(data)
-          setSubject(data.subject)
-          setHtmlContent(data.html_content)
+          setTemplate({
+            id: 'id' in data ? Number(data.id) : 0,
+            evenement_id: 'evenement_id' in data ? String(data.evenement_id) : '',
+            subject: 'subject' in data ? String(data.subject) : '',
+            html_content: 'html_content' in data ? String(data.html_content) : '',
+            created_at: 'created_at' in data ? String(data.created_at) : '',
+            updated_at: 'updated_at' in data ? String(data.updated_at) : '',
+          });
+          setSubject('subject' in data && typeof data.subject === 'string' ? data.subject : ''); // Vérifiez si c'est une chaîne
+          setHtmlContent('html_content' in data && typeof data.html_content === 'string' ? data.html_content : ''); // Vérifiez si c'est une chaîne
         } else {
           // Créer un modèle par défaut
           const { data: eventData, error: eventError } = await supabase
@@ -104,8 +111,8 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
           setSubject(defaultSubject)
           setHtmlContent(defaultHtmlContent)
         }
-      } catch (error: Error | ApiError | unknown) {
-        console.error('Error loading template:', error)
+      } catch (error: Error | unknown) {
+        console.error('Error loading template:', error);
         setError(error instanceof Error ? error.message : 'Failed to load template')
       } finally {
         setIsLoading(false)
@@ -181,7 +188,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
         onClose();
       }, 1000);
       
-    } catch (error: Error | ApiError | unknown) {
+    } catch (error: Error | unknown) {
       console.error('Error saving template:', error)
       setError(error instanceof Error ? error.message : 'Failed to save template')
     } finally {

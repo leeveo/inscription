@@ -55,7 +55,7 @@ export default function TicketPage() {
   const [error, setError] = useState<string | null>(null)
   const [checkInUrl, setCheckInUrl] = useState<string>('')
   const [isRegistering, setIsRegistering] = useState(false)
-  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session>>({})
+  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session[]>>({}); // Ajustez le type ici
   
   useEffect(() => {
     const fetchParticipantAndEvent = async () => {
@@ -75,19 +75,23 @@ export default function TicketPage() {
         if (participantError) throw participantError
         if (!participantData) throw new Error('Participant not found')
         
-        setParticipant(participantData)
+        // Add a type assertion to fix the type error
+        setParticipant(participantData as unknown as Participant)
         
         // Fetch event details
         const { data: eventData, /* error */ } = await supabase
           .from('inscription_evenements')
           .select('*')
-          .eq('id', participantData.evenement_id)
+          .eq('id', participantData.evenement_id as string)
           .single()
+        
+        // Add a two-step type assertion to fix the type error
+        setEvent(eventData as unknown as Event)
         
         // if (eventError) throw eventError
         if (!eventData) throw new Error('Event not found')
         
-        setEvent(eventData)
+        setEvent(eventData as unknown as Event)
         
         // Fetch sessions for this event
         const { data: sessionsData, error: sessionsError } = await supabase
@@ -126,25 +130,41 @@ export default function TicketPage() {
           }) || []
         )
         
-        setSessions(sessionsWithRegistrations)
+        // Assurez-vous que chaque session inclut les propriétés requises par le type Session
+        const validatedSessions = sessionsWithRegistrations.map(session => ({
+          id: 'id' in session ? String(session.id) : '', // Vérifiez si la propriété existe
+          evenement_id: 'evenement_id' in session ? String(session.evenement_id) : '',
+          titre: 'titre' in session ? String(session.titre) : '',
+          description: 'description' in session ? String(session.description) : '',
+          date: 'date' in session ? String(session.date) : '',
+          heure_debut: 'heure_debut' in session ? String(session.heure_debut) : '',
+          heure_fin: 'heure_fin' in session ? String(session.heure_fin) : '',
+          participant_count: session.participant_count || 0,
+          is_registered: session.is_registered || false,
+          intervenant: 'intervenant' in session ? String(session.intervenant) : '',
+          lieu: 'lieu' in session ? String(session.lieu) : '',
+          type: 'type' in session ? String(session.type) : '',
+        }));
+
+        setSessions(validatedSessions)
         
         // Group sessions by date
-        const grouped = sessionsWithRegistrations.reduce((acc: Record<string, Session>, session) => {
+        const grouped = validatedSessions.reduce((acc: Record<string, Session[]>, session) => {
           const date = new Date(session.date).toLocaleDateString('fr-FR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
-          })
-          
+          });
+        
           if (!acc[date]) {
-            acc[date] = []
+            acc[date] = []; // Initialisez avec un tableau vide de type Session[]
           }
-          acc[date].push(session)
-          return acc
+          acc[date].push(session); // Ajoutez la session au tableau
+          return acc;
         }, {})
         
-        setGroupedSessions(grouped)
+        setGroupedSessions(grouped) // Le type est maintenant compatible
         
         // Generate check-in URL
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
@@ -221,9 +241,10 @@ export default function TicketPage() {
       })
       setGroupedSessions(newGroupedSessions)
       
-    } catch (err: Error | unknown) {
-      console.error('Error updating session registration:', err)
-      alert(`Erreur: ${err.message || 'Une erreur est survenue'}`)
+    } catch (err: unknown) {
+      console.error('Error updating session registration:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      alert(`Erreur: ${errorMessage}`);
     } finally {
       setIsRegistering(false)
     }

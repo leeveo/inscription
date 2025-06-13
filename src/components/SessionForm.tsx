@@ -92,11 +92,12 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         
         onSessionSaved(newSession as Session)
       }
-    } catch (err: FormSubmitError | Error) {
-      console.error('Error saving session:', err)
-      setError(err.message || 'Une erreur est survenue lors de l\'enregistrement')
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'enregistrement';
+      console.error('Error submitting session form:', errorMessage);
+      setError(errorMessage);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 

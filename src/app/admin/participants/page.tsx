@@ -116,7 +116,8 @@ export default function ParticipantsPage() {
           console.log('All participants match selected event:', allMatch);
         }
         
-        setParticipants(data || [])
+        // Add a two-step type assertion to fix the type error
+        setParticipants(data as unknown as Participant[] || [])
         setTotalCount(count || 0)
         
         // Fetch total checked-in count
@@ -137,11 +138,12 @@ export default function ParticipantsPage() {
         // Get most recent registration date
         if (data && data.length > 0) {
           // Sort by created_at in descending order
-          const sortedData = [...data].sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          const sortedData = [...data].sort((a, b) =>
+            new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
           );
           
-          setLastRegistrationDate(sortedData[0]?.created_at || null);
+          // Fix the type error by asserting created_at as string
+          setLastRegistrationDate((sortedData[0]?.created_at as string) || null);
         } else {
           setLastRegistrationDate(null);
         }
@@ -221,6 +223,17 @@ export default function ParticipantsPage() {
     if (diffDays > 0) return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
     if (diffHours > 0) return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
     return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+  };
+
+  // Add the missing simpleDateFormat function
+  const simpleDateFormat = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (

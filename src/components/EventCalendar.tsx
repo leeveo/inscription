@@ -22,12 +22,16 @@ type Event = {
   statut?: 'brouillon' | 'publié' | 'archivé'
 }
 
-interface CalendarEvent {
+type CalendarEvent = {
+  id: number
   title: string
   start: Date
   end: Date
   allDay?: boolean
-  resource?: unknown
+  resource: Event
+  status: string
+  statut: string
+  type_participation: string
 }
 
 interface EventCalendarProps {
@@ -45,7 +49,10 @@ export default function EventCalendar({ events }: EventCalendarProps) {
       title: event.nom,
       start: new Date(event.date_debut),
       end: new Date(event.date_fin),
-      resource: event
+      resource: event,
+      statut: event.statut || '', // Remplacez `status` par `statut`
+      type_participation: event.type_participation || '',
+      status: event.statut || '', // Ajoutez cette propriété pour respecter le type CalendarEvent
     }))
     
     setCalendarEvents(formattedEvents)
@@ -61,18 +68,17 @@ export default function EventCalendar({ events }: EventCalendarProps) {
     const resource = event.resource || {}
     let backgroundColor = '#3788d8' // Default blue
     
-    if (resource.statut === 'publié') {
+    if ('statut' in resource && resource.statut === 'publié') {
       backgroundColor = '#10b981' // Green
-    } else if (resource.statut === 'archivé') {
+    } else if ('statut' in resource && resource.statut === 'archivé') {
       backgroundColor = '#6b7280' // Gray
-    } else if (resource.statut === 'brouillon') {
+    } else if ('statut' in resource && resource.statut === 'brouillon') {
       backgroundColor = '#f59e0b' // Yellow
     }
     
-    // Different color based on type
-    if (resource.type_participation === 'virtuel') {
+    if ('type_participation' in resource && resource.type_participation === 'virtuel') {
       backgroundColor = '#8b5cf6' // Purple
-    } else if (resource.type_participation === 'hybride') {
+    } else if ('type_participation' in resource && resource.type_participation === 'hybride') {
       backgroundColor = '#ec4899' // Pink
     }
     

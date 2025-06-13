@@ -1,15 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React from 'react'
+
+// Supprimez la déclaration de namespace et utilisez directement les types
+type JSXElement = React.ReactElement<unknown, string | React.JSXElementConstructor<unknown>>;
 
 type NavItem = {
-  name: string
-  href: string
-  icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element
-  current?: boolean
+  name: string;
+  href: string;
+  icon: (props: React.SVGProps<SVGSVGElement>) => JSXElement; // Remplacez `any` par `unknown`
+  current?: boolean;
 }
 
 const navigation: NavItem[] = [

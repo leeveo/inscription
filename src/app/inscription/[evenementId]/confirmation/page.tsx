@@ -14,14 +14,16 @@ export default function ConfirmationPage() {
       const supabase = supabaseBrowser()
       const { data: { user } } = await supabase.auth.getUser()
 
+      // Add a type assertion to handle the ParamValue type
       const { data, /* error */ } = await supabase
         .from('inscription_inscriptions')
         .select('id')
-        .eq('evenement_id', evenementId)
-        .eq('utilisateur_id', user?.id)
+        .eq('evenement_id', evenementId as string)
+        .eq('utilisateur_id', user?.id as string) // Add type assertion here
         .single()
 
-      if (data) setInscriptionId(data.id)
+      // Add a type assertion for data.id
+      if (data) setInscriptionId(data.id as string)
     }
 
     fetchInscription()

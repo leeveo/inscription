@@ -10,11 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: false
   },
   global: {
-    // Disable realtime as it's not needed for this API route
-    // This helps avoid the dynamic import issues
-    realtime: {
-      connect: false
-    }
+    fetch: fetch
   }
 })
 
