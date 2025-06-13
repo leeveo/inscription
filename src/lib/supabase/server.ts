@@ -3,7 +3,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-export const supabaseServer = () => {
+export const supabaseServer = async () => {
   // Explicitly check and use environment variables
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -22,7 +22,7 @@ export const supabaseServer = () => {
 }
 
 // Add a function specifically for API routes
-export const supabaseApi = () => {
+export const supabaseApi = async () => {
   // Use the same environment variables but with explicit error handling for API routes
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
