@@ -97,6 +97,8 @@ export default function EditEventPage() {
   const [participantPage, setParticipantPage] = useState(1)
   const [totalParticipants, setTotalParticipants] = useState(0)
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false)
+  // Add the missing state variable for editing participants
+  const [participantToEdit, setParticipantToEdit] = useState<any>(null)
   
   // Add these new state variables for session management
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
@@ -732,7 +734,7 @@ export default function EditEventPage() {
                     className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                     </svg>
                     Envoyer un email {selectedParticipants.length > 0 && `(${selectedParticipants.length})`}
                   </button>
