@@ -1,7 +1,9 @@
-/* Version simplifiée sans références d'images externes */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import des styles UploadThing */
+@import "~@uploadthing/react/styles.css";
 
 :root {
   --foreground-rgb: 0, 0, 0;

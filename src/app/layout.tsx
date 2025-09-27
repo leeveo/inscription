@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import Sidebar from '@/components/Sidebar'
+import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -9,11 +10,28 @@ export const metadata = {
   description: 'Gestion des inscriptions aux événements',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const headersList = await headers()
+  const pathname = headersList.get('x-pathname') || ''
+  
+  // Si c'est une route landing ou QR scanner, utiliser un layout simplifié
+  const isLandingPage = pathname.includes('/landing/')
+  const isQRScannerPage = pathname.includes('/qr-scanner') || pathname.includes('/scanner')
+  
+  if (isLandingPage || isQRScannerPage) {
+    return (
+      <html lang="fr">
+        <body className={`${inter.className} min-h-screen bg-gray-50`}>
+          {children}
+        </body>
+      </html>
+    )
+  }
+
   return (
     <html lang="fr">
       <body className={`${inter.className} flex h-screen bg-gray-50`}>

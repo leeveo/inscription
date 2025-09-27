@@ -14,7 +14,7 @@ type Participant = {
   email: string;
   telephone: string;
   checked_in: boolean;
-  checked_in_at?: string;
+  checked_in_at?: string;  // Ajout du nouveau champ
   // Other participant properties
 }
 
@@ -99,7 +99,7 @@ export default function CheckInClient({ eventId, participantId }: CheckInClientP
         .from('inscription_participants')
         .update({
           checked_in: true,
-          check_in_time: new Date().toISOString()
+          checked_in_at: new Date().toISOString()  // Utilisation du nouveau champ
         })
         .eq('id', participant.id)
       
@@ -107,7 +107,11 @@ export default function CheckInClient({ eventId, participantId }: CheckInClientP
       
       setSuccess(true)
       // Update local state
-      setParticipant(prev => prev ? {...prev, checked_in: true, check_in_time: new Date().toISOString()} : null)
+      setParticipant(prev => prev ? {
+        ...prev, 
+        checked_in: true, 
+        checked_in_at: new Date().toISOString()
+      } : null)
       
       // Redirect after 2 seconds
       setTimeout(() => {

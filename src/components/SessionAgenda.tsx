@@ -23,6 +23,10 @@ type Session = {
   participant_count: number;
   participants: SessionParticipant[];
   is_registered?: boolean;
+  type: string;
+  intervenant?: string;
+  lieu?: string;
+  max_participants?: number | null;
 }
 
 interface SessionAgendaProps {
@@ -45,7 +49,7 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tableExists, setTableExists] = useState(true)
-  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session>>({})
+  const [groupedSessions, setGroupedSessions] = useState<Record<string, Session[]>>({})
 
   // Add state for participant list modal
   const [isParticipantListOpen, setIsParticipantListOpen] = useState(false)
@@ -147,6 +151,10 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
               participant_count: Number(count || 0),
               participants: formattedParticipants,
               is_registered: Boolean(session.is_registered),
+              type: String(session.type),
+              intervenant: session.intervenant ? String(session.intervenant) : undefined,
+              lieu: session.lieu ? String(session.lieu) : undefined,
+              max_participants: session.max_participants ? Number(session.max_participants) : null,
             };
           })
         );
@@ -528,8 +536,22 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
                             }}
                           >
                             <div className="flex justify-between">
-                              <div>
-                                <h4 className="font-medium text-gray-900">{session.titre}</h4>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-medium text-gray-900">{session.titre}</h4>
+                                  {/* Badge de statut de capacité */}
+                                  {session.max_participants && (
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      session.participant_count >= session.max_participants 
+                                        ? 'bg-red-100 text-red-800 border border-red-200' 
+                                        : session.participant_count >= session.max_participants * 0.8 
+                                          ? 'bg-orange-100 text-orange-800 border border-orange-200' 
+                                          : 'bg-green-100 text-green-800 border border-green-200'
+                                    }`}>
+                                      {session.participant_count}/{session.max_participants}
+                                    </span>
+                                  )}
+                                </div>
                                 <div className="flex items-center mt-1 text-sm">
                                   <span className="text-gray-700">
                                     {formatTimeDisplay(session.heure_debut)} - {formatTimeDisplay(session.heure_fin)}
@@ -585,10 +607,55 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
                                   </button>
                                 </div>
                                 
-                                <div className="flex items-center mt-2">
-                                  <span className="bg-white text-xs font-medium px-2 py-1 rounded-full border border-current">
-                                    {session.participant_count} inscrit{session.participant_count !== 1 ? 's' : ''}
-                                  </span>
+                                <div className="flex flex-col items-end mt-2 space-y-2">
+                                  {/* Jauge de capacité améliorée */}
+                                  {session.max_participants ? (
+                                    <div className="w-32">
+                                      <div className="flex items-center justify-between text-xs font-medium text-gray-700 mb-1">
+                                        <span>{session.participant_count}</span>
+                                        <span className="text-gray-500">/</span>
+                                        <span>{session.max_participants}</span>
+                                      </div>
+                                      <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+                                        <div 
+                                          className={`h-3 rounded-full transition-all duration-500 shadow-sm ${
+                                            session.participant_count >= session.max_participants 
+                                              ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                                              : session.participant_count >= session.max_participants * 0.8 
+                                                ? 'bg-gradient-to-r from-orange-400 to-orange-500' 
+                                                : 'bg-gradient-to-r from-green-400 to-green-500'
+                                          }`}
+                                          style={{ 
+                                            width: `${Math.min((session.participant_count / session.max_participants) * 100, 100)}%` 
+                                          }}
+                                        ></div>
+                                      </div>
+                                      <div className="flex items-center justify-between mt-1">
+                                        <div className="text-xs text-gray-500">
+                                          {Math.round((session.participant_count / session.max_participants) * 100)}%
+                                        </div>
+                                        <div className={`text-xs font-medium ${
+                                          session.participant_count >= session.max_participants 
+                                            ? 'text-red-600' 
+                                            : session.participant_count >= session.max_participants * 0.8 
+                                              ? 'text-orange-600' 
+                                              : 'text-green-600'
+                                        }`}>
+                                          {session.participant_count >= session.max_participants 
+                                            ? 'Complet' 
+                                            : `${session.max_participants - session.participant_count} libre${session.max_participants - session.participant_count !== 1 ? 's' : ''}`
+                                          }
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center space-x-2">
+                                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                      <span className="bg-green-50 text-green-700 text-xs font-medium px-2 py-1 rounded-full border border-green-200">
+                                        {session.participant_count} inscrit{session.participant_count !== 1 ? 's' : ''} (illimité)
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -622,7 +689,7 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
           isOpen={isParticipantListOpen}
           onClose={() => setIsParticipantListOpen(false)}
           title="Participants inscrits"
-          size="lg"
+          size="3xl"
         >
           <SessionParticipantsList
             sessionId={selectedSessionId}

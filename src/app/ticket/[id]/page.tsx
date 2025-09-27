@@ -167,7 +167,7 @@ export default function TicketPage() {
         setGroupedSessions(grouped) // Le type est maintenant compatible
         
         // Generate check-in URL
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
         const checkIn = `${baseUrl}/admin/check-in/${participantData.evenement_id}/${participantId}`
         setCheckInUrl(checkIn)
         

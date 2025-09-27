@@ -6,69 +6,53 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabase = createClient(supabaseUrl, anonKey)
 
-// Enhanced function to send email via MailerSend API with trial account handling
-async function sendEmailViaMailerSend(to: string, subject: string, html: string) {
-  const apiKey = process.env.MAILERSEND_API_KEY
-  const fromEmail = process.env.MAILERSEND_FROM_EMAIL
-  const fromName = process.env.MAILERSEND_FROM_NAME
-  const adminEmail = process.env.MAILERSEND_ADMIN_EMAIL || fromEmail // The email you used to register with MailerSend
-  const isTrialAccount = process.env.MAILERSEND_IS_TRIAL === 'true'
+// Enhanced function to send ticket via Brevo API
+async function sendTicketViaBrevo(to: string, subject: string, html: string, eventName: string) {
+  const apiKey = process.env.BREVO_API_KEY
+  const fromEmail = process.env.BREVO_FROM_EMAIL
+  const fromName = process.env.BREVO_FROM_NAME || eventName
   
-  console.log('MailerSend setup:')
+  console.log('Brevo setup:')
   console.log('- API Key exists:', !!apiKey)
   console.log('- From Email:', fromEmail)
-  console.log('- Admin Email:', adminEmail)
-  console.log('- Trial Account:', isTrialAccount)
+  console.log('- Event Name:', eventName)
   
   if (!apiKey || !fromEmail) {
-    console.log('MailerSend credentials missing, skipping real email send')
+    console.log('Brevo credentials missing, skipping real email send')
     return { success: false, reason: 'credentials_missing' }
   }
   
   try {
-    // If using trial account, always send to admin email
-    const recipientEmail = isTrialAccount ? adminEmail : to
-    
-    console.log(`Preparing to send email to: ${recipientEmail} ${isTrialAccount ? '(trial mode - redirected to admin)' : ''}`)
-    console.log(`Original recipient would be: ${to}`)
+    console.log(`Preparing to send ticket to: ${to}`)
     
     const payload = {
-      from: {
+      sender: {
         email: fromEmail,
-        name: fromName || 'Event Admin'
+        name: fromName
       },
-      to: [
-        {
-          email: recipientEmail,
-          // If in trial mode, add original recipient info to email subject
-          name: isTrialAccount ? `Original recipient: ${to}` : undefined
-        }
-      ],
-      subject: isTrialAccount ? `[TEST] ${subject} (for: ${to})` : subject,
-      html: isTrialAccount 
-        ? `<div style="background-color: #fff3cd; padding: 10px; margin-bottom: 20px; border: 1px solid #ffeeba; border-radius: 4px;">
-             <p><strong>TEST MODE</strong>: This email would normally be sent to <strong>${to}</strong>.</p>
-           </div>
-           ${html}`
-        : html
+      to: [{
+        email: to,
+        name: to.split('@')[0] // Use email prefix as name fallback
+      }],
+      subject: subject,
+      htmlContent: html
     }
     
     console.log('Request payload:', JSON.stringify(payload))
     
-    const response = await fetch('https://api.mailersend.com/v1/email', {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'X-Requested-With': 'XMLHttpRequest'
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
     
     const responseText = await response.text();
-    console.log(`MailerSend response status: ${response.status}`);
-    console.log(`MailerSend response headers:`, Object.fromEntries([...response.headers.entries()]));
-    console.log(`MailerSend response body: ${responseText}`);
+    console.log(`Brevo response status: ${response.status}`);
+    console.log(`Brevo response body: ${responseText}`);
     
     if (!response.ok) {
       return { 
@@ -88,7 +72,7 @@ async function sendEmailViaMailerSend(to: string, subject: string, html: string)
     
     return { success: true, data: result };
   } catch (error) {
-    console.error("Error sending email:", error)
+    console.error("Error sending ticket:", error)
     return { 
       success: false, 
       reason: 'exception',
@@ -113,6 +97,33 @@ async function getEmailTemplate(eventId: string) {
   return data
 }
 
+// Fonction pour récupérer les sessions inscrites d'un participant
+async function getParticipantSessions(participantId: string) {
+  const { data, error } = await supabase
+    .from('inscription_session_participants')
+    .select(`
+      inscription_sessions (
+        id,
+        titre,
+        description,
+        date,
+        heure_debut,
+        heure_fin,
+        lieu,
+        intervenant,
+        type
+      )
+    `)
+    .eq('participant_id', participantId)
+
+  if (error) {
+    console.error('Error fetching participant sessions:', error)
+    return []
+  }
+
+  return data || []
+}
+
 // Define proper types instead of using 'any'
 interface EventData {
   id: string;
@@ -130,12 +141,13 @@ interface ParticipantData {
   telephone?: string;
 }
 
-// Update the function signature to use the new interfaces
+// Update the function signature to use the new interfaces and support both ticket and landing URLs
 function replaceTemplateVariables(
   template: string, 
   event: EventData, 
   participant: ParticipantData, 
-  ticketUrl: string
+  ticketUrl: string,
+  landingUrl?: string
 ) {
   return template
     .replace(/{{event_name}}/g, event.nom)
@@ -150,6 +162,7 @@ function replaceTemplateVariables(
     .replace(/{{participant_lastname}}/g, participant.nom)
     .replace(/{{participant_email}}/g, participant.email)
     .replace(/{{ticket_url}}/g, ticketUrl)
+    .replace(/{{landing_url}}/g, landingUrl || ticketUrl) // Fallback to ticketUrl if no landing URL
 }
 
 export async function POST(req: NextRequest) {
@@ -187,7 +200,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Error fetching participants' }, { status: 500 })
     }
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
     const results = []
     
     // Récupérer le modèle d'email personnalisé
@@ -253,10 +266,11 @@ export async function POST(req: NextRequest) {
         }
         
         // Send real email with enhanced response
-        const emailResult = await sendEmailViaMailerSend(
+        const emailResult = await sendTicketViaBrevo(
           participant.email, 
           emailSubject, 
-          emailHtml
+          emailHtml,
+          eventData.nom
         );
         
         console.log(`[EMAIL ${emailResult.success ? 'SENT' : 'FAILED'}] To: ${participant.email}, Result:`, emailResult)

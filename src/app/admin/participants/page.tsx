@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Modal from '@/components/Modal'
+import TicketTemplateManager from '@/components/TicketTemplateManager'
 
 type Participant = {
   id: number
@@ -13,6 +15,7 @@ type Participant = {
   telephone: string
   site_web?: string
   checked_in: boolean
+  checked_in_at?: string  // Ajout du nouveau champ
   created_at: string
   // Nouveaux champs
   profession?: string
@@ -44,6 +47,7 @@ export default function ParticipantsPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [checkedInCount, setCheckedInCount] = useState(0)
   const [lastRegistrationDate, setLastRegistrationDate] = useState<string | null>(null)
+  const [isTicketTemplateModalOpen, setIsTicketTemplateModalOpen] = useState(false)
   const itemsPerPage = 20
   
   // Fetch participants and events
@@ -288,6 +292,36 @@ export default function ParticipantsPage() {
                 </svg>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Actions section */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => setIsTicketTemplateModalOpen(true)}
+              disabled={!selectedEvent}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
+                selectedEvent
+                  ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+              title={!selectedEvent ? "Sélectionnez un événement pour gérer les templates" : ""}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Gérer les templates de tickets
+            </button>
+            
+            {selectedEvent && (
+              <div className="text-sm text-gray-600 flex items-center">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Templates pour l'événement sélectionné
+              </div>
+            )}
           </div>
         </div>
         
@@ -550,6 +584,21 @@ export default function ParticipantsPage() {
           </div>
         </div>
       )}
+      
+      {/* Modal for ticket template management */}
+      <Modal
+        isOpen={isTicketTemplateModalOpen}
+        onClose={() => setIsTicketTemplateModalOpen(false)}
+        title="Gestion des modèles de tickets"
+        size="3xl"
+      >
+        {selectedEvent && (
+          <TicketTemplateManager
+            eventId={selectedEvent}
+            onClose={() => setIsTicketTemplateModalOpen(false)}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

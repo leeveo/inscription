@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import { useState } from 'react'
+import EventDescriptionEditor from '@/components/EventDescriptionEditor'
+import ImageUpload from '@/components/ImageUpload'
 
-// Update the schema to handle capacite properly
+// Update the schema to handle capacite properly and remove description validation (handled separately)
 const schema = z.object({
   nom: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
-  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
   lieu: z.string().min(3, "Le lieu doit contenir au moins 3 caractères"),
   date_debut: z.string().refine(val => !!val, "La date de début est requise"),
   date_fin: z.string().refine(val => !!val, "La date de fin est requise"),
@@ -24,6 +25,7 @@ const schema = z.object({
   // Make type_evenement required (not optional)
   type_evenement: z.enum(['conférence', 'atelier', 'webinar', 'autre']).default('conférence'),
   statut: z.enum(['brouillon', 'publié', 'archivé']),
+  // Note: description and logo_url are handled separately in state
 })
 
 type FormData = z.infer<typeof schema>
@@ -32,6 +34,8 @@ export default function CreateEventPage() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [description, setDescription] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   
   const {
     register,
@@ -54,11 +58,21 @@ export default function CreateEventPage() {
     try {
       setIsSubmitting(true)
       setFormError(null)
+
+      // Validate description manually since it's not in the form
+      if (!description || description.trim().length < 10) {
+        setFormError("La description doit contenir au moins 10 caractères")
+        setIsSubmitting(false)
+        return
+      }
+
       const supabase = supabaseBrowser()
 
       // Ensure capacity is properly handled
       const formattedData = {
         ...data,
+        description: description, // Use HTML description from state
+        logo_url: logoUrl || null, // Use logo URL from state
         date_debut: new Date(data.date_debut),
         date_fin: new Date(data.date_fin),
         // If capacite is empty string, set to null to avoid NaN
@@ -122,18 +136,30 @@ export default function CreateEventPage() {
               
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description *
+                  Description * (HTML)
                 </label>
-                <textarea 
-                  id="description"
-                  {...register('description')} 
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
-                  placeholder="Décrivez votre événement en détail..."
+                <EventDescriptionEditor
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Décrivez votre événement en détail avec du texte formaté..."
                 />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+                {!description && (
+                  <p className="mt-1 text-sm text-red-600">La description est requise</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Logo de l&apos;événement
+                </label>
+                <ImageUpload
+                  currentImageUrl={logoUrl || ''}
+                  onImageUploaded={setLogoUrl}
+                  className="w-full"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Téléchargez un logo qui apparaîtra sur les pages d&apos;inscription et templates (max 1MB)
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

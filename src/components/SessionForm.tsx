@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { supabaseBrowser } from '@/lib/supabase/client'
 
 // Schema validation
 const sessionSchema = z.object({
@@ -16,13 +15,23 @@ const sessionSchema = z.object({
   intervenant: z.string().optional(),
   lieu: z.string().optional(),
   type: z.string().min(1, 'Le type de session est requis'),
+  max_participants: z.string().optional(),
 })
 
 type SessionFormData = z.infer<typeof sessionSchema>
 
-type Session = SessionFormData & {
+type Session = {
   id: string
   evenement_id: string
+  titre: string
+  description?: string
+  date: string
+  heure_debut: string
+  heure_fin: string
+  intervenant?: string
+  lieu?: string
+  type: string
+  max_participants?: number | null
   created_at?: string
 }
 
@@ -54,10 +63,12 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       intervenant: session.intervenant || '',
       lieu: session.lieu || '',
       type: session.type || '',
+      max_participants: session.max_participants?.toString() || '',
     } : {
       // Default values for new sessions
       type: 'conférence', // Set default type
       date: new Date().toISOString().split('T')[0], // Today's date
+      max_participants: '',
     }
   })
 
@@ -73,7 +84,6 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       
       setIsSubmitting(true)
       setError(null)
-      const supabase = supabaseBrowser()
       
       // Log the data we're about to send
       console.log("Sending session data:", data);
@@ -88,44 +98,53 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         intervenant: data.intervenant || '',
         lieu: data.lieu || '',
         type: data.type,
+        max_participants: data.max_participants && data.max_participants.trim() !== '' ? parseInt(data.max_participants, 10) : null,
       };
       
       if (session) {
-        // Update existing session
+        // Update existing session via API
         console.log("Updating session with ID:", session.id);
         
-        const { data: updatedSession, error: updateError } = await supabase
-          .from('inscription_sessions')
-          .update(formattedData)
-          .eq('id', session.id)
-          .select()
-          .single()
+        const response = await fetch('/api/sessions', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: session.id,
+            ...formattedData
+          })
+        });
         
-        if (updateError) {
-          console.error("Error updating session:", updateError);
-          throw updateError;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors de la mise à jour');
         }
         
+        const { session: updatedSession } = await response.json();
         console.log("Session updated successfully:", updatedSession);
         onSessionSaved(updatedSession as Session)
       } else {
-        // Create new session
+        // Create new session via API
         console.log("Creating new session for event:", eventId);
         
-        const { data: newSession, error: insertError } = await supabase
-          .from('inscription_sessions')
-          .insert({
-            ...formattedData,
-            evenement_id: eventId
+        const response = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            eventId,
+            ...formattedData
           })
-          .select()
-          .single()
+        });
         
-        if (insertError) {
-          console.error("Error creating session:", insertError);
-          throw insertError;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erreur lors de la création');
         }
         
+        const { session: newSession } = await response.json();
         console.log("Session created successfully:", newSession);
         onSessionSaved(newSession as Session)
       }
@@ -194,6 +213,26 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
           </select>
           {errors.type && (
             <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+          )}
+        </div>
+        
+        <div>
+          <label htmlFor="max_participants" className="block text-sm font-medium text-gray-700 mb-1">
+            Nombre maximum de participants
+          </label>
+          <input
+            id="max_participants"
+            type="number"
+            min="1"
+            {...register('max_participants')}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Laissez vide pour illimité"
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            Laissez ce champ vide si vous ne souhaitez pas limiter le nombre de participants
+          </p>
+          {errors.max_participants && (
+            <p className="mt-1 text-sm text-red-600">{errors.max_participants.message}</p>
           )}
         </div>
         

@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import SimpleRichTextEditor from './SimpleRichTextEditor'
 import { supabaseBrowser } from '@/lib/supabase/client'
-import MailerSendTemplateSelector from './MailerSendTemplateSelector'
+import BrevoTemplateSelector from './BrevoTemplateSelector'
 
 // Schema validation
 const emailSchema = z.object({
@@ -72,6 +72,7 @@ export default function EmailForm({
       .replace(/{{participant_lastname}}/g, 'Nom')
       .replace(/{{event_date}}/g, 'Date de l\'événement')
       .replace(/{{event_location}}/g, 'Lieu de l\'événement')
+      .replace(/{{landing_url}}/g, 'https://localhost:3000/landing/[event-id]/[participant-token]')
       .replace(/{{ticket_url}}/g, 'https://example.com/ticket');
   };
 
@@ -126,7 +127,7 @@ export default function EmailForm({
   // Show template selector if requested
   if (showTemplateSelector) {
     return (
-      <MailerSendTemplateSelector
+      <BrevoTemplateSelector
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
       />
@@ -232,6 +233,7 @@ export default function EmailForm({
             <li>{'{{participant_lastname}}'} - Nom du participant</li>
             <li>{'{{event_date}}'} - Date de l'événement</li>
             <li>{'{{event_location}}'} - Lieu de l'événement</li>
+            <li>{'{{landing_url}}'} - Lien vers la page d'inscription personnalisée</li>
             <li>{'{{ticket_url}}'} - Lien vers le billet</li>
           </ul>
         </div>

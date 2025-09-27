@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import EventCalendar from '@/components/EventCalendar'
+import EventCodesManager from '@/components/EventCodesManager'
 import Link from 'next/link'
 
 // Rename your Event type to something more specific to avoid collision with DOM Event
@@ -188,6 +189,33 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500">Envoyer des communications</p>
             </div>
           </div>
+
+          <Link 
+            href="/scanner"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex items-center"
+          >
+            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M12 12h-4.01M8 16l2-2m0 0h2m-2 0v2m0-2H8m4 2v2" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">Scanner QR Mobile</h3>
+              <p className="text-sm text-gray-500">Check-in des participants (Plein écran)</p>
+            </div>
+          </Link>
+        </div>
+      </div>
+      
+      {/* Event Codes Management Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">Codes d&apos;accès événements</h2>
+        </div>
+        <div className="bg-white rounded-lg shadow-md">
+          <EventCodesManager />
         </div>
       </div>
       
@@ -219,87 +247,207 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      {/* Recent Events Section */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Événements récents</h2>
+      {/* Recent Events Section - Modern Design */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Événements récents</h2>
+              <p className="text-blue-100 mt-1">Aperçu de vos derniers événements</p>
+            </div>
+            <Link 
+              href="/admin/evenements"
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+            >
+              <span>Voir tout</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </div>
         
-        {events.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">Aucun événement disponible</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nom
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Lieu
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {events.slice(0, 5).map((event) => {
-                  const eventDate = new Date(event.date_debut)
-                  const now = new Date()
-                  const isUpcoming = eventDate > now
-                  
-                  return (
-                    <tr key={event.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{event.nom}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {new Date(event.date_debut).toLocaleDateString('fr-FR')}
+        <div className="p-6">
+          {events.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun événement</h3>
+              <p className="text-gray-500 mb-4">Commencez par créer votre premier événement</p>
+              <Link 
+                href="/admin/evenements/create"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Créer un événement
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {events.slice(0, 5).map((event, index) => {
+                const eventDate = new Date(event.date_debut)
+                const now = new Date()
+                const isUpcoming = eventDate > now
+                const isPast = eventDate < now
+                const isToday = eventDate.toDateString() === now.toDateString()
+                
+                return (
+                  <div 
+                    key={event.id}
+                    className="group relative bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    {/* Event number badge */}
+                    <div className="absolute -top-2 -left-2 w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">
+                      {index + 1}
+                    </div>
+                    
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start space-x-4">
+                          {/* Date circle */}
+                          <div className="flex-shrink-0">
+                            <div className={`w-16 h-16 rounded-full border-4 flex flex-col items-center justify-center text-center ${
+                              isToday ? 'bg-orange-500 border-orange-300 text-white' :
+                              isUpcoming ? 'bg-blue-500 border-blue-300 text-white' :
+                              'bg-gray-400 border-gray-300 text-white'
+                            }`}>
+                              <span className="text-xs font-medium">
+                                {eventDate.toLocaleDateString('fr-FR', { month: 'short' })}
+                              </span>
+                              <span className="text-lg font-bold">
+                                {eventDate.getDate()}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Event details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-200">
+                              {event.nom}
+                            </h3>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+                              <div className="flex items-center">
+                                <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {eventDate.toLocaleDateString('fr-FR', { 
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </div>
+                              
+                              <div className="flex items-center">
+                                <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {event.lieu}
+                              </div>
+                            </div>
+                            
+                            {event.description && (
+                              <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                                {event.description}
+                              </p>
+                            )}
+                            
+                            {/* Status badge */}
+                            <div className="flex items-center space-x-3">
+                              {event.statut ? (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                                  event.statut === 'publié' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  event.statut === 'archivé' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                                  'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                }`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                    event.statut === 'publié' ? 'bg-green-400' :
+                                    event.statut === 'archivé' ? 'bg-gray-400' :
+                                    'bg-yellow-400'
+                                  }`}></div>
+                                  {event.statut.charAt(0).toUpperCase() + event.statut.slice(1)}
+                                </span>
+                              ) : (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+                                  isToday ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                  isUpcoming ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                                  'bg-gray-50 text-gray-700 border-gray-200'
+                                }`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                    isToday ? 'bg-orange-400' :
+                                    isUpcoming ? 'bg-blue-400' : 'bg-gray-400'
+                                  }`}></div>
+                                  {isToday ? "Aujourd'hui" : isUpcoming ? 'À venir' : 'Terminé'}
+                                </span>
+                              )}
+                              
+                              {/* Time indicator for upcoming events */}
+                              {isUpcoming && (
+                                <span className="text-xs text-gray-500">
+                                  dans {Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))} jour{Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{event.lieu}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {event.statut ? (
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${event.statut === 'publié' ? 'bg-green-100 text-green-800' : 
-                              event.statut === 'archivé' ? 'bg-gray-100 text-gray-800' : 
-                              'bg-yellow-100 text-yellow-800'}`}
+                      </div>
+                      
+                      {/* Action buttons */}
+                      <div className="flex-shrink-0 ml-4">
+                        <div className="flex items-center space-x-2">
+                          <Link 
+                            href={`/admin/evenements/${event.id}`}
+                            className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium"
                           >
-                            {event.statut}
-                          </span>
-                        ) : (
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${isUpcoming ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Détails
+                          </Link>
+                          
+                          <Link 
+                            href={`/admin/evenements/${event.id}/edit`}
+                            className="inline-flex items-center px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm font-medium"
                           >
-                            {isUpcoming ? 'À venir' : 'Terminé'}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link 
-                          href={`/admin/evenements/${event.id}`}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Détails
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Modifier
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Subtle gradient overlay on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-indigo-500/0 group-hover:from-blue-500/5 group-hover:to-indigo-500/5 rounded-xl transition-all duration-300 pointer-events-none"></div>
+                  </div>
+                )
+              })}
+              
+              {events.length > 5 && (
+                <div className="text-center pt-4 border-t border-gray-200">
+                  <Link 
+                    href="/admin/evenements"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0l-4-4m4 4l-4 4" />
+                    </svg>
+                    Voir tous les événements ({events.length})
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
