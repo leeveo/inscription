@@ -9,7 +9,7 @@ import { Calendar, MapPin, Clock, User, Mail, CheckCircle } from 'lucide-react'
 
 interface Evenement {
   id: string
-  titre: string
+  nom: string
   description: string
   date_debut: string
   date_fin: string
@@ -57,7 +57,7 @@ export default function InscriptionPage() {
         .single()
 
       if (evenementData) {
-        setEvenement(evenementData)
+        setEvenement(evenementData as unknown as Evenement)
       }
 
       setLoading(false)
@@ -133,7 +133,7 @@ export default function InscriptionPage() {
             
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{evenement.titre}</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{evenement.nom}</h3>
                 <p className="text-gray-600 leading-relaxed">{evenement.description}</p>
               </div>
 
@@ -192,7 +192,7 @@ export default function InscriptionPage() {
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <h3 className="font-semibold text-gray-800 mb-2">Récapitulatif de votre inscription</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>• Événement: {evenement.titre}</li>
+                <li>• Événement: {evenement.nom}</li>
                 <li>• Date: {new Date(evenement.date_debut).toLocaleDateString('fr-FR')}</li>
                 <li>• Lieu: {evenement.lieu}</li>
                 <li>• Statut: En attente de confirmation</li>
