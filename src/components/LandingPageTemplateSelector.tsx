@@ -267,7 +267,9 @@ export default function LandingPageTemplateSelector({
   }
 
   const generateLandingPageUrl = () => {
-    return `${window.location.origin}/landing/${eventId}?template=${selectedTemplate}`
+    // Utiliser le domaine public pour les landing pages
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
+    return `${publicBaseUrl}/landing/${eventId}?template=${selectedTemplate}`
   }
 
   const copyUrlToClipboard = async () => {

@@ -149,9 +149,9 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    // Générer l'URL complète
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const landingUrl = `${baseUrl}/landing/${updatedParticipant.evenement_id}/${token}`
+    // Générer l'URL complète avec le domaine public pour les landing pages
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
+    const landingUrl = `${publicBaseUrl}/landing/${updatedParticipant.evenement_id}/${token}`
 
     return NextResponse.json({ 
       token,

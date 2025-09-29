@@ -354,8 +354,8 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
     { name: 'Prénom du participant', code: '{{participant_firstname}}' },
     { name: 'Nom du participant', code: '{{participant_lastname}}' },
     { name: 'Email du participant', code: '{{participant_email}}' },
-    { name: 'Lien du billet', code: '{{ticket_url}}' },
-    { name: 'Lien d\'inscription personnalisé', code: '{{landing_url}}' },
+    { name: 'Lien du billet (admin.waivent.app)', code: '{{ticket_url}}' },
+    { name: 'Lien d\'inscription personnalisé (waivent.app)', code: '{{landing_url}}' },
   ]
   
   // Charger le modèle depuis la base de données

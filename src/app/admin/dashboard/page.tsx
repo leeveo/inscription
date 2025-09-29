@@ -147,7 +147,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Actions rapides</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Link 
             href="/admin/evenements/create"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex items-center"
@@ -175,6 +175,21 @@ export default function DashboardPage() {
             <div>
               <h3 className="font-semibold text-gray-800">Gérer les événements</h3>
               <p className="text-sm text-gray-500">Voir la liste des événements</p>
+            </div>
+          </Link>
+
+          <Link 
+            href="/admin/documentation"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow flex items-center"
+          >
+            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
+              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9M12 4v16m0 0H3m9 0a9 9 0 100-18 9 9 0 000 18z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">Documentation</h3>
+              <p className="text-sm text-gray-500">Guide d&apos;utilisation du SaaS</p>
             </div>
           </Link>
           

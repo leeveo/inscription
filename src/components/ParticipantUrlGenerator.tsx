@@ -34,12 +34,13 @@ export default function ParticipantUrlGenerator({
   const [generatedUrls, setGeneratedUrls] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    // Initialiser les URLs déjà générées
+    // Initialiser les URLs déjà générées avec le domaine public
     const initialUrls: Record<string, string> = {}
     participants.forEach(participant => {
       if (participant.token_landing_page) {
-        const baseUrl = window.location.origin
-        initialUrls[participant.id] = `${baseUrl}/landing/${eventId}/${participant.token_landing_page}`
+        // Utiliser le domaine public pour les landing pages
+        const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
+        initialUrls[participant.id] = `${publicBaseUrl}/landing/${eventId}/${participant.token_landing_page}`
       }
     })
     setGeneratedUrls(initialUrls)

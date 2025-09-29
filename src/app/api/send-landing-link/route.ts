@@ -174,7 +174,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Error fetching participants' }, { status: 500 })
     }
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+    // Utiliser les domaines appropriés
+    const adminBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_ADMIN_BASE_URL || 'http://localhost:3001'
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
     const results = []
     
     // Get email template
@@ -194,8 +196,9 @@ export async function POST(req: NextRequest) {
           continue
         }
 
-        const landingUrl = `${baseUrl}/landing/${eventId}/${participant.token_landing_page}`
-        const ticketUrl = `${baseUrl}/ticket/${participant.id}`
+        // Utiliser le domaine public pour les landing pages et admin pour les tickets
+        const landingUrl = `${publicBaseUrl}/landing/${eventId}/${participant.token_landing_page}`
+        const ticketUrl = `${adminBaseUrl}/ticket/${participant.id}`
         
         // Generate email content
         let emailSubject = `Votre lien d'inscription pour ${eventData.nom}`

@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
     const participant = participantResult.data
 
     // Générer l'URL de la page d'inscription personnalisée (TOUJOURS landing page)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+    // Utiliser le domaine public pour les landing pages
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
     
     // S'assurer que le participant a un token pour la landing page
     if (!participant.token_landing_page) {
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const landingUrl = `${baseUrl}/landing/${eventId}/${participant.token_landing_page}`
+    const landingUrl = `${publicBaseUrl}/landing/${eventId}/${participant.token_landing_page}`
 
     console.log(`📧 Préparation envoi email d'inscription pour ${participant.email}`)
     console.log(`🔗 URL de la page d'inscription: ${landingUrl}`)

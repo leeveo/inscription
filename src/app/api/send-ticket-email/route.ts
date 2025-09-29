@@ -101,7 +101,7 @@ async function getOrCreateQRToken(participantId: string, eventId: string): Promi
     // Générer un nouveau token unique
     console.log('Génération d\'un nouveau token QR...')
     const newToken = generateUniqueToken()
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+    const adminBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_ADMIN_BASE_URL || 'http://localhost:3001'
     
     try {
       const { error: insertError } = await supabase
@@ -110,7 +110,7 @@ async function getOrCreateQRToken(participantId: string, eventId: string): Promi
           participant_id: participantId,
           evenement_id: eventId,
           qr_token: newToken,
-          ticket_url: `${baseUrl}/checkin/${newToken}`,
+          ticket_url: `${adminBaseUrl}/checkin/${newToken}`,
           is_active: true
         })
       
@@ -339,9 +339,9 @@ export async function POST(req: NextRequest) {
     console.log('Récupération du token QR unique...')
     const qrToken = await getOrCreateQRToken(participantId, eventId)
     
-    // Build QR Code HTML with unique token
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
-    const checkInUrl = `${baseUrl}/checkin/${qrToken}`
+    // Utiliser les domaines appropriés: admin pour tickets et check-in, public pour landing pages si nécessaire
+    const adminBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_ADMIN_BASE_URL || 'http://localhost:3001'
+    const checkInUrl = `${adminBaseUrl}/checkin/${qrToken}`
     const qrCodeHtml = `
       <div style="text-align: center; margin: 20px 0;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkInUrl)}&bgcolor=FFFFFF&color=000000&margin=10&format=png" 
@@ -355,7 +355,7 @@ export async function POST(req: NextRequest) {
     // Get ticket template
     console.log('Récupération du template...')
     const ticketTemplate = await getTicketTemplate(eventId)
-    const ticketUrl = `${baseUrl}/ticket/${participantId}`
+    const ticketUrl = `${adminBaseUrl}/ticket/${participantId}`
     
     let subject = 'Votre ticket pour {{event_name}}'
     let htmlContent = `

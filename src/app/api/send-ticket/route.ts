@@ -162,7 +162,7 @@ function replaceTemplateVariables(
     .replace(/{{participant_lastname}}/g, participant.nom)
     .replace(/{{participant_email}}/g, participant.email)
     .replace(/{{ticket_url}}/g, ticketUrl)
-    .replace(/{{landing_url}}/g, landingUrl || ticketUrl) // Fallback to ticketUrl if no landing URL
+    .replace(/{{landing_url}}/g, landingUrl || ticketUrl) // Utiliser l'URL de landing page avec le domaine public waivent.app
 }
 
 export async function POST(req: NextRequest) {
@@ -200,7 +200,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Error fetching participants' }, { status: 500 })
     }
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+    // Utiliser les domaines appropriés: admin pour tickets, public pour landing pages
+    const adminBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_ADMIN_BASE_URL || 'http://localhost:3001'
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
     const results = []
     
     // Récupérer le modèle d'email personnalisé
@@ -209,7 +211,10 @@ export async function POST(req: NextRequest) {
     // Process each participant
     for (const participant of participantsData || []) {
       try {
-        const ticketUrl = `${baseUrl}/ticket/${participant.id}`
+        const ticketUrl = `${adminBaseUrl}/ticket/${participant.id}`
+        const landingUrl = participant.token_landing_page 
+          ? `${publicBaseUrl}/landing/${eventId}/${participant.token_landing_page}`
+          : undefined
         
         // Générer le contenu HTML personnalisé
         let emailSubject = 'Votre billet'
@@ -221,14 +226,16 @@ export async function POST(req: NextRequest) {
             emailTemplate.subject, 
             eventData, 
             participant, 
-            ticketUrl
+            ticketUrl,
+            landingUrl
           )
           
           emailHtml = replaceTemplateVariables(
             emailTemplate.html_content, 
             eventData, 
             participant, 
-            ticketUrl
+            ticketUrl,
+            landingUrl
           )
         } else {
           // Fallback au template par défaut
