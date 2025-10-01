@@ -12,8 +12,8 @@ import {
   FiTag,
   FiZap,
   FiSmartphone,
-  FiTicket,
-  FiRocket
+  FiCreditCard,
+  FiSend
 } from 'react-icons/fi'
 
 type TicketTemplate = {
@@ -110,7 +110,7 @@ export default function TicketTemplateViewer({ eventId, onEdit }: TicketTemplate
         <div className="relative z-10 text-center py-12">
           {/* Icon with animation */}
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-cyan-400/30 to-blue-600/30 rounded-full flex items-center justify-center border-4 border-cyan-400/50 shadow-lg animate-bounce">
-            <FiTicket className="w-12 h-12 text-cyan-300" />
+            <FiCreditCard className="w-12 h-12 text-cyan-300" />
           </div>
 
           {/* Title with gradient */}
@@ -145,7 +145,7 @@ export default function TicketTemplateViewer({ eventId, onEdit }: TicketTemplate
             onClick={onEdit}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-lg font-bold rounded-xl transition-all shadow-2xl hover:shadow-cyan-500/50 transform hover:scale-105 border-2 border-white/30 animate-pulse"
           >
-            <FiRocket className="w-5 h-5" />
+            <FiSend className="w-5 h-5" />
             Créer mon premier template
           </button>
         </div>
