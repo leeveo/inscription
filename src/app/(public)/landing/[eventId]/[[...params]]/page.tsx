@@ -3,6 +3,12 @@ import { notFound } from 'next/navigation'
 import { supabaseServer } from '@/lib/supabase/server'
 import ClientLandingWrapper from '@/components/ClientLandingWrapper'
 
+// Force dynamic rendering pour éviter les erreurs 500 en production
+// Ces pages doivent être rendues à la demande car elles dépendent de tokens dynamiques
+export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+export const revalidate = 0
+
 interface PageProps {
   params: Promise<{
     eventId: string
@@ -169,11 +175,8 @@ export default async function LandingPage({ params, searchParams }: PageProps) {
   );
 }
 
-// Générer les paramètres statiques pour l'optimisation
-export async function generateStaticParams() {
-  // En production, vous pourriez vouloir générer statiquement certaines pages
-  return []
-}
+// Ne pas générer de paramètres statiques
+// Cette fonction est supprimée car nous utilisons dynamic = 'force-dynamic'
 
 // Métadonnées dynamiques
 export async function generateMetadata({ params }: PageProps) {
