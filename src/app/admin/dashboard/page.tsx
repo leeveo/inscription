@@ -256,7 +256,7 @@ export default function DashboardPage() {
               lieu: event.lieu,
               date_debut: event.date_debut,
               date_fin: event.date_fin,
-              statut: event.statut,
+              statut: event.statut as 'brouillon' | 'publié' | 'archivé',
             }))}
           />
         </div>
