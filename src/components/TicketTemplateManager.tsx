@@ -387,123 +387,140 @@ export default function TicketTemplateManager({ eventId, onClose }: TicketTempla
         </div>
       )}
       
-      <div className="space-y-6">
-        {/* Subject */}
-        <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-            Objet du ticket
-          </label>
-          <input
-            id="subject"
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Objet du ticket..."
-          />
-        </div>
-        
-        {/* Variables */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Variables disponibles
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded p-2">
-            {availableVariables.map((variable, index) => (
-              <button
-                key={index}
-                onClick={() => insertVariable(variable.code)}
-                className="text-left px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
-                title={`Cliquer pour insérer ${variable.code}`}
-              >
-                <span className="font-mono text-blue-600">{variable.code}</span>
-                <br />
-                <span className="text-gray-600">{variable.name}</span>
-              </button>
-            ))}
+      {/* Layout 2 colonnes avec scroll */}
+      <div className="grid grid-cols-2 gap-6 h-[600px]">
+        {/* Colonne gauche - Objet et Variables */}
+        <div className="overflow-y-auto pr-4 border-r border-gray-200">
+          <div className="space-y-6">
+            {/* Subject */}
+            <div>
+              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                Objet du ticket
+              </label>
+              <input
+                id="subject"
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Objet du ticket..."
+              />
+            </div>
+
+            {/* Variables */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Variables disponibles
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                Cliquez sur une variable pour l'insérer dans l'éditeur
+              </p>
+              <div className="space-y-2">
+                {availableVariables.map((variable, index) => (
+                  <button
+                    key={index}
+                    onClick={() => insertVariable(variable.code)}
+                    className="w-full text-left px-3 py-2 bg-gray-50 hover:bg-blue-50 rounded border border-gray-300 hover:border-blue-400 transition-colors group"
+                    title={`Cliquer pour insérer ${variable.code}`}
+                  >
+                    <div className="font-mono text-sm text-blue-600 group-hover:text-blue-700 font-medium">
+                      {variable.code}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {variable.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Editor Mode Toggle */}
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">Mode d'édition :</span>
-          <div className="flex rounded-md border border-gray-300 overflow-hidden">
-            <button
-              onClick={() => setEditorMode('wysiwyg')}
-              className={`px-3 py-1 text-sm ${
-                editorMode === 'wysiwyg'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Éditeur visuel
-            </button>
-            <button
-              onClick={() => setEditorMode('html')}
-              className={`px-3 py-1 text-sm ${
-                editorMode === 'html'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              HTML
-            </button>
+
+        {/* Colonne droite - Éditeur */}
+        <div className="overflow-y-auto pl-4">
+          <div className="space-y-6">
+            {/* Editor Mode Toggle */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">Mode d'édition :</span>
+              <div className="flex rounded-md border border-gray-300 overflow-hidden">
+                <button
+                  onClick={() => setEditorMode('wysiwyg')}
+                  className={`px-3 py-1 text-sm ${
+                    editorMode === 'wysiwyg'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Éditeur visuel
+                </button>
+                <button
+                  onClick={() => setEditorMode('html')}
+                  className={`px-3 py-1 text-sm ${
+                    editorMode === 'html'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  HTML
+                </button>
+              </div>
+            </div>
+
+            {/* Content Editor */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contenu du ticket
+              </label>
+
+              {editorMode === 'wysiwyg' ? (
+                <SimpleRichTextEditor
+                  value={htmlContent}
+                  onChange={setHtmlContent}
+                />
+              ) : (
+                <textarea
+                  ref={textareaRef}
+                  value={htmlContent}
+                  onChange={(e) => setHtmlContent(e.target.value)}
+                  rows={20}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  placeholder="Contenu HTML du ticket..."
+                />
+              )}
+            </div>
+
+            {/* Preview */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Aperçu du ticket
+              </label>
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50 max-h-96 overflow-y-auto">
+                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+              </div>
+            </div>
           </div>
         </div>
-        
-        {/* Content Editor */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Contenu du ticket
-          </label>
-          
-          {editorMode === 'wysiwyg' ? (
-            <SimpleRichTextEditor
-              value={htmlContent}
-              onChange={setHtmlContent}
-            />
-          ) : (
-            <textarea
-              ref={textareaRef}
-              value={htmlContent}
-              onChange={(e) => setHtmlContent(e.target.value)}
-              rows={20}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="Contenu HTML du ticket..."
-            />
-          )}
-        </div>
-        
-        {/* Preview */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Aperçu du ticket
-          </label>
-          <div className="border border-gray-300 rounded-md p-4 bg-gray-50 max-h-96 overflow-y-auto">
-            <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-          </div>
-        </div>
-        
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`px-6 py-2 text-white rounded-md ${
-              isSaving
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
-        </div>
+      </div>
+
+      {/* Actions en bas */}
+      <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+        <button
+          onClick={onClose}
+          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+        >
+          Annuler
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`px-6 py-2 text-white rounded-md ${
+            isSaving
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+        </button>
       </div>
     </div>
   )

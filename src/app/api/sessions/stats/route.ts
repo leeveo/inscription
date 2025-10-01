@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = supabaseApi();
+    const supabase = await supabaseApi();
 
     // 1. Compter le nombre total de sessions
     const { data: sessionsData, error: sessionsError } = await supabase
