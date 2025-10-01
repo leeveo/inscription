@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Landing Pages</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        h2 { margin-top: 0; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .url-list { list-style: none; padding: 0; }
+        .url-list li { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .url-list a { color: #007bff; text-decoration: none; word-break: break-all; }
+        .url-list a:hover { text-decoration: underline; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test des Landing Pages</h1>
+
+    <div class="test-section info">
+        <h2>📊 Diagnostics Supabase</h2>
+        <button onclick="runDiagnostics()">Exécuter les diagnostics</button>
+        <pre id="diagnostics-result">Cliquez sur le bouton pour exécuter les diagnostics...</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 URLs de test générées</h2>
+        <button onclick="generateTestUrls()">Générer les URLs</button>
+        <div id="urls-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎨 Test des templates</h2>
+        <p>Templates disponibles:</p>
+        <ul class="url-list">
+            <li>modern-gradient</li>
+            <li>minimal-clean</li>
+            <li>fullscreen-video</li>
+            <li>glassmorphism</li>
+            <li>classic-business</li>
+        </ul>
+        <button onclick="testTemplate()">Tester un template</button>
+        <div id="template-result"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:3000';
+
+        async function runDiagnostics() {
+            const result = document.getElementById('diagnostics-result');
+            result.textContent = 'Exécution des diagnostics...';
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/test-supabase`);
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+
+                // Store data for URL generation
+                window.diagnosticsData = data;
+            } catch (error) {
+                result.textContent = `Erreur: ${error.message}`;
+            }
+        }
+
+        async function generateTestUrls() {
+            const container = document.getElementById('urls-container');
+
+            if (!window.diagnosticsData) {
+                container.innerHTML = '<p style="color: red;">Veuillez d\'abord exécuter les diagnostics!</p>';
+                return;
+            }
+
+            const data = window.diagnosticsData;
+            const events = data.tests.sampleEvents.events;
+            const participants = data.tests.participantsWithTokens.samples;
+
+            let html = '<h3>URLs sans token (publiques):</h3><ul class="url-list">';
+
+            events.forEach(event => {
+                const url = `${BASE_URL}/landing/${event.id}`;
+                html += `<li>
+                    <strong>${event.nom}</strong><br>
+                    <a href="${url}" target="_blank">${url}</a>
+                </li>`;
+            });
+
+            html += '</ul><h3>URLs avec token (personnalisées):</h3>';
+
+            // Fetch actual tokens
+            html += '<p>Récupération des tokens réels...</p><div id="token-urls"></div>';
+            container.innerHTML = html;
+
+            // Fetch tokens from API
+            try {
+                const tokenResponse = await fetch(`${BASE_URL}/api/test-supabase`);
+                const tokenData = await tokenResponse.json();
+
+                let tokenHtml = '<ul class="url-list">';
+
+                for (const participant of tokenData.tests.participantsWithTokens.samples) {
+                    // Need to fetch actual token from database
+                    const eventId = participant.eventId;
+                    const participantId = participant.id;
+
+                    tokenHtml += `<li>
+                        <strong>${participant.nom}</strong> (Event ID: ${eventId.substring(0, 8)}...)<br>
+                        <span style="color: #666;">Token length: ${participant.tokenLength} chars</span><br>
+                        <em>Note: Le token complet n'est pas exposé dans l'API de test pour des raisons de sécurité</em>
+                    </li>`;
+                }
+
+                tokenHtml += '</ul>';
+                document.getElementById('token-urls').innerHTML = tokenHtml;
+            } catch (error) {
+                document.getElementById('token-urls').innerHTML = `<p style="color: red;">Erreur: ${error.message}</p>`;
+            }
+        }
+
+        async function testTemplate() {
+            const result = document.getElementById('template-result');
+
+            if (!window.diagnosticsData) {
+                result.innerHTML = '<p style="color: red;">Veuillez d\'abord exécuter les diagnostics!</p>';
+                return;
+            }
+
+            const events = window.diagnosticsData.tests.sampleEvents.events;
+            if (events.length === 0) {
+                result.innerHTML = '<p style="color: red;">Aucun événement trouvé!</p>';
+                return;
+            }
+
+            const eventId = events[0].id;
+            const templates = ['modern-gradient', 'minimal-clean', 'glassmorphism', 'classic-business', 'fullscreen-video'];
+
+            let html = '<h3>Test des templates pour l\'événement: ' + events[0].nom + '</h3><ul class="url-list">';
+
+            templates.forEach(template => {
+                const url = `${BASE_URL}/landing/${eventId}?template=${template}&preview=true`;
+                html += `<li>
+                    <strong>${template}</strong><br>
+                    <a href="${url}" target="_blank">${url}</a>
+                </li>`;
+            });
+
+            html += '</ul>';
+            result.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
