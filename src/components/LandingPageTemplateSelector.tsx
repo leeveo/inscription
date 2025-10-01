@@ -15,19 +15,23 @@ export interface LandingPageTemplate {
   isPremium?: boolean
 }
 
+export interface LandingPageCustomization {
+  primaryColor: string
+  secondaryColor: string
+  accentColor?: string
+  backgroundColor?: string
+  heroTitle?: string
+  heroSubtitle?: string
+  heroImage?: string
+  ctaButtonText?: string
+  logoUrl?: string
+  backgroundImage?: string
+  customCSS?: string
+}
+
 export interface LandingPageConfig {
   templateId: string
-  customization: {
-    primaryColor: string
-    secondaryColor: string
-    heroTitle?: string
-    heroSubtitle?: string
-    heroImage?: string
-    ctaButtonText?: string
-    logoUrl?: string
-    backgroundImage?: string
-    customCSS?: string
-  }
+  customization: LandingPageCustomization
 }
 
 // Modèles de landing page disponibles
@@ -184,7 +188,7 @@ export default function LandingPageTemplateSelector({
   )
   const [showCustomizationModal, setShowCustomizationModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [customization, setCustomization] = useState<LandingPageConfig['customization']>({
+  const [customization, setCustomization] = useState<LandingPageCustomization>({
     primaryColor: '#3B82F6',
     secondaryColor: '#1F2937',
     accentColor: '#F59E0B',
