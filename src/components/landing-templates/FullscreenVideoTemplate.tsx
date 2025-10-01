@@ -235,11 +235,10 @@ export default function FullscreenVideoTemplate({
                   setShowModal(false)
                   onRegistrationSuccess()
                 }}
-                isPreview={isPreview}
                 participantData={participantData}
                 token={token}
-                buttonStyle={buttonStyle}
-                accentColor={primaryColor}
+                customButtonStyle={buttonStyle}
+                customAccentColor={primaryColor}
               />
             </div>
           </div>

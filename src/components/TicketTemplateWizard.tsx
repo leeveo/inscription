@@ -406,88 +406,100 @@ export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplat
           </div>
         )}
 
-        {/* ÉTAPE 2: Modification */}
+        {/* ÉTAPE 2: Modification - LAYOUT 2 COLONNES */}
         {currentStep === 2 && (
-          <div className="space-y-5">
-            {/* Subject */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
-              <label htmlFor="subject" className="block text-sm font-bold text-white mb-3">
-                📧 Objet de l'email
-              </label>
-              <input
-                id="subject"
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 text-white placeholder-blue-200/60 font-medium"
-                placeholder="Ex: Votre ticket pour {{event_name}}"
-              />
-            </div>
-
-            {/* Variables */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
-              <label className="block text-sm font-bold text-white mb-3">
-                🏷️ Variables (cliquez pour insérer)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto">
-                {availableVariables.map((variable, index) => (
-                  <button
-                    key={index}
-                    onClick={() => insertVariable(variable.code)}
-                    className="text-left px-3 py-2 text-xs bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 hover:border-cyan-400/40 transition-all backdrop-blur-sm"
-                  >
-                    <span className="font-mono text-cyan-300 font-bold block text-xs">{variable.code}</span>
-                    <span className="text-blue-200/70 text-xs">{variable.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Editor */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-bold text-white">📝 Éditeur</span>
-                <div className="flex rounded-xl overflow-hidden border border-white/20">
-                  <button
-                    onClick={() => setEditorMode('wysiwyg')}
-                    className={`px-4 py-2 text-xs font-bold transition-all ${
-                      editorMode === 'wysiwyg'
-                        ? 'bg-gradient-to-r from-cyan-500/40 to-blue-500/40 text-white backdrop-blur-sm'
-                        : 'bg-white/10 text-blue-200 hover:bg-white/20 backdrop-blur-sm'
-                    }`}
-                  >
-                    ✨ Visuel
-                  </button>
-                  <button
-                    onClick={() => setEditorMode('html')}
-                    className={`px-4 py-2 text-xs font-bold transition-all ${
-                      editorMode === 'html'
-                        ? 'bg-gradient-to-r from-cyan-500/40 to-blue-500/40 text-white backdrop-blur-sm'
-                        : 'bg-white/10 text-blue-200 hover:bg-white/20 backdrop-blur-sm'
-                    }`}
-                  >
-                    💻 HTML
-                  </button>
-                </div>
-              </div>
-
-              {editorMode === 'wysiwyg' ? (
-                <div className="bg-white rounded-xl p-2">
-                  <SimpleRichTextEditor
-                    value={htmlContent}
-                    onChange={setHtmlContent}
-                  />
-                </div>
-              ) : (
-                <textarea
-                  ref={textareaRef}
-                  value={htmlContent}
-                  onChange={(e) => setHtmlContent(e.target.value)}
-                  rows={18}
-                  className="w-full px-4 py-3 bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 text-white font-mono text-sm"
-                  placeholder="Code HTML..."
+          <div className="grid grid-cols-2 gap-6 h-full">
+            {/* COLONNE GAUCHE - Objet et Variables */}
+            <div className="overflow-y-auto pr-4 space-y-5">
+              {/* Subject */}
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
+                <label htmlFor="subject" className="block text-sm font-bold text-white mb-3">
+                  📧 Objet de l'email
+                </label>
+                <input
+                  id="subject"
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 text-white placeholder-blue-200/60 font-medium"
+                  placeholder="Ex: Votre ticket pour {{event_name}}"
                 />
-              )}
+              </div>
+
+              {/* Variables */}
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
+                <label className="block text-sm font-bold text-white mb-3">
+                  🏷️ Variables (cliquez pour insérer)
+                </label>
+                <p className="text-xs text-blue-200/70 mb-3">
+                  Cliquez sur une variable pour l'insérer dans l'éditeur
+                </p>
+                <div className="space-y-2">
+                  {availableVariables.map((variable, index) => (
+                    <button
+                      key={index}
+                      onClick={() => insertVariable(variable.code)}
+                      className="w-full text-left px-3 py-2.5 bg-white/10 hover:bg-cyan-500/20 rounded-lg border border-white/20 hover:border-cyan-400/50 transition-all backdrop-blur-sm group"
+                    >
+                      <div className="font-mono text-cyan-300 font-bold text-sm group-hover:text-cyan-200">
+                        {variable.code}
+                      </div>
+                      <div className="text-blue-200/70 text-xs mt-1">
+                        {variable.name}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* COLONNE DROITE - Éditeur */}
+            <div className="overflow-y-auto pl-4 border-l border-white/20">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-bold text-white">📝 Éditeur</span>
+                  <div className="flex rounded-xl overflow-hidden border border-white/20">
+                    <button
+                      onClick={() => setEditorMode('wysiwyg')}
+                      className={`px-4 py-2 text-xs font-bold transition-all ${
+                        editorMode === 'wysiwyg'
+                          ? 'bg-gradient-to-r from-cyan-500/40 to-blue-500/40 text-white backdrop-blur-sm'
+                          : 'bg-white/10 text-blue-200 hover:bg-white/20 backdrop-blur-sm'
+                      }`}
+                    >
+                      ✨ Visuel
+                    </button>
+                    <button
+                      onClick={() => setEditorMode('html')}
+                      className={`px-4 py-2 text-xs font-bold transition-all ${
+                        editorMode === 'html'
+                          ? 'bg-gradient-to-r from-cyan-500/40 to-blue-500/40 text-white backdrop-blur-sm'
+                          : 'bg-white/10 text-blue-200 hover:bg-white/20 backdrop-blur-sm'
+                      }`}
+                    >
+                      💻 HTML
+                    </button>
+                  </div>
+                </div>
+
+                {editorMode === 'wysiwyg' ? (
+                  <div className="bg-white rounded-xl p-2">
+                    <SimpleRichTextEditor
+                      value={htmlContent}
+                      onChange={setHtmlContent}
+                    />
+                  </div>
+                ) : (
+                  <textarea
+                    ref={textareaRef}
+                    value={htmlContent}
+                    onChange={(e) => setHtmlContent(e.target.value)}
+                    rows={25}
+                    className="w-full px-4 py-3 bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 text-white font-mono text-sm"
+                    placeholder="Code HTML..."
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}
