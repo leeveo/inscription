@@ -146,9 +146,10 @@ export default function Parallax3DTemplate({ eventData, config }: Parallax3DTemp
               
               {/* Subtitle */}
               <div className="mouse-parallax mb-12">
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-                  {config?.customization?.heroSubtitle || eventData.description}
-                </p>
+                <div
+                  className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || eventData.description }}
+                />
               </div>
               
               {/* Info Cards with 3D hover */}
@@ -294,9 +295,10 @@ export default function Parallax3DTemplate({ eventData, config }: Parallax3DTemp
                 <div>
                   <h3 className="text-xl font-bold text-white mb-4">À propos</h3>
                   <div className="bg-white/10 rounded-lg p-4">
-                    <p className="text-white/80 leading-relaxed">
-                      {eventData.description}
-                    </p>
+                    <div
+                      className="text-white/80 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: eventData.description }}
+                    />
                   </div>
                 </div>
               </div>

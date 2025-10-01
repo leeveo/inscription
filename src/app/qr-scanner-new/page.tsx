@@ -272,7 +272,7 @@ export default function QRScannerApp() {
 
   const startScanning = async () => {
     console.log('🔍 [QR-SCANNER] Tentative de démarrage du scan...')
-    
+
     if (!videoRef.current) {
       console.error('❌ [QR-SCANNER] Référence vidéo non trouvée')
       setMessage({ type: 'error', text: 'Erreur: élément vidéo non trouvé' })
@@ -284,31 +284,110 @@ export default function QRScannerApp() {
       setIsScanning(true)
       setMessage({ type: 'info', text: 'Démarrage de la caméra...' })
 
-      // Demander l'accès à la caméra
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment', // Caméra arrière sur mobile
-          width: { ideal: 640 },
-          height: { ideal: 480 }
+      // Détecter si on est sur mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      console.log(`📱 [QR-SCANNER] Appareil mobile détecté: ${isMobile}`)
+
+      let mediaStream: MediaStream | null = null
+
+      // Configuration vidéo optimale pour QR codes (format 1:1 sur mobile)
+      const videoConstraints = isMobile ? {
+        facingMode: { exact: 'environment' },
+        width: { ideal: 1080 },
+        height: { ideal: 1080 }, // Ratio 1:1 pour QR codes
+        aspectRatio: { ideal: 1 }
+      } : {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+
+      // Essayer d'abord avec facingMode: { exact: 'environment' } pour forcer la caméra arrière
+      try {
+        console.log('📷 [QR-SCANNER] Tentative avec caméra arrière forcée...')
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: false
+        })
+        console.log('✅ [QR-SCANNER] Caméra arrière activée avec succès')
+      } catch (err) {
+        // Si exact: 'environment' échoue, essayer avec 'environment' simple
+        console.log('⚠️ [QR-SCANNER] Caméra arrière exacte non disponible, tentative alternative...')
+        try {
+          const fallbackConstraints = isMobile ? {
+            facingMode: 'environment',
+            width: { ideal: 1080 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 1 }
+          } : {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: fallbackConstraints,
+            audio: false
+          })
+          console.log('✅ [QR-SCANNER] Caméra arrière (mode préféré) activée')
+        } catch (err2) {
+          // En dernier recours, utiliser n'importe quelle caméra
+          console.log('⚠️ [QR-SCANNER] Mode environment non disponible, utilisation de la caméra par défaut...')
+          const defaultConstraints = isMobile ? {
+            width: { ideal: 1080 },
+            height: { ideal: 1080 },
+            aspectRatio: { ideal: 1 }
+          } : {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: defaultConstraints,
+            audio: false
+          })
+          console.log('✅ [QR-SCANNER] Caméra par défaut activée')
         }
+      }
+
+      if (!mediaStream) {
+        throw new Error('Impossible d\'obtenir le flux vidéo')
+      }
+
+      // Vérifier les capacités de la caméra obtenue
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      const settings = videoTrack.getSettings()
+      console.log('📷 [QR-SCANNER] Paramètres caméra:', {
+        facingMode: settings.facingMode,
+        width: settings.width,
+        height: settings.height,
+        deviceId: settings.deviceId
       })
 
       console.log('✅ [QR-SCANNER] Caméra accessible')
       setStream(mediaStream)
-      
+
       // Connecter le stream à la vidéo
       videoRef.current.srcObject = mediaStream
+
+      // Définir les attributs pour mobile
+      videoRef.current.setAttribute('playsinline', 'true')
+      videoRef.current.setAttribute('webkit-playsinline', 'true')
+
       await videoRef.current.play()
 
       console.log('✅ [QR-SCANNER] Vidéo démarrée')
-      setMessage({ type: 'success', text: 'Scanner actif' })
+      setMessage({
+        type: 'success',
+        text: `Scanner actif${settings.facingMode === 'environment' ? ' (caméra arrière)' : ''}`
+      })
 
       // Si ZXing est disponible, utiliser le scanner QR
       if (codeReader) {
         console.log('🔍 [QR-SCANNER] Activation du scanner QR...')
-        
+
         const result = await codeReader.decodeFromVideoDevice(
-          undefined, // Utiliser la caméra par défaut
+          videoTrack.getSettings().deviceId, // Utiliser le deviceId de la caméra active
           videoRef.current,
           (result, error) => {
             if (result) {
@@ -327,9 +406,9 @@ export default function QRScannerApp() {
 
     } catch (error) {
       console.error('❌ [QR-SCANNER] Erreur démarrage caméra:', error)
-      setMessage({ 
-        type: 'error', 
-        text: `Impossible d'accéder à la caméra: ${error instanceof Error ? error.message : 'Erreur inconnue'}` 
+      setMessage({
+        type: 'error',
+        text: `Impossible d'accéder à la caméra: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
       })
       setIsScanning(false)
     }
@@ -650,21 +729,23 @@ export default function QRScannerApp() {
                   
                   {/* Vidéo toujours présente mais cachée si pas en cours de scan */}
                   <div className="relative">
-                    <video 
-                      ref={videoRef} 
-                      className={`w-full max-w-sm mx-auto rounded-xl border-4 ${isScanning ? 'border-green-500' : 'border-gray-300'}`} 
-                      style={{ 
-                        maxHeight: '300px',
+                    <video
+                      ref={videoRef}
+                      className={`w-full max-w-sm mx-auto rounded-xl border-4 ${isScanning ? 'border-green-500' : 'border-gray-300'}`}
+                      style={{
+                        aspectRatio: '1 / 1',
+                        objectFit: 'cover',
+                        maxHeight: '400px',
                         display: isScanning ? 'block' : 'none'
                       }}
-                      autoPlay 
-                      playsInline 
+                      autoPlay
+                      playsInline
                       muted
                     />
                     
                     {/* Overlay quand caméra non active */}
                     {!isScanning && (
-                      <div className="w-full max-w-sm mx-auto h-64 bg-gray-200 rounded-xl flex items-center justify-center">
+                      <div className="w-full max-w-sm mx-auto bg-gray-200 rounded-xl flex items-center justify-center" style={{ aspectRatio: '1 / 1', maxHeight: '400px' }}>
                         <div className="text-center">
                           <div className="text-6xl mb-2">📷</div>
                           <p className="text-gray-600">Caméra désactivée</p>

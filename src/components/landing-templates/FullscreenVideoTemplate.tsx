@@ -1,23 +1,70 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import LandingRegistrationForm from '@/components/ParticipantForm'
+import LandingRegistrationForm from '@/components/LandingRegistrationForm'
+import { LandingPageConfig } from '@/types'
 
-interface FullscreenVideoTemplateProps {
-  eventData: any
-  config: any
+interface Event {
+  id: string
+  nom: string
+  description: string
+  lieu: string
+  date_debut: string
+  date_fin: string
+  prix?: number
+  places_disponibles?: number
+  organisateur?: string
+  email_contact?: string
+  telephone_contact?: string
+  logo_url?: string
+  statut?: string
+  type_evenement?: string
 }
 
-export default function FullscreenVideoTemplate({ eventData, config }: FullscreenVideoTemplateProps) {
+interface FullscreenVideoTemplateProps {
+  event: Event
+  config: LandingPageConfig
+  onRegistrationSuccess: () => void
+  registrationSuccess: boolean
+  isPreview?: boolean
+  participantData?: any
+  token?: string | null
+}
+
+export default function FullscreenVideoTemplate({
+  event,
+  config,
+  onRegistrationSuccess,
+  registrationSuccess,
+  isPreview = false,
+  participantData,
+  token
+}: FullscreenVideoTemplateProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const { customization } = config
 
   useEffect(() => {
     setIsVisible(true)
   }, [])
 
-  const primaryColor = config?.customization?.primaryColor || '#FF6B6B'
-  const secondaryColor = config?.customization?.secondaryColor || '#4ECDC4'
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const primaryColor = customization.primaryColor || '#FF6B6B'
+  const secondaryColor = customization.secondaryColor || '#4ECDC4'
+
+  const buttonStyle = {
+    backgroundColor: primaryColor
+  }
 
   return (
     <>
@@ -103,14 +150,14 @@ export default function FullscreenVideoTemplate({ eventData, config }: Fullscree
               {/* Titre principal */}
               <div className="fade-in stagger-1 mb-6">
                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white text-shadow leading-tight">
-                  {config?.customization?.heroTitle || eventData.nom}
+                  {customization.heroTitle || event.nom}
                 </h1>
               </div>
-              
+
               {/* Sous-titre */}
               <div className="fade-in stagger-2 mb-12">
                 <p className="text-xl md:text-2xl text-white/90 text-shadow max-w-3xl mx-auto leading-relaxed">
-                  {config?.customization?.heroSubtitle || eventData.description}
+                  {customization.heroSubtitle || event.description}
                 </p>
               </div>
               
@@ -122,17 +169,17 @@ export default function FullscreenVideoTemplate({ eventData, config }: Fullscree
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="font-semibold">{new Date(eventData.date_debut).toLocaleDateString('fr-FR')}</span>
+                      <span className="font-semibold">{formatDate(event.date_debut)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3">
                     <div className="flex items-center space-x-3 text-white">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <span className="font-semibold">{eventData.lieu}</span>
+                      <span className="font-semibold">{event.lieu}</span>
                     </div>
                   </div>
                 </div>
@@ -144,7 +191,7 @@ export default function FullscreenVideoTemplate({ eventData, config }: Fullscree
                   onClick={() => setShowModal(true)}
                   className="cinematic-button text-white font-bold text-xl px-12 py-6 rounded-full transition-all duration-300 hover:scale-105"
                 >
-                  {config?.customization?.ctaButtonText || "S'inscrire maintenant"}
+                  {customization.ctaButtonText || "S'inscrire maintenant"}
                 </button>
                 
                 <p className="text-white/80 mt-4 text-sm">
@@ -182,13 +229,17 @@ export default function FullscreenVideoTemplate({ eventData, config }: Fullscree
                 </button>
               </div>
               
-              <LandingRegistrationForm 
-                eventId={eventData.id}
-                onParticipantAdded={() => {
+              <LandingRegistrationForm
+                eventId={event.id}
+                onSuccess={() => {
                   setShowModal(false)
-                  // Optionally show success message
+                  onRegistrationSuccess()
                 }}
-                onCancel={() => setShowModal(false)}
+                isPreview={isPreview}
+                participantData={participantData}
+                token={token}
+                buttonStyle={buttonStyle}
+                accentColor={primaryColor}
               />
             </div>
           </div>
@@ -206,7 +257,7 @@ export default function FullscreenVideoTemplate({ eventData, config }: Fullscree
                 </div>
                 <h4 className="text-lg font-semibold text-white mb-2">Durée</h4>
                 <p className="text-white/80">
-                  Du {new Date(eventData.date_debut).toLocaleDateString('fr-FR')} au {new Date(eventData.date_fin).toLocaleDateString('fr-FR')}
+                  Du {formatDate(event.date_debut)}<br />au {formatDate(event.date_fin)}
                 </p>
               </div>
               

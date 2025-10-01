@@ -76,9 +76,10 @@ export default function ClassicBusinessTemplate({ event, config, onRegistrationS
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               {customization.heroTitle || event.nom}
             </h1>
-            <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              {customization.heroSubtitle || event.description}
-            </p>
+            <div
+              className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto"
+              dangerouslySetInnerHTML={{ __html: customization.heroSubtitle || event.description }}
+            />
             
             {/* Event details */}
             <div className="flex flex-wrap justify-center gap-6 mb-8 text-lg">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import SimpleRichTextEditor from './SimpleRichTextEditor'
+import TicketEmailLibrary, { TicketEmailTemplate } from './TicketEmailLibrary'
 
 type TicketTemplate = {
   id: number
@@ -30,6 +31,7 @@ export default function TicketTemplateManager({ eventId, onClose }: TicketTempla
   const [brevoTemplates, setBrevoTemplates] = useState([])
   const [selectedBrevoTemplate, setSelectedBrevoTemplate] = useState<any>(null)
   const [showBrevoSelector, setShowBrevoSelector] = useState(false)
+  const [showTemplateLibrary, setShowTemplateLibrary] = useState(false)
   
   // Référence à l'élément textarea pour l'insertion de variables
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -256,16 +258,27 @@ export default function TicketTemplateManager({ eventId, onClose }: TicketTempla
   // Charger un template Brevo
   const loadBrevoTemplate = (template: any) => {
     console.log('Loading Brevo template:', template)
-    
+
     // Adapter le format Brevo
     const brevoSubject = template.subject || template.name || 'Votre ticket pour {{event_name}}'
     const brevoContent = template.htmlContent || template.html_content || template.content || ''
-    
+
     setSubject(brevoSubject)
     setHtmlContent(brevoContent)
     setSelectedBrevoTemplate(template)
     setShowBrevoSelector(false)
     setSuccessMessage('Template Brevo chargé avec succès!')
+    setTimeout(() => setSuccessMessage(null), 3000)
+  }
+
+  // Charger un template depuis la bibliothèque
+  const loadLibraryTemplate = (template: TicketEmailTemplate) => {
+    console.log('Loading library template:', template)
+
+    setSubject(template.subject)
+    setHtmlContent(template.htmlContent)
+    setShowTemplateLibrary(false)
+    setSuccessMessage(`Template "${template.name}" chargé avec succès!`)
     setTimeout(() => setSuccessMessage(null), 3000)
   }
   
@@ -284,6 +297,12 @@ export default function TicketTemplateManager({ eventId, onClose }: TicketTempla
           Gestion des modèles de tickets
         </h2>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowTemplateLibrary(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+          >
+            📚 Bibliothèque Templates
+          </button>
           <button
             onClick={() => setShowBrevoSelector(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
@@ -309,6 +328,14 @@ export default function TicketTemplateManager({ eventId, onClose }: TicketTempla
         <div className="mb-4 bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded">
           {successMessage}
         </div>
+      )}
+
+      {/* Template Library Modal */}
+      {showTemplateLibrary && (
+        <TicketEmailLibrary
+          onSelectTemplate={loadLibraryTemplate}
+          onClose={() => setShowTemplateLibrary(false)}
+        />
       )}
 
       {/* Template Brevo Selector Modal */}

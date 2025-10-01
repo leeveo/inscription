@@ -581,8 +581,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   };
 
   const handlePreviewLandingPage = (templateId: string, config: LandingPageConfig) => {
-    // Open preview in new tab
-    const previewUrl = `/landing/${eventId}?preview=true&template=${templateId}`;
+    // Open preview in new tab with production URL
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app';
+    const previewUrl = `${publicBaseUrl}/landing/${eventId}?preview=true&template=${templateId}`;
     window.open(previewUrl, '_blank');
   };
 
@@ -590,7 +591,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     return (
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600"></div>
         </div>
       </div>
     );
@@ -599,14 +600,26 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   if (error && !nom) {
     return (
       <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Erreur!</strong>
-          <span className="block sm:inline"> {error}</span>
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-red-900">Erreur!</h3>
+              <p className="text-red-700 mt-1">{error}</p>
+            </div>
+          </div>
         </div>
-        <Link 
-          href="/admin/evenements" 
-          className="mt-4 inline-block px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700"
+        <Link
+          href="/admin/evenements"
+          className="mt-6 inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
         >
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
           Retour à la liste
         </Link>
       </div>
@@ -617,42 +630,45 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* En-tête */}
       <div className="mb-8">
-        <Link 
+        <Link
           href={`/admin/evenements/${eventId}`}
-          className="text-blue-600 hover:text-blue-800 mb-4 inline-flex items-center"
+          className="group inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 mb-4 transition-all duration-300"
         >
-          ← Retour aux détails de l&apos;événement
+          <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="font-medium">Retour aux détails de l&apos;événement</span>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Modifier l&apos;événement</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Modifiez les informations de l&apos;événement et configurez le modèle d&apos;email
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Modifier l&apos;événement</h1>
+        <p className="text-lg text-gray-600">
+          Gérez tous les aspects de votre événement depuis cette interface
         </p>
       </div>
 
       {/* Modern Navigation Tabs */}
       <div className="mb-8">
-        <div className="bg-white/80 backdrop-blur-md p-2 rounded-2xl shadow-lg border border-white/20">
-          <nav className="flex space-x-2">
+        <div className="bg-white p-2 rounded-2xl shadow-lg border-2 border-gray-200">
+          <nav className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('details')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'details'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Détails événement</span>
+              <span>Détails</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('participants')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'participants'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -660,18 +676,20 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </svg>
               <span>Participants</span>
               {participants.length > 0 && (
-                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-bold">{participants.length}</span>
+                <div className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  activeTab === 'participants' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {participants.length}
                 </div>
               )}
             </button>
-            
+
             <button
               onClick={() => setActiveTab('checkin')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'checkin'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,61 +697,61 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </svg>
               <span>Check-in</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('sessions')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'sessions'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h8m-8 0l-2 9a3 3 0 003 3h4a3 3 0 003-3l-2-9M8 7v8a2 2 0 002 2h4a2 2 0 002-2V7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>Sessions</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('landing-page')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'landing-page'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              <span>Page inscription</span>
+              <span>Landing Page</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('participant-urls')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'participant-urls'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
-              <span>URLs Personnalisées</span>
+              <span>URLs</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('email')}
-              className={`group relative px-6 py-3 font-medium text-sm rounded-xl transition-all duration-300 flex items-center space-x-2 ${
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'email'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <span>Modèle email</span>
+              <span>Email</span>
             </button>
           </nav>
         </div>
@@ -961,7 +979,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   <button
                     type="button"
                     onClick={generateNewAccessCode}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     title="Générer un nouveau code"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -973,7 +991,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     <button
                       type="button"
                       onClick={copyAccessCode}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+                      className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm font-medium"
                       title="Copier le code"
                     >
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1015,14 +1033,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             <div className="flex justify-end space-x-3 pt-6">
               <Link
                 href={`/admin/evenements/${eventId}`}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
               >
                 Annuler
               </Link>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
               >
                 {isSaving && (
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
@@ -1048,144 +1066,73 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 </p>
               </div>
               
-              {/* Modern Action Buttons */}
+              {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
-                {/* Export Dropdown */}
-                <div className="relative">
-                  <button
-                    className="group relative px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 
-                             text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                             transform hover:scale-105 transition-all duration-300 
-                             border border-white/20 backdrop-blur-sm
-                             flex items-center space-x-2 min-w-[160px]"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const dropdown = e.currentTarget.nextElementSibling as HTMLElement;
-                      dropdown?.classList.toggle('hidden');
-                    }}
-                  >
-                    <div className="flex items-center space-x-2 flex-1">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <span>Exporter CSV</span>
-                    </div>
-                    <svg className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                  </button>
-                  
-                  <div className="hidden absolute right-0 mt-2 w-64 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl z-50 border border-white/20">
-                    <div className="p-2 space-y-1">
-                      <button
-                        onClick={handleExportAllParticipants}
-                        className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 
-                                 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3"
-                      >
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{participants.length}</span>
-                        </div>
-                        <span>Tous les participants</span>
-                      </button>
-                      <button
-                        onClick={handleExportSelectedParticipants}
-                        disabled={selectedParticipants.length === 0}
-                        className="w-full text-left px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 
-                                 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3
-                                 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-bold">{selectedParticipants.length}</span>
-                        </div>
-                        <span>Participants sélectionnés</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <button
+                  onClick={handleExportAllParticipants}
+                  className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200 text-sm font-medium"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Exporter CSV
+                </button>
 
                 <button
                   onClick={() => setShowAddParticipantModal(true)}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 
-                           text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                           transform hover:scale-105 transition-all duration-300 
-                           border border-white/20 backdrop-blur-sm
-                           flex items-center space-x-2 min-w-[180px]"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span>Ajouter participant</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                  Ajouter participant
                 </button>
-                
+
                 <button
                   onClick={() => setShowImportParticipantsModal(true)}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-600 
-                           text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                           transform hover:scale-105 transition-all duration-300 
-                           border border-white/20 backdrop-blur-sm
-                           flex items-center space-x-2 min-w-[170px]"
+                  className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm font-medium"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                   </svg>
-                  <span>Importer CSV</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-teal-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                  Importer CSV
                 </button>
-                
+
                 <button
                   onClick={() => setShowParticipantEmailManager(true)}
                   disabled={participants.length === 0}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 
-                           text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                           transform hover:scale-105 transition-all duration-300 
-                           border border-white/20 backdrop-blur-sm
-                           flex items-center space-x-2 min-w-[200px]
-                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="inline-flex items-center px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>Envoyer emails liens</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                  Envoyer emails
                 </button>
-                
+
                 <button
                   onClick={() => setShowTicketTemplateModal(true)}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 
-                           text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                           transform hover:scale-105 transition-all duration-300 
-                           border border-white/20 backdrop-blur-sm
-                           flex items-center space-x-2 min-w-[200px]"
+                  className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                   </svg>
-                  <span>Gérer templates</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                  Templates Email
                 </button>
-                
+
                 <button
                   onClick={handleEmailSelected}
                   disabled={selectedParticipants.length === 0}
-                  className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 
-                           text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                           transform hover:scale-105 transition-all duration-300 
-                           border border-white/20 backdrop-blur-sm
-                           flex items-center space-x-2 min-w-[170px]
-                           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="inline-flex items-center px-4 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>Email général</span>
+                  Email général
                   {selectedParticipants.length > 0 && (
-                    <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-bold">{selectedParticipants.length}</span>
-                    </div>
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                      {selectedParticipants.length}
+                    </span>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 </button>
               </div>
             </div>
@@ -1297,10 +1244,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         <td className="px-6 py-4 whitespace-nowrap">
                           {participant.checked_in ? (
                             <div className="flex items-center">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-50 text-green-700 border-green-200">
+                                <div className="w-1.5 h-1.5 rounded-full mr-1.5 bg-green-400"></div>
                                 Enregistré
                               </span>
                               {participant.checked_in_at && (
@@ -1313,10 +1258,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                               )}
                             </div>
                           ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                              </svg>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200">
+                              <div className="w-1.5 h-1.5 rounded-full mr-1.5 bg-gray-400"></div>
                               Non enregistré
                             </span>
                           )}
@@ -1328,19 +1271,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => handleShowParticipantDetails(participant)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="inline-flex items-center px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200"
                               title="Voir sessions et détails"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                             </button>
                             <button
                               onClick={() => handleEmailSingle(participant)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
                               title="Envoyer un email général"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
                             </button>
@@ -1368,29 +1311,29 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                                   console.error('Error sending ticket:', error)
                                 }
                               }}
-                              className="text-amber-600 hover:text-amber-900"
+                              className="inline-flex items-center px-2 py-1 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200"
                               title="Envoyer le ticket par email"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                               </svg>
                             </button>
                             <button
                               onClick={() => handleShowQrCode(participant)}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors duration-200"
                               title="Voir le QR code"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                               </svg>
                             </button>
                             <Link
                               href={`/ticket/${participant.id}`}
                               target="_blank"
-                              className="text-green-600 hover:text-green-900"
+                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200"
                               title="Voir le billet"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
                             </Link>
@@ -1455,7 +1398,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 </label>
                 <button
                   onClick={fetchCheckedInParticipants}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1478,7 +1421,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-green-300 transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center">
                   <div className="p-2 bg-green-100 rounded-full mr-3">
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1491,8 +1434,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+
+              <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-full mr-3">
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1506,7 +1449,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 </div>
               </div>
               
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+              <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-purple-300 transition-all duration-300 transform hover:-translate-y-1">
                 <div className="flex items-center">
                   <div className="p-2 bg-purple-100 rounded-full mr-3">
                     <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1600,19 +1543,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                             <Link
                               href={`/ticket/${participant.id}`}
                               target="_blank"
-                              className="text-green-600 hover:text-green-900"
+                              className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200"
                               title="Voir le billet"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
                             </Link>
                             <button
                               onClick={() => handleEmailSingle(participant)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
                               title="Envoyer un email"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
                             </button>
@@ -1644,68 +1587,47 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   </p>
                 </div>
                 
-                {/* Modern Action Buttons */}
+                {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={handleAddSession}
-                    className="group relative px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 
-                             text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                             transform hover:scale-105 transition-all duration-300 
-                             border border-white/20 backdrop-blur-sm
-                             flex items-center space-x-2 min-w-[160px]"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    <span>Créer session</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    Créer session
                   </button>
-                  
+
                   <button
                     onClick={() => setShowFullAgendaModal(true)}
-                    className="group relative px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 
-                             text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                             transform hover:scale-105 transition-all duration-300 
-                             border border-white/20 backdrop-blur-sm
-                             flex items-center space-x-2 min-w-[180px]"
+                    className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm font-medium"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 0h8m-8 0l-2 9a3 3 0 003 3h4a3 3 0 003-3l-2-9M8 7v8a2 2 0 002 2h4a2 2 0 002-2V7" />
                     </svg>
-                    <span>Voir agenda complet</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    Voir agenda complet
                   </button>
 
                   <button
                     onClick={refetchStats}
                     disabled={isLoadingStats}
-                    className="group relative px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 
-                             text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                             transform hover:scale-105 transition-all duration-300 
-                             border border-white/20 backdrop-blur-sm
-                             flex items-center space-x-2 min-w-[170px]
-                             disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="inline-flex items-center px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className={`w-5 h-5 ${isLoadingStats ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-5 h-5 mr-2 ${isLoadingStats ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <span>{isLoadingStats ? 'Chargement...' : 'Actualiser stats'}</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    {isLoadingStats ? 'Chargement...' : 'Actualiser stats'}
                   </button>
 
                   <button
                     onClick={() => setShowDetailedStatsModal(true)}
-                    className="group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 
-                             text-white font-medium rounded-xl shadow-lg hover:shadow-xl
-                             transform hover:scale-105 transition-all duration-300 
-                             border border-white/20 backdrop-blur-sm
-                             flex items-center space-x-2 min-w-[170px]"
+                    className="inline-flex items-center px-4 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span>Voir détails</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                    Voir détails
                   </button>
                 </div>
               </div>
@@ -1960,13 +1882,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   <button
                     type="button"
                     onClick={() => setShowAddParticipantModal(false)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                    className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     Ajouter
                   </button>
@@ -2009,7 +1931,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     onClick={() => setShowEmailModal(false)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                    className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
                   >
                     Annuler
                   </button>
@@ -2020,7 +1942,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                       setSelectedParticipants([]);
                       setEmailTarget(null);
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     Envoyer
                   </button>
@@ -2114,7 +2036,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     setShowQrModal(false);
                     setSelectedParticipantForQr(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                  className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium"
                 >
                   Fermer
                 </button>
@@ -2123,7 +2045,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     // Télécharger ou imprimer le QR code
                     window.print();
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Imprimer
                 </button>

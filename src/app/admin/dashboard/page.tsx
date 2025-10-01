@@ -247,17 +247,17 @@ export default function DashboardPage() {
         </div>
         
         <div className="h-[600px]">
-          <EventCalendar 
+          <EventCalendar
             events={events.map(event => ({
-              id: Number(event.id), // Convert string ID to number if needed
+              id: event.id,
               title: event.nom,
               nom: event.nom,
               description: event.description,
               lieu: event.lieu,
               date_debut: event.date_debut,
               date_fin: event.date_fin,
-              // Add any other properties required by the Event type
-            }))} 
+              statut: event.statut,
+            }))}
           />
         </div>
       </div>

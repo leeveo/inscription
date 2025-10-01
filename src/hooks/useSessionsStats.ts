@@ -65,7 +65,7 @@ export function useSessionsStats(eventId: string): UseSessionsStatsReturn {
     if (eventId) {
       fetchStats();
     }
-  }, [fetchStats]);
+  }, [eventId, fetchStats]);
 
   return {
     data,

@@ -17,15 +17,21 @@ export default async function RootLayout({
 }) {
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') || ''
-  
-  // Si c'est une route landing ou QR scanner, utiliser un layout simplifié
-  const isLandingPage = pathname.includes('/landing/')
+
+  // Routes qui ne doivent pas avoir la sidebar
+  const isLandingPage = pathname.includes('/landing')
   const isQRScannerPage = pathname.includes('/qr-scanner') || pathname.includes('/scanner')
-  
-  if (isLandingPage || isQRScannerPage) {
+  const isAuthPage = pathname.startsWith('/auth')
+  const isHomePage = pathname === '/'
+  const isTicketPage = pathname.includes('/ticket')
+  const isInscriptionPage = pathname.includes('/inscription')
+  const isCheckinPage = pathname.includes('/checkin')
+
+  // Utiliser un layout simplifié pour ces pages
+  if (isLandingPage || isQRScannerPage || isAuthPage || isHomePage || isTicketPage || isInscriptionPage || isCheckinPage) {
     return (
       <html lang="fr">
-        <body className={`${inter.className} min-h-screen bg-gray-50`}>
+        <body className={`${inter.className} min-h-screen`}>
           {children}
         </body>
       </html>
@@ -39,7 +45,7 @@ export default async function RootLayout({
         <div className="hidden md:block md:w-64 shrink-0">
           <Sidebar />
         </div>
-        
+
         {/* Main content area */}
         <div className="flex-1 flex flex-col overflow-auto">
           {/* Mobile header with menu button */}
@@ -51,7 +57,7 @@ export default async function RootLayout({
               </svg>
             </button>
           </header>
-          
+
           {/* Page content */}
           <main className="flex-1 p-4 md:p-6">
             {children}

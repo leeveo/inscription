@@ -139,9 +139,10 @@ export default function NeomorphismTemplate({ eventData, config }: NeomorphismTe
                   </div>
                   
                   <div className="fade-in stagger-2">
-                    <p className="text-xl text-slate-600 mb-8 leading-relaxed">
-                      {config?.customization?.heroSubtitle || eventData.description}
-                    </p>
+                    <div
+                      className="text-xl text-slate-600 mb-8 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || eventData.description }}
+                    />
                   </div>
                   
                   <div className="fade-in stagger-3 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
@@ -257,9 +258,10 @@ export default function NeomorphismTemplate({ eventData, config }: NeomorphismTe
                 </div>
                 <h3 className="text-xl font-bold text-slate-700 mb-6 text-center">À propos de l'événement</h3>
                 <div className="neo-inset p-6 rounded-xl">
-                  <p className="text-slate-600 leading-relaxed text-center">
-                    {eventData.description}
-                  </p>
+                  <div
+                    className="text-slate-600 leading-relaxed text-center"
+                    dangerouslySetInnerHTML={{ __html: eventData.description }}
+                  />
                 </div>
               </div>
             </div>

@@ -173,9 +173,10 @@ export default function OnepageScrollTemplate({ eventData, config }: OnepageScro
                 <h1 className="text-6xl md:text-8xl font-black text-white mb-6 typewriter">
                   {config?.customization?.heroTitle || eventData.nom}
                 </h1>
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed">
-                  {config?.customization?.heroSubtitle || eventData.description}
-                </p>
+                <div
+                  className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || eventData.description }}
+                />
                 
                 {/* Animated arrow */}
                 <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
@@ -201,9 +202,10 @@ export default function OnepageScrollTemplate({ eventData, config }: OnepageScro
                   <h2 className="text-5xl font-bold text-white mb-8">
                     À propos de l'événement
                   </h2>
-                  <p className="text-xl text-white/80 leading-relaxed mb-8">
-                    {eventData.description}
-                  </p>
+                  <div
+                    className="text-xl text-white/80 leading-relaxed mb-8"
+                    dangerouslySetInnerHTML={{ __html: eventData.description }}
+                  />
                   
                   <div className="space-y-6">
                     <div className="flex items-center space-x-4">

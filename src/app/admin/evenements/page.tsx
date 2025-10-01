@@ -30,6 +30,7 @@ export default function EvenementsPage() {
         const { data, error } = await supabase
           .from('inscription_evenements')
           .select('*')
+          .order('date_debut', { ascending: false })
           
         if (error) {
           console.error('Supabase error:', error)
@@ -204,9 +205,10 @@ export default function EvenementsPage() {
                         </div>
                         
                         {event.description && (
-                          <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                            {event.description}
-                          </p>
+                          <div
+                            className="text-gray-600 text-sm line-clamp-2 mb-3"
+                            dangerouslySetInnerHTML={{ __html: event.description }}
+                          />
                         )}
                         
                         {/* Status badge */}

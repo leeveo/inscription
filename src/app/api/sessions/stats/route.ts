@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseBrowser } from '@/lib/supabase/client';
+import { supabaseApi } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = supabaseBrowser();
+    const supabase = supabaseApi();
 
     // 1. Compter le nombre total de sessions
     const { data: sessionsData, error: sessionsError } = await supabase

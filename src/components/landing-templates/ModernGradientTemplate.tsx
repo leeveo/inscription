@@ -101,9 +101,10 @@ export default function ModernGradientTemplate({
               {customization.heroTitle || event.nom}
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              {customization.heroSubtitle || event.description}
-            </p>
+            <div
+              className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto"
+              dangerouslySetInnerHTML={{ __html: customization.heroSubtitle || event.description }}
+            />
 
             {/* Hero Image */}
             {customization.heroImage && (
@@ -159,9 +160,10 @@ export default function ModernGradientTemplate({
               À propos de l'événement
             </h2>
             <div className="w-24 h-1 mx-auto mb-8" style={{ backgroundColor: customization.primaryColor }}></div>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              {event.description}
-            </p>
+            <div
+              className="text-lg text-gray-600 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: event.description }}
+            />
           </div>
 
           {/* Event Info Grid */}

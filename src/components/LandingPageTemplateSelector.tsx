@@ -55,7 +55,7 @@ const LANDING_PAGE_TEMPLATES: LandingPageTemplate[] = [
     name: 'Minimal Clean',
     description: 'Design épuré et minimaliste, focus sur le contenu',
     preview: '/api/templates/minimal-clean/preview',
-    thumbnail: 'https://images.unsplash.com/photo-1586281010774-7e82ba1bb5c2?w=400&h=300&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=400&h=300&fit=crop',
     category: 'minimal',
     features: ['Épuré', 'Typographie claire', 'Chargement rapide', 'Accessibilité'],
   },
@@ -103,7 +103,7 @@ const LANDING_PAGE_TEMPLATES: LandingPageTemplate[] = [
     name: 'Fullscreen Video',
     description: 'Template cinématographique avec vidéo en plein écran',
     preview: '/api/templates/fullscreen-video/preview',
-    thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=400&h=300&fit=crop',
+    thumbnail: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&h=300&fit=crop',
     category: 'creative',
     features: ['Vidéo background', 'Design cinéma', 'Modal inscription', 'Immersif'],
     isPremium: true,
@@ -298,29 +298,13 @@ export default function LandingPageTemplateSelector({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Modèle de Page d'Inscription
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Choisissez un modèle pour la page d'inscription publique de votre événement
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={handlePreview}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Prévisualiser
-          </button>
-          <button
-            onClick={() => setShowCustomization(!showCustomization)}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-          >
-            Personnaliser
-          </button>
-        </div>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">
+          Modèle de Page d'Inscription
+        </h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Choisissez un modèle pour la page d'inscription publique de votre événement
+        </p>
       </div>
 
       {/* URL publique avec design amélioré */}

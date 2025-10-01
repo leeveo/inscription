@@ -1,14 +1,17 @@
 'use client'
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { 
-  FiCalendar, 
-  FiUsers, 
-  FiGrid, 
-  FiCamera
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  FiCalendar,
+  FiUsers,
+  FiGrid,
+  FiCamera,
+  FiLogOut
 } from 'react-icons/fi';
+import { supabaseBrowser } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 const eventAdminLinks = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: <FiGrid className="w-5 h-5" /> },
@@ -18,7 +21,38 @@ const eventAdminLinks = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  
+  const router = useRouter();
+  const supabase = supabaseBrowser();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  useEffect(() => {
+    // Récupérer l'utilisateur connecté
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Écouter les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      router.push('/auth/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   // Fonction pour déterminer si un lien est actif
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -122,10 +156,10 @@ export default function Sidebar() {
         </div>
         
         {/* Documentation section */}
-        <div className="mt-auto">
+        <div className="mt-auto space-y-4">
           <div className="relative group">
-            <div className="rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 
-                          border border-indigo-400/30 backdrop-blur-sm p-4 
+            <div className="rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20
+                          border border-indigo-400/30 backdrop-blur-sm p-4
                           hover:border-indigo-300/50 transition-all duration-300">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-600 shadow-md">
@@ -141,7 +175,7 @@ export default function Sidebar() {
               </p>
               <Link
                 href="/admin/documentation"
-                className="inline-flex items-center gap-2 px-3 py-2 
+                className="inline-flex items-center gap-2 px-3 py-2
                          bg-gradient-to-r from-indigo-500 to-purple-600
                          hover:from-indigo-400 hover:to-purple-500
                          text-white text-xs font-medium rounded-lg
@@ -155,6 +189,43 @@ export default function Sidebar() {
               </Link>
             </div>
           </div>
+
+          {/* User info and logout */}
+          {user && (
+            <div className="rounded-xl bg-gradient-to-br from-slate-800/50 to-blue-900/50
+                          border border-blue-400/30 backdrop-blur-sm p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center shadow-md">
+                  <span className="text-white font-bold text-sm">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm truncate">
+                    {user.user_metadata?.full_name || 'Admin'}
+                  </p>
+                  <p className="text-blue-200/80 text-xs truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5
+                         bg-gradient-to-r from-red-500/20 to-pink-500/20
+                         hover:from-red-500/30 hover:to-pink-500/30
+                         border border-red-400/30 hover:border-red-300/50
+                         text-white text-sm font-medium rounded-lg
+                         transition-all duration-300 transform hover:scale-[1.02]
+                         disabled:opacity-50 disabled:cursor-not-allowed
+                         shadow-md hover:shadow-lg"
+              >
+                <FiLogOut className="w-4 h-4" />
+                <span>{isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

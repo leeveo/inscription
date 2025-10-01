@@ -285,19 +285,19 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             </p>
             <p style="margin: 8px 0 0 0; font-size: 15px; opacity: 0.8;">{{event_date}} • {{event_location}}</p>
           </div>
-          
+
           <div style="padding: 40px;">
             <div style="margin-bottom: 30px;">
               <p style="color: #374151; font-size: 16px; margin: 0 0 5px 0;">Cher(ère) collègue,</p>
               <p style="color: #4b5563; font-size: 16px; margin: 0; font-weight: 500;">Dr. {{participant_firstname}} {{participant_lastname}}</p>
             </div>
-            
+
             <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0; text-align: justify;">
-              C'est avec un grand plaisir que nous vous invitons à participer à <em style="color: #1e3a8a; font-weight: 500;">{{event_name}}</em>. 
-              Cette conférence de haut niveau réunit la communauté scientifique autour de présentations innovantes, 
+              C'est avec un grand plaisir que nous vous invitons à participer à <em style="color: #1e3a8a; font-weight: 500;">{{event_name}}</em>.
+              Cette conférence de haut niveau réunit la communauté scientifique autour de présentations innovantes,
               d'ateliers pratiques et de sessions de discussion entre experts.
             </p>
-            
+
             <div style="background: #f3f4f6; border-left: 4px solid #1e3a8a; padding: 25px; margin: 30px 0;">
               <h3 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px;">📚 Programme de la conférence</h3>
               <p style="color: #4b5563; margin: 0 0 15px 0; line-height: 1.6;">
@@ -310,7 +310,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
                 L'inscription vous permet de sélectionner les sessions correspondant à vos domaines d'intérêt.
               </p>
             </div>
-            
+
             <div style="background: #eff6ff; border: 1px solid #dbeafe; border-radius: 6px; padding: 20px; margin: 30px 0;">
               <p style="color: #1e40af; margin: 0 0 10px 0; font-size: 15px; font-weight: 600;">
                 📋 Modalités d'inscription :
@@ -322,14 +322,14 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
                 4. Validez votre inscription
               </p>
             </div>
-            
+
             <div style="text-align: center; margin: 40px 0;">
-              <a href="{{landing_url}}" 
+              <a href="{{landing_url}}"
                  style="background: #1e3a8a; color: white; padding: 15px 35px; text-decoration: none; border-radius: 3px; font-size: 16px; font-weight: 500; display: inline-block; letter-spacing: 0.3px;">
                 📝 S'INSCRIRE À LA CONFÉRENCE
               </a>
             </div>
-            
+
             <div style="border-top: 1px solid #e5e7eb; padding-top: 25px; margin-top: 35px;">
               <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0; text-align: center;">
                 <strong>Comité d'organisation :</strong> {{event_name}}<br>
@@ -340,6 +340,1326 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
                 Pour toute question scientifique, contactez le secrétariat de la conférence.
               </p>
             </div>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'tech-startup',
+      name: 'Tech & Startup',
+      subject: '⚡ {{event_name}} - Innovation & Networking',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a;">
+          <div style="background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #ec4899 100%); padding: 2px;">
+            <div style="background: #0f172a; padding: 40px 30px; text-align: center;">
+              <div style="background: linear-gradient(135deg, #0ea5e9, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 36px; font-weight: 900; margin-bottom: 15px;">
+                {{event_name}}
+              </div>
+              <p style="color: #94a3b8; font-size: 16px; margin: 0;">{{event_date}} | {{event_location}}</p>
+              <div style="display: inline-block; background: rgba(14, 165, 233, 0.1); border: 1px solid #0ea5e9; border-radius: 20px; padding: 8px 20px; margin-top: 15px;">
+                <span style="color: #0ea5e9; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Early Access</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding: 40px 30px; background: #1e293b;">
+            <p style="color: #cbd5e1; font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">Hey {{participant_firstname}}! 👋</p>
+
+            <p style="color: #94a3b8; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0;">
+              Prêt à vivre une expérience tech unique ? <strong style="color: #e2e8f0;">{{event_name}}</strong> réunit les meilleurs innovateurs,
+              startups et investisseurs pour deux jours intenses de networking et découvertes.
+            </p>
+
+            <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(139, 92, 246, 0.1)); border-left: 3px solid #8b5cf6; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="color: #e2e8f0; margin: 0 0 12px 0; font-size: 18px;">🚀 Au programme</h3>
+              <div style="color: #cbd5e1; font-size: 15px; line-height: 1.8;">
+                <div style="margin-bottom: 8px;">⚡ Keynotes par des CEO de licornes tech</div>
+                <div style="margin-bottom: 8px;">💡 Pitchs de startups innovantes</div>
+                <div style="margin-bottom: 8px;">🤝 Sessions de networking exclusives</div>
+                <div>🎯 Ateliers pratiques & demos live</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #0ea5e9, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                🎟️ Claim Your Spot
+              </a>
+            </div>
+
+            <div style="background: rgba(236, 72, 153, 0.1); border: 1px solid #ec4899; border-radius: 8px; padding: 15px; margin: 25px 0; text-align: center;">
+              <p style="color: #f9a8d4; margin: 0; font-size: 14px; font-weight: 600;">
+                ⏰ Places limitées • Premier arrivé, premier servi
+              </p>
+            </div>
+
+            <p style="color: #64748b; font-size: 13px; margin: 30px 0 0 0; text-align: center; line-height: 1.5;">
+              See you there! 🚀<br>
+              L'équipe {{event_name}}
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'festival-culturel',
+      name: 'Festival Culturel',
+      subject: '🎨 {{event_name}} - Réservez votre expérience culturelle',
+      html_content: `
+        <div style="font-family: 'Georgia', serif; max-width: 650px; margin: 0 auto; background: #fffbf0;">
+          <div style="background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%); padding: 50px 30px; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: relative; z-index: 1;">
+              <h1 style="color: #78350f; margin: 0 0 15px 0; font-size: 38px; font-weight: 700; text-shadow: 2px 2px 4px rgba(255,255,255,0.3);">
+                {{event_name}}
+              </h1>
+              <div style="width: 80px; height: 3px; background: #78350f; margin: 0 auto 20px;"></div>
+              <p style="color: #92400e; font-size: 18px; font-style: italic; margin: 0;">Festival des Arts & Culture</p>
+              <p style="color: #92400e; font-size: 16px; margin: 10px 0 0 0;">📅 {{event_date}} • 📍 {{event_location}}</p>
+            </div>
+          </div>
+
+          <div style="padding: 45px 35px; background: white;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <p style="color: #78350f; font-size: 20px; margin: 0; font-weight: 600;">
+                Bonjour {{participant_firstname}},
+              </p>
+            </div>
+
+            <p style="color: #92400e; font-size: 16px; line-height: 1.8; margin: 0 0 25px 0; text-align: center;">
+              Nous sommes ravis de vous inviter à découvrir <strong>{{event_name}}</strong>,
+              un festival exceptionnel célébrant la diversité artistique et culturelle.
+            </p>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 30px; margin: 30px 0; border: 2px solid #fbbf24;">
+              <h3 style="color: #78350f; margin: 0 0 20px 0; font-size: 22px; text-align: center;">🎭 Programmation</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; color: #92400e; font-size: 15px;">
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;">🎨</div>
+                  <div style="font-weight: 600;">Expositions</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;">🎵</div>
+                  <div style="font-weight: 600;">Concerts Live</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;">🎬</div>
+                  <div style="font-weight: 600;">Projections</div>
+                </div>
+                <div style="text-align: center; padding: 15px; background: white; border-radius: 8px;">
+                  <div style="font-size: 24px; margin-bottom: 5px;">👥</div>
+                  <div style="font-weight: 600;">Ateliers</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 18px 45px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 18px; display: inline-block; box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4); text-transform: uppercase; letter-spacing: 1px;">
+                🎟️ Réserver ma place
+              </a>
+            </div>
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 30px 0;">
+              <p style="color: #92400e; margin: 0; font-size: 15px; line-height: 1.6; font-style: italic;">
+                ✨ <strong>Accès gratuit</strong> sur inscription<br>
+                🎁 Choisissez vos activités préférées lors de l'inscription<br>
+                🌟 Nombre de places limité par atelier
+              </p>
+            </div>
+
+            <p style="color: #a16207; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Au plaisir de vous accueillir !<br>
+              <strong>L'équipe du {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'formation-pro',
+      name: 'Formation Professionnelle',
+      subject: '📚 Formation {{event_name}} - Inscription ouverte',
+      html_content: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 620px; margin: 0 auto; background: white; border: 1px solid #e5e7eb;">
+          <div style="background: #059669; color: white; padding: 35px 30px;">
+            <div style="display: inline-block; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; margin-bottom: 15px;">
+              <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Formation Certifiante</span>
+            </div>
+            <h1 style="margin: 0 0 12px 0; font-size: 28px; font-weight: 700;">{{event_name}}</h1>
+            <p style="margin: 0; font-size: 16px; opacity: 0.95;">📅 {{event_date}} | 📍 {{event_location}}</p>
+          </div>
+
+          <div style="padding: 35px 30px;">
+            <p style="color: #374151; font-size: 17px; margin: 0 0 8px 0; font-weight: 600;">
+              Bonjour {{participant_firstname}} {{participant_lastname}},
+            </p>
+
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0;">
+              Nous sommes heureux de vous proposer une place pour la formation
+              <strong style="color: #059669;">{{event_name}}</strong>. Cette formation vous permettra
+              d'acquérir de nouvelles compétences et d'obtenir une certification reconnue.
+            </p>
+
+            <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 10px; padding: 25px; margin: 25px 0;">
+              <h3 style="color: #047857; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">
+                📋 Détails de la formation
+              </h3>
+              <table style="width: 100%; color: #374151; font-size: 15px;">
+                <tr>
+                  <td style="padding: 8px 0; font-weight: 600; width: 40%;">🎯 Objectifs :</td>
+                  <td style="padding: 8px 0;">Développement de compétences</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-weight: 600;">⏱️ Durée :</td>
+                  <td style="padding: 8px 0;">Sessions modulaires</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-weight: 600;">📜 Certification :</td>
+                  <td style="padding: 8px 0;">Attestation délivrée</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-weight: 600;">👥 Format :</td>
+                  <td style="padding: 8px 0;">Présentiel & Pratique</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 8px; padding: 20px; margin: 25px 0;">
+              <h4 style="color: #065f46; margin: 0 0 12px 0; font-size: 16px;">✅ Étapes d'inscription :</h4>
+              <ol style="color: #047857; margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>Consultez le programme détaillé de formation</li>
+                <li>Sélectionnez les modules qui vous intéressent</li>
+                <li>Confirmez votre participation</li>
+                <li>Recevez votre convocation par email</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: #059669; color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
+                📝 S'inscrire à la formation
+              </a>
+            </div>
+
+            <div style="border-top: 2px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+              <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px 0; text-align: center;">
+                <strong>Organisme de formation :</strong> {{event_name}}
+              </p>
+              <p style="color: #9ca3af; font-size: 13px; margin: 0; text-align: center; line-height: 1.5;">
+                Pour toute question : {{participant_email}}<br>
+                Lien d'inscription : {{landing_url}}
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'soiree-gala',
+      name: 'Soirée Gala',
+      subject: '✨ Invitation Exclusive - Gala {{event_name}}',
+      html_content: `
+        <div style="font-family: 'Palatino', 'Times New Roman', serif; max-width: 650px; margin: 0 auto; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);">
+          <div style="padding: 50px 40px; text-align: center; border-bottom: 3px solid #fbbf24;">
+            <div style="background: linear-gradient(135deg, #fbbf24, #f59e0b); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(251, 191, 36, 0.5);">
+              <span style="font-size: 40px;">✨</span>
+            </div>
+            <div style="color: #fbbf24; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">
+              Invitation Exclusive
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 34px; font-weight: 300; letter-spacing: 1px;">
+              {{event_name}}
+            </h1>
+            <div style="width: 60px; height: 2px; background: #fbbf24; margin: 0 auto 20px;"></div>
+            <p style="color: #e0e7ff; font-size: 17px; margin: 0; font-style: italic;">
+              Soirée de Gala
+            </p>
+            <p style="color: #c7d2fe; font-size: 15px; margin: 10px 0 0 0;">
+              {{event_date}} • {{event_location}}
+            </p>
+          </div>
+
+          <div style="background: white; padding: 45px 40px;">
+            <p style="color: #1e1b4b; font-size: 18px; margin: 0 0 25px 0; text-align: center; font-style: italic;">
+              Madame, Monsieur <strong>{{participant_lastname}}</strong>,
+            </p>
+
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.8; margin: 0 0 25px 0; text-align: center;">
+              C'est avec un immense plaisir que nous vous convions à notre soirée de gala
+              <strong style="color: #1e1b4b;">{{event_name}}</strong>.
+              Une soirée d'exception vous attend dans un cadre prestigieux.
+            </p>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #fbbf24; border-right: 4px solid #fbbf24; padding: 30px; margin: 30px 0; text-align: center;">
+              <h3 style="color: #78350f; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">
+                🌟 Programme de la soirée
+              </h3>
+              <div style="color: #92400e; font-size: 15px; line-height: 2;">
+                <div>🥂 <strong>Cocktail de bienvenue</strong> & Networking</div>
+                <div>🎭 <strong>Spectacle</strong> & Divertissements</div>
+                <div>🍽️ <strong>Dîner gastronomique</strong> 4 services</div>
+                <div>🎵 <strong>Soirée dansante</strong> & DJ</div>
+              </div>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 10px; padding: 25px; margin: 30px 0;">
+              <div style="text-align: center; margin-bottom: 15px;">
+                <span style="background: #1e1b4b; color: white; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                  Dress Code
+                </span>
+              </div>
+              <p style="color: #374151; margin: 0; text-align: center; font-size: 15px; font-style: italic;">
+                Tenue de soirée exigée • Smoking / Robe longue
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: white; padding: 18px 45px; text-decoration: none; border-radius: 50px; font-weight: 600; font-size: 17px; display: inline-block; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.4); text-transform: uppercase; letter-spacing: 1px; border: 2px solid #fbbf24;">
+                ✨ Confirmer ma présence
+              </a>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 25px; margin-top: 35px; text-align: center;">
+              <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0; font-style: italic;">
+                <strong>RSVP avant le {{event_date}}</strong><br>
+                Nombre de places limité
+              </p>
+              <p style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5;">
+                Pour toute information : {{participant_email}}<br>
+                Nous vous prions d'agréer nos salutations distinguées.
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'webinar-en-ligne',
+      name: 'Webinar En Ligne',
+      subject: '🎥 Webinar {{event_name}} - Rejoignez-nous en ligne',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); padding: 40px 30px; text-align: center;">
+            <div style="background: white; display: inline-block; padding: 12px 24px; border-radius: 30px; margin-bottom: 20px;">
+              <span style="background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                Webinar Live
+              </span>
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 32px; font-weight: 700;">
+              {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 17px; margin: 0;">
+              🗓️ {{event_date}} | 🌐 En ligne
+            </p>
+          </div>
+
+          <div style="padding: 40px 30px;">
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #0ea5e9; padding: 20px; margin: 0 0 30px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #0c4a6e; font-size: 16px; margin: 0;">
+                <strong>👋 Salut {{participant_firstname}} !</strong><br>
+                <span style="color: #075985; margin-top: 8px; display: block;">
+                  Préparez-vous pour un webinar interactif et enrichissant !
+                </span>
+              </p>
+            </div>
+
+            <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0;">
+              Nous sommes ravis de vous inviter à notre webinar <strong style="color: #6366f1;">{{event_name}}</strong>.
+              Une session en ligne interactive avec des experts, des démonstrations pratiques et une session Q&A.
+            </p>
+
+            <div style="background: #f9fafb; border: 2px dashed #d1d5db; border-radius: 12px; padding: 25px; margin: 25px 0;">
+              <h3 style="color: #1f2937; margin: 0 0 18px 0; font-size: 18px; text-align: center;">
+                📺 Ce qui vous attend
+              </h3>
+              <div style="color: #4b5563; font-size: 15px; line-height: 2;">
+                <div style="margin-bottom: 10px;">
+                  <span style="display: inline-block; width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; text-align: center; line-height: 30px; margin-right: 10px;">💡</span>
+                  Présentation par des experts reconnus
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <span style="display: inline-block; width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; text-align: center; line-height: 30px; margin-right: 10px;">🛠️</span>
+                  Démonstrations pratiques en direct
+                </div>
+                <div style="margin-bottom: 10px;">
+                  <span style="display: inline-block; width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; text-align: center; line-height: 30px; margin-right: 10px;">❓</span>
+                  Session Questions & Réponses interactive
+                </div>
+                <div>
+                  <span style="display: inline-block; width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; text-align: center; line-height: 30px; margin-right: 10px;">📥</span>
+                  Ressources et support téléchargeables
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                🎥 Réserver ma place
+              </a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px; padding: 20px; margin: 30px 0; text-align: center;">
+              <p style="color: #92400e; margin: 0; font-size: 15px; font-weight: 600;">
+                ⚡ Accès gratuit • 🎁 Replay disponible 24h • 📜 Certificat de participation
+              </p>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 8px; padding: 20px; margin: 25px 0;">
+              <h4 style="color: #374151; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">
+                📌 Informations pratiques
+              </h4>
+              <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+                ✅ Connexion 10 minutes avant le début<br>
+                ✅ Lien de connexion envoyé 24h avant l'événement<br>
+                ✅ Compatible ordinateur, tablette et smartphone<br>
+                ✅ Aucune installation requise
+              </p>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 13px; margin: 30px 0 0 0; text-align: center; line-height: 1.5;">
+              À très bientôt en ligne ! 👋<br>
+              <strong>L'équipe {{event_name}}</strong><br>
+              Lien d'inscription : {{landing_url}}
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'sport-competition',
+      name: 'Sport & Compétition',
+      subject: '🏆 {{event_name}} - Inscription aux épreuves',
+      html_content: `
+        <div style="font-family: 'Arial', sans-serif; max-width: 650px; margin: 0 auto; background: #f8fafc;">
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%); padding: 45px 30px; text-align: center; position: relative;">
+            <div style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px);">
+              <span style="color: white; font-size: 12px; font-weight: 700; text-transform: uppercase;">Édition 2025</span>
+            </div>
+            <div style="font-size: 60px; margin-bottom: 15px;">🏆</div>
+            <h1 style="color: white; margin: 0 0 10px 0; font-size: 36px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 8px rgba(0,0,0,0.3);">
+              {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 18px; font-weight: 600; margin: 0;">
+              📅 {{event_date}} | 📍 {{event_location}}
+            </p>
+          </div>
+
+          <div style="background: white; padding: 40px 35px;">
+            <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-left: 5px solid #dc2626; padding: 20px; margin: 0 0 30px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #7f1d1d; font-size: 18px; margin: 0; font-weight: 700;">
+                🎯 Bonjour {{participant_firstname}} {{participant_lastname}} !
+              </p>
+              <p style="color: #991b1b; font-size: 15px; margin: 8px 0 0 0;">
+                Prêt(e) à relever le défi ?
+              </p>
+            </div>
+
+            <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0;">
+              Nous sommes ravis de vous inviter à participer à <strong style="color: #dc2626;">{{event_name}}</strong> !
+              Un événement sportif d'envergure qui rassemble les meilleurs athlètes et passionnés.
+            </p>
+
+            <div style="background: #f1f5f9; border-radius: 12px; padding: 25px; margin: 25px 0;">
+              <h3 style="color: #1e293b; margin: 0 0 20px 0; font-size: 20px; font-weight: 700; text-align: center;">
+                🏅 Épreuves disponibles
+              </h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="background: white; padding: 18px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+                  <div style="font-size: 32px; margin-bottom: 8px;">🏃</div>
+                  <div style="color: #475569; font-weight: 600; font-size: 14px;">Course 5km</div>
+                </div>
+                <div style="background: white; padding: 18px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+                  <div style="font-size: 32px; margin-bottom: 8px;">🏃‍♂️</div>
+                  <div style="color: #475569; font-weight: 600; font-size: 14px;">Course 10km</div>
+                </div>
+                <div style="background: white; padding: 18px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+                  <div style="font-size: 32px; margin-bottom: 8px;">🚴</div>
+                  <div style="color: #475569; font-weight: 600; font-size: 14px;">Cyclisme</div>
+                </div>
+                <div style="background: white; padding: 18px; border-radius: 8px; text-align: center; border: 2px solid #e2e8f0;">
+                  <div style="font-size: 32px; margin-bottom: 8px;">👨‍👩‍👧‍👦</div>
+                  <div style="color: #475569; font-weight: 600; font-size: 14px;">Épreuves Kids</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 10px; padding: 20px; margin: 25px 0;">
+              <h4 style="color: #78350f; margin: 0 0 15px 0; font-size: 17px; font-weight: 700;">
+                ⚡ Inscription rapide
+              </h4>
+              <ol style="color: #92400e; margin: 0; padding-left: 20px; line-height: 1.8; font-size: 15px;">
+                <li>Choisissez vos épreuves</li>
+                <li>Remplissez vos informations</li>
+                <li>Validez votre inscription</li>
+                <li>Recevez votre dossard par email</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #dc2626, #ea580c); color: white; padding: 18px 45px; text-decoration: none; border-radius: 50px; font-weight: 800; font-size: 17px; display: inline-block; box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4); text-transform: uppercase; letter-spacing: 1px;">
+                🏃 Je m'inscris maintenant
+              </a>
+            </div>
+
+            <div style="background: #fee2e2; border-radius: 8px; padding: 18px; margin: 25px 0; text-align: center;">
+              <p style="color: #991b1b; margin: 0; font-size: 15px; font-weight: 600;">
+                ⏰ Inscriptions limitées • 🎁 Goodies offerts • 🏅 Médaille pour tous les finishers
+              </p>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Que le meilleur gagne ! 💪<br>
+              <strong>L'équipe organisatrice {{event_name}}</strong><br>
+              Contact : {{participant_email}}
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'save-the-date',
+      name: 'Save The Date',
+      subject: '📅 Save The Date - {{event_name}}',
+      html_content: `
+        <div style="font-family: 'Georgia', 'Times New Roman', serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background: linear-gradient(180deg, #fef9f3 0%, #ffffff 100%); padding: 50px 30px; text-align: center; border-bottom: 3px solid #d4af37;">
+            <div style="font-size: 14px; color: #9ca3af; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; font-weight: 600;">
+              Save The Date
+            </div>
+            <h1 style="color: #1f2937; margin: 0 0 25px 0; font-size: 42px; font-weight: 300; line-height: 1.2;">
+              {{event_name}}
+            </h1>
+            <div style="background: #d4af37; width: 80px; height: 2px; margin: 0 auto 30px;"></div>
+            <div style="background: white; border: 2px solid #d4af37; padding: 25px 30px; display: inline-block; border-radius: 4px;">
+              <div style="color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Date & Heure</div>
+              <div style="color: #1f2937; font-size: 24px; font-weight: 600; margin-bottom: 15px;">{{event_date}}</div>
+              <div style="color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Lieu</div>
+              <div style="color: #1f2937; font-size: 18px; font-weight: 500;">{{event_location}}</div>
+            </div>
+          </div>
+
+          <div style="padding: 45px 35px;">
+            <p style="color: #4b5563; font-size: 17px; line-height: 1.8; text-align: center; margin: 0 0 30px 0;">
+              Cher(ère) <strong>{{participant_firstname}}</strong>,
+            </p>
+            <p style="color: #6b7280; font-size: 16px; line-height: 1.8; text-align: center; margin: 0 0 35px 0;">
+              Nous avons le plaisir de vous annoncer que <strong style="color: #1f2937;">{{event_name}}</strong>
+              aura lieu prochainement. Réservez dès maintenant cette date dans votre agenda !
+            </p>
+
+            <div style="background: #fef9f3; border-left: 4px solid #d4af37; padding: 25px; margin: 30px 0;">
+              <p style="color: #92400e; font-size: 15px; margin: 0; line-height: 1.7; font-style: italic;">
+                ✨ Une invitation formelle avec tous les détails suivra prochainement<br>
+                📧 Restez attentif à vos emails<br>
+                🗓️ Marquez cette date comme importante
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: #1f2937; color: white; padding: 16px 40px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 15px; display: inline-block; text-transform: uppercase; letter-spacing: 1px; border: 2px solid #1f2937;">
+                Plus d'informations
+              </a>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Nous avons hâte de vous retrouver !<br>
+              <strong style="color: #6b7280;">L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'countdown-reminder',
+      name: 'Rappel Compte à Rebours',
+      subject: '⏰ Plus que quelques jours - {{event_name}}',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a;">
+          <div style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); padding: 40px 30px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.15); border-radius: 50%; width: 100px; height: 100px; margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; border: 3px solid rgba(255,255,255,0.3);">
+              <div style="text-align: center;">
+                <div style="color: white; font-size: 36px; font-weight: 900; line-height: 1;">3</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Jours</div>
+              </div>
+            </div>
+            <h1 style="color: white; margin: 0 0 12px 0; font-size: 28px; font-weight: 700;">
+              {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              📅 {{event_date}} • 📍 {{event_location}}
+            </p>
+          </div>
+
+          <div style="background: #1e293b; padding: 40px 30px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <p style="color: #f1f5f9; font-size: 20px; font-weight: 700; margin: 0 0 10px 0;">
+                ⏰ Le compte à rebours a commencé !
+              </p>
+              <p style="color: #cbd5e1; font-size: 15px; margin: 0;">
+                Bonjour {{participant_firstname}}, ne manquez pas cet événement !
+              </p>
+            </div>
+
+            <p style="color: #94a3b8; font-size: 16px; line-height: 1.7; margin: 0 0 30px 0; text-align: center;">
+              L'événement <strong style="color: #e2e8f0;">{{event_name}}</strong> commence dans seulement
+              <strong style="color: #f97316;">3 jours</strong> ! Assurez-vous d'être prêt(e) et de ne rien manquer.
+            </p>
+
+            <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 25px; margin: 30px 0;">
+              <h3 style="color: #fca5a5; margin: 0 0 15px 0; font-size: 18px; text-align: center;">
+                ✅ Derniers préparatifs
+              </h3>
+              <div style="color: #cbd5e1; font-size: 15px; line-height: 2;">
+                <div>📋 Vérifiez votre inscription et vos sessions</div>
+                <div>🎫 Téléchargez votre billet d'entrée</div>
+                <div>🗺️ Consultez l'itinéraire vers le lieu</div>
+                <div>📱 Activez les notifications de rappel</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #ef4444, #f97316); color: white; padding: 18px 45px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-transform: uppercase; letter-spacing: 1px;">
+                🎫 Accéder à mon billet
+              </a>
+            </div>
+
+            <div style="background: rgba(251, 191, 36, 0.1); border-radius: 8px; padding: 18px; margin: 25px 0; text-align: center;">
+              <p style="color: #fcd34d; margin: 0; font-size: 14px; font-weight: 600;">
+                ⚡ Dernier rappel avant l'événement • On vous attend nombreux !
+              </p>
+            </div>
+
+            <p style="color: #64748b; font-size: 13px; margin: 30px 0 0 0; text-align: center; line-height: 1.5;">
+              À très bientôt ! 🎉<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'speaker-announcement',
+      name: 'Annonce Conférenciers',
+      subject: '🎤 Découvrez nos intervenants - {{event_name}}',
+      html_content: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 650px; margin: 0 auto; background: white;">
+          <div style="background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%); padding: 45px 30px; text-align: center;">
+            <div style="color: rgba(255,255,255,0.9); font-size: 13px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; font-weight: 600;">
+              Programme & Intervenants
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 34px; font-weight: 700;">
+              {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              {{event_date}} • {{event_location}}
+            </p>
+          </div>
+
+          <div style="padding: 45px 35px; background: #f8fafc;">
+            <p style="color: #0f172a; font-size: 18px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">
+              Bonjour {{participant_firstname}},
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.7; margin: 0 0 35px 0; text-align: center;">
+              Nous sommes ravis de vous dévoiler la liste complète des intervenants exceptionnels qui prendront part à <strong style="color: #0f172a;">{{event_name}}</strong> !
+            </p>
+
+            <div style="background: white; border-radius: 12px; padding: 30px; margin: 30px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+              <h3 style="color: #14b8a6; margin: 0 0 25px 0; font-size: 22px; text-align: center;">
+                🎤 Nos Speakers
+              </h3>
+
+              <div style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                  <div style="background: linear-gradient(135deg, #14b8a6, #06b6d4); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span style="color: white; font-size: 24px; font-weight: 700;">1</span>
+                  </div>
+                  <div>
+                    <div style="color: #0f172a; font-size: 18px; font-weight: 700; margin-bottom: 5px;">Speaker Expert</div>
+                    <div style="color: #64748b; font-size: 14px; font-style: italic;">Expert en Innovation</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                  <div style="background: linear-gradient(135deg, #14b8a6, #06b6d4); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span style="color: white; font-size: 24px; font-weight: 700;">2</span>
+                  </div>
+                  <div>
+                    <div style="color: #0f172a; font-size: 18px; font-weight: 700; margin-bottom: 5px;">Leader Visionnaire</div>
+                    <div style="color: #64748b; font-size: 14px; font-style: italic;">CEO & Fondateur</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                  <div style="background: linear-gradient(135deg, #14b8a6, #06b6d4); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span style="color: white; font-size: 24px; font-weight: 700;">3</span>
+                  </div>
+                  <div>
+                    <div style="color: #0f172a; font-size: 18px; font-weight: 700; margin-bottom: 5px;">Expert International</div>
+                    <div style="color: #64748b; font-size: 14px; font-style: italic;">Conférencier Keynote</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #14b8a6, #06b6d4); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(20, 184, 166, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
+                📋 Voir le programme complet
+              </a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #ecfdf5, #f0fdfa); border-left: 4px solid #14b8a6; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #065f46; margin: 0; font-size: 15px; line-height: 1.7;">
+                💡 <strong>Ne manquez aucune session</strong><br>
+                Inscrivez-vous dès maintenant aux sessions qui vous intéressent pour garantir votre place !
+              </p>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              À bientôt pour cet événement exceptionnel !<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'networking-focus',
+      name: 'Networking & Rencontres',
+      subject: '🤝 Networking à {{event_name}} - Connectez-vous',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #fafafa;">
+          <div style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); padding: 40px 30px; text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 20px;">🤝</div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 32px; font-weight: 700;">
+              Networking à {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              Connectez-vous avec des professionnels
+            </p>
+          </div>
+
+          <div style="background: white; padding: 40px 30px;">
+            <p style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">
+              Bonjour {{participant_firstname}} !
+            </p>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 30px 0; text-align: center;">
+              <strong style="color: #2563eb;">{{event_name}}</strong> est l'occasion idéale pour élargir votre réseau professionnel et créer des connexions durables.
+            </p>
+
+            <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border-radius: 12px; padding: 30px; margin: 30px 0;">
+              <h3 style="color: #1e40af; margin: 0 0 20px 0; font-size: 20px; text-align: center;">
+                🎯 Opportunités de Networking
+              </h3>
+              <div style="color: #1e40af; font-size: 15px; line-height: 2.2;">
+                <div style="margin-bottom: 12px;">
+                  <strong>☕ Sessions Café Networking</strong><br>
+                  <span style="color: #3730a3; font-size: 14px;">Rencontres informelles entre sessions</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <strong>🍽️ Déjeuner Networking</strong><br>
+                  <span style="color: #3730a3; font-size: 14px;">Tables thématiques par secteur</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <strong>🎤 Speed Networking</strong><br>
+                  <span style="color: #3730a3; font-size: 14px;">Rencontrez 20+ professionnels en 1h</span>
+                </div>
+                <div>
+                  <strong>📱 Plateforme Digitale</strong><br>
+                  <span style="color: #3730a3; font-size: 14px;">Connectez-vous avant, pendant et après</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: #f9fafb; border: 2px dashed #d1d5db; border-radius: 10px; padding: 25px; margin: 30px 0; text-align: center;">
+              <div style="color: #6b7280; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">
+                Votre profil networking
+              </div>
+              <div style="color: #1f2937; font-size: 18px; font-weight: 700; margin-bottom: 5px;">
+                {{participant_firstname}} {{participant_lastname}}
+              </div>
+              <div style="color: #6b7280; font-size: 14px;">
+                {{participant_email}}
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
+                🚀 Préparer mon networking
+              </a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <p style="color: #92400e; margin: 0; font-size: 15px; line-height: 1.7; text-align: center;">
+                💡 <strong>Conseil Pro :</strong> Préparez votre pitch et vos cartes de visite pour maximiser vos rencontres !
+              </p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Hâte de vous voir networker ! 🎉<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'vip-exclusive',
+      name: 'VIP Exclusif',
+      subject: '⭐ Accès VIP - {{event_name}} - Invitation Exclusive',
+      html_content: `
+        <div style="font-family: 'Garamond', 'Times New Roman', serif; max-width: 600px; margin: 0 auto; background: #000000;">
+          <div style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); padding: 50px 30px; text-align: center; border-bottom: 2px solid #ffd700;">
+            <div style="background: linear-gradient(135deg, #ffd700, #ffed4e); width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.4);">
+              <span style="font-size: 45px;">⭐</span>
+            </div>
+            <div style="color: #ffd700; font-size: 12px; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 20px; font-weight: 700;">
+              Accès VIP Exclusif
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 36px; font-weight: 300; letter-spacing: 2px;">
+              {{event_name}}
+            </h1>
+            <div style="width: 60px; height: 1px; background: #ffd700; margin: 0 auto 20px;"></div>
+            <p style="color: #d4d4d4; font-size: 16px; margin: 0; font-style: italic;">
+              {{event_date}} • {{event_location}}
+            </p>
+          </div>
+
+          <div style="background: #1a1a1a; padding: 45px 35px;">
+            <p style="color: #ffd700; font-size: 20px; font-weight: 300; margin: 0 0 25px 0; text-align: center; letter-spacing: 1px;">
+              {{participant_firstname}} {{participant_lastname}}
+            </p>
+
+            <p style="color: #d4d4d4; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0; text-align: center;">
+              Vous avez été sélectionné(e) pour bénéficier d'un <strong style="color: #ffd700;">accès VIP exclusif</strong>
+              à notre événement premium <strong style="color: white;">{{event_name}}</strong>.
+            </p>
+
+            <div style="background: linear-gradient(135deg, #2a2a2a, #1f1f1f); border: 2px solid #ffd700; border-radius: 12px; padding: 30px; margin: 30px 0;">
+              <h3 style="color: #ffd700; margin: 0 0 25px 0; font-size: 20px; text-align: center; font-weight: 600;">
+                ✨ Privilèges VIP Inclus
+              </h3>
+              <div style="color: #d4d4d4; font-size: 15px; line-height: 2.2;">
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333;">
+                  <strong style="color: #ffd700;">🎫 Accès Prioritaire</strong><br>
+                  <span style="color: #a3a3a3; font-size: 14px;">Entrée VIP sans file d'attente</span>
+                </div>
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333;">
+                  <strong style="color: #ffd700;">🍾 Lounge VIP Privé</strong><br>
+                  <span style="color: #a3a3a3; font-size: 14px;">Espace exclusif avec restauration premium</span>
+                </div>
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333;">
+                  <strong style="color: #ffd700;">🎤 Meet & Greet Speakers</strong><br>
+                  <span style="color: #a3a3a3; font-size: 14px;">Session privée avec les intervenants</span>
+                </div>
+                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #333;">
+                  <strong style="color: #ffd700;">📸 Kit VIP Personnalisé</strong><br>
+                  <span style="color: #a3a3a3; font-size: 14px;">Goodies exclusifs et certificat VIP</span>
+                </div>
+                <div>
+                  <strong style="color: #ffd700;">💼 Networking Exclusif</strong><br>
+                  <span style="color: #a3a3a3; font-size: 14px;">Accès au réseau VIP fermé</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000000; padding: 18px 45px; text-decoration: none; border-radius: 4px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4); text-transform: uppercase; letter-spacing: 2px;">
+                ⭐ Activer mon accès VIP
+              </a>
+            </div>
+
+            <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #ffd700; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+              <p style="color: #ffd700; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 1px;">
+                🔐 ACCÈS LIMITÉ • INVITATION STRICTEMENT PERSONNELLE
+              </p>
+            </div>
+
+            <p style="color: #737373; font-size: 13px; margin: 30px 0 0 0; text-align: center; line-height: 1.6; font-style: italic;">
+              Nous sommes honorés de votre présence<br>
+              <strong style="color: #a3a3a3;">L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'early-bird',
+      name: 'Early Bird Promo',
+      subject: '🐦 Early Bird - {{event_name}} - Offre Limitée',
+      html_content: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 620px; margin: 0 auto; background: white;">
+          <div style="background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); padding: 10px; text-align: center;">
+            <div style="background: #78350f; color: #fef3c7; display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+              ⚡ Offre Early Bird - Derniers Jours
+            </div>
+          </div>
+
+          <div style="background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%); padding: 40px 30px; text-align: center;">
+            <div style="font-size: 60px; margin-bottom: 15px;">🐦</div>
+            <h1 style="color: #78350f; margin: 0 0 15px 0; font-size: 34px; font-weight: 700;">
+              {{event_name}}
+            </h1>
+            <p style="color: #92400e; font-size: 17px; margin: 0;">
+              📅 {{event_date}} • 📍 {{event_location}}
+            </p>
+          </div>
+
+          <div style="padding: 40px 30px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <p style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">
+                Bonjour {{participant_firstname}} !
+              </p>
+              <p style="color: #4b5563; font-size: 16px; margin: 0;">
+                Profitez de notre offre Early Bird avant qu'il ne soit trop tard !
+              </p>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 3px solid #f59e0b; border-radius: 15px; padding: 30px; margin: 30px 0; text-align: center;">
+              <div style="color: #78350f; font-size: 16px; font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">
+                Offre Spéciale Early Bird
+              </div>
+              <div style="color: #92400e; font-size: 48px; font-weight: 900; margin: 15px 0;">
+                -30%
+              </div>
+              <div style="color: #a16207; font-size: 15px; margin-top: 10px;">
+                Sur votre inscription
+              </div>
+              <div style="background: #ef4444; color: white; display: inline-block; padding: 8px 20px; border-radius: 20px; margin-top: 15px; font-size: 13px; font-weight: 700;">
+                ⏰ Expire dans 48h
+              </div>
+            </div>
+
+            <div style="background: #f9fafb; border-radius: 12px; padding: 25px; margin: 30px 0;">
+              <h3 style="color: #1f2937; margin: 0 0 20px 0; font-size: 19px; text-align: center;">
+                🎁 Inclus dans votre Early Bird
+              </h3>
+              <div style="color: #4b5563; font-size: 15px; line-height: 2;">
+                <div>✅ Accès à toutes les sessions</div>
+                <div>✅ Kit participant complet</div>
+                <div>✅ Déjeuners & pauses café</div>
+                <div>✅ Certificat de participation</div>
+                <div>✅ Accès plateforme networking</div>
+                <div>✅ Replay des conférences</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #f59e0b, #eab308); color: white; padding: 18px 45px; text-decoration: none; border-radius: 30px; font-weight: 800; font-size: 17px; display: inline-block; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); text-transform: uppercase; letter-spacing: 1px;">
+                🐦 Profiter de l'offre
+              </a>
+            </div>
+
+            <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 18px; margin: 30px 0;">
+              <p style="color: #991b1b; margin: 0; font-size: 15px; font-weight: 600;">
+                ⚠️ Attention : Places limitées à tarif Early Bird. L'offre expire automatiquement après 48 heures ou épuisement des places.
+              </p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Ne manquez pas cette opportunité ! 🚀<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'thank-you-confirmation',
+      name: 'Merci & Confirmation',
+      subject: '✅ Inscription confirmée - {{event_name}}',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 45px 30px; text-align: center;">
+            <div style="background: white; width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
+              <span style="font-size: 45px;">✅</span>
+            </div>
+            <h1 style="color: white; margin: 0 0 12px 0; font-size: 32px; font-weight: 700;">
+              Inscription Confirmée !
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              Bienvenue à {{event_name}}
+            </p>
+          </div>
+
+          <div style="padding: 40px 30px;">
+            <p style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">
+              Merci {{participant_firstname}} ! 🎉
+            </p>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 30px 0; text-align: center;">
+              Votre inscription à <strong style="color: #10b981;">{{event_name}}</strong> a été confirmée avec succès. Nous avons hâte de vous accueillir !
+            </p>
+
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin: 30px 0;">
+              <h3 style="color: #065f46; margin: 0 0 20px 0; font-size: 18px; text-align: center; font-weight: 700;">
+                📋 Récapitulatif de votre inscription
+              </h3>
+              <table style="width: 100%; color: #047857; font-size: 15px;">
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600;">Participant :</td>
+                  <td style="padding: 10px 0; text-align: right;">{{participant_firstname}} {{participant_lastname}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600;">Email :</td>
+                  <td style="padding: 10px 0; text-align: right;">{{participant_email}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600;">Événement :</td>
+                  <td style="padding: 10px 0; text-align: right;">{{event_name}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600;">Date :</td>
+                  <td style="padding: 10px 0; text-align: right;">{{event_date}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600;">Lieu :</td>
+                  <td style="padding: 10px 0; text-align: right;">{{event_location}}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background: #f3f4f6; border-radius: 10px; padding: 25px; margin: 30px 0;">
+              <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 17px; font-weight: 700;">
+                📌 Prochaines étapes
+              </h4>
+              <ol style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 2;">
+                <li>Consultez votre email pour accéder à votre billet</li>
+                <li>Téléchargez l'application mobile de l'événement</li>
+                <li>Sélectionnez vos sessions préférées</li>
+                <li>Préparez vos questions pour les speakers</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{ticket_url}}"
+                 style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 10px;">
+                🎫 Mon Billet
+              </a>
+              <a href="{{landing_url}}"
+                 style="background: white; color: #10b981; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; border: 2px solid #10b981; text-transform: uppercase; letter-spacing: 0.5px;">
+                📋 Programme
+              </a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 8px; padding: 18px; margin: 30px 0; text-align: center;">
+              <p style="color: #92400e; margin: 0; font-size: 14px; font-weight: 600;">
+                💡 Ajoutez l'événement à votre calendrier pour ne rien manquer !
+              </p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Des questions ? Contactez-nous à {{participant_email}}<br>
+              <strong>À très bientôt ! 🎉</strong><br>
+              L'équipe {{event_name}}
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'last-chance',
+      name: 'Dernière Chance',
+      subject: '⚠️ Dernière chance - {{event_name}} - Places limitées',
+      html_content: `
+        <div style="font-family: 'Arial Black', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fafafa;">
+          <div style="background: #ef4444; padding: 12px; text-align: center;">
+            <div style="color: white; font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; animation: pulse 2s infinite;">
+              ⚠️ ALERTE DERNIÈRE CHANCE ⚠️
+            </div>
+          </div>
+
+          <div style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); padding: 45px 30px; text-align: center;">
+            <div style="color: #fbbf24; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px;">
+              Il ne reste que
+            </div>
+            <div style="background: #ef4444; color: white; display: inline-block; padding: 20px 40px; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);">
+              <div style="font-size: 50px; font-weight: 900; line-height: 1;">12</div>
+              <div style="font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;">Places</div>
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 36px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">
+              {{event_name}}
+            </h1>
+            <p style="color: #d1d5db; font-size: 16px; margin: 0;">
+              📅 {{event_date}} • 📍 {{event_location}}
+            </p>
+          </div>
+
+          <div style="background: white; padding: 40px 30px;">
+            <div style="background: linear-gradient(135deg, #fee2e2, #fecaca); border-left: 5px solid #ef4444; padding: 20px; margin: 0 0 30px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #7f1d1d; font-size: 18px; font-weight: 900; margin: 0 0 10px 0; text-transform: uppercase;">
+                ⏰ Urgence {{participant_firstname}} !
+              </p>
+              <p style="color: #991b1b; font-size: 15px; margin: 0; font-weight: 700;">
+                Les inscriptions ferment dans moins de 24 heures !
+              </p>
+            </div>
+
+            <p style="color: #374151; font-size: 16px; line-height: 1.7; margin: 0 0 25px 0; text-align: center;">
+              <strong style="color: #ef4444;">{{event_name}}</strong> affiche complet !
+              Seulement <strong style="color: #ef4444;">12 places restantes</strong> sur plus de 500 inscrits.
+            </p>
+
+            <div style="background: #1f2937; border-radius: 12px; padding: 30px; margin: 30px 0; text-align: center;">
+              <div style="color: #fbbf24; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px;">
+                ⏳ Compte à Rebours Final
+              </div>
+              <div style="display: flex; justify-content: center; gap: 15px;">
+                <div style="background: #ef4444; color: white; padding: 15px 20px; border-radius: 8px; min-width: 70px;">
+                  <div style="font-size: 32px; font-weight: 900;">23</div>
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Heures</div>
+                </div>
+                <div style="background: #ef4444; color: white; padding: 15px 20px; border-radius: 8px; min-width: 70px;">
+                  <div style="font-size: 32px; font-weight: 900;">47</div>
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Minutes</div>
+                </div>
+                <div style="background: #ef4444; color: white; padding: 15px 20px; border-radius: 8px; min-width: 70px;">
+                  <div style="font-size: 32px; font-weight: 900;">32</div>
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase;">Secondes</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 3px solid #f59e0b; border-radius: 12px; padding: 25px; margin: 30px 0;">
+              <h3 style="color: #78350f; margin: 0 0 15px 0; font-size: 18px; font-weight: 900; text-align: center; text-transform: uppercase;">
+                ⚡ Ne Ratez Pas
+              </h3>
+              <div style="color: #92400e; font-size: 15px; font-weight: 700; line-height: 2;">
+                <div>✅ 20+ Speakers internationaux</div>
+                <div>✅ 40+ Sessions exclusives</div>
+                <div>✅ Networking premium</div>
+                <div>✅ Kit participant complet</div>
+                <div>✅ Certificat officiel</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 20px 50px; text-decoration: none; border-radius: 50px; font-weight: 900; font-size: 18px; display: inline-block; box-shadow: 0 15px 35px rgba(239, 68, 68, 0.5); text-transform: uppercase; letter-spacing: 2px; animation: shake 0.5s infinite;">
+                🔥 Réserver ma place maintenant
+              </a>
+            </div>
+
+            <div style="background: #7f1d1d; color: white; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+              <p style="margin: 0; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+                ⚠️ APRÈS CETTE DATE, IL SERA TROP TARD ! ⚠️
+              </p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Ne laissez pas passer cette opportunité unique !<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'post-event-survey',
+      name: 'Enquête Post-Événement',
+      subject: '📝 Votre avis compte - {{event_name}}',
+      html_content: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 40px 30px; text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 20px;">💜</div>
+            <h1 style="color: white; margin: 0 0 12px 0; font-size: 32px; font-weight: 700;">
+              Merci d'avoir participé !
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              Votre avis nous aide à nous améliorer
+            </p>
+          </div>
+
+          <div style="padding: 40px 30px;">
+            <p style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">
+              Bonjour {{participant_firstname}},
+            </p>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.7; margin: 0 0 30px 0; text-align: center;">
+              Nous espérons que vous avez apprécié <strong style="color: #8b5cf6;">{{event_name}}</strong> !
+              Votre retour d'expérience est précieux pour nous aider à organiser des événements encore meilleurs.
+            </p>
+
+            <div style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-radius: 12px; padding: 30px; margin: 30px 0; text-align: center;">
+              <h3 style="color: #5b21b6; margin: 0 0 20px 0; font-size: 20px;">
+                ⭐ Partagez votre expérience
+              </h3>
+              <p style="color: #6b21a8; margin: 0 0 25px 0; font-size: 15px; line-height: 1.7;">
+                Prenez 2 minutes pour répondre à notre questionnaire de satisfaction.
+                Votre avis nous permettra d'améliorer nos futurs événements.
+              </p>
+              <div style="color: #7c3aed; font-size: 14px; font-weight: 600;">
+                ⏱️ Durée estimée : 2 minutes
+              </div>
+            </div>
+
+            <div style="background: #f9fafb; border-radius: 10px; padding: 25px; margin: 30px 0;">
+              <h4 style="color: #1f2937; margin: 0 0 15px 0; font-size: 17px; font-weight: 700; text-align: center;">
+                📊 Thèmes du questionnaire
+              </h4>
+              <div style="color: #4b5563; font-size: 15px; line-height: 2;">
+                <div>✓ Qualité du contenu et des sessions</div>
+                <div>✓ Organisation et logistique</div>
+                <div>✓ Intervenants et animations</div>
+                <div>✓ Opportunités de networking</div>
+                <div>✓ Suggestions d'amélioration</div>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 35px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; padding: 18px 45px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">
+                📝 Répondre au questionnaire
+              </a>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+              <p style="color: #92400e; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.7;">
+                🎁 <strong>Bonus :</strong> En remerciement, vous recevrez un accès prioritaire aux inscriptions pour notre prochain événement !
+              </p>
+            </div>
+
+            <div style="border-top: 2px solid #e5e7eb; padding-top: 25px; margin-top: 35px; text-align: center;">
+              <p style="color: #6b7280; font-size: 15px; margin: 0 0 15px 0; line-height: 1.7;">
+                <strong style="color: #1f2937;">Vous souhaitez partager votre expérience ?</strong><br>
+                Identifiez-nous sur les réseaux sociaux avec #{{event_name}}
+              </p>
+              <div style="margin-top: 20px;">
+                <a href="#" style="display: inline-block; margin: 0 8px; color: #6b7280; text-decoration: none;">📘 Facebook</a>
+                <a href="#" style="display: inline-block; margin: 0 8px; color: #6b7280; text-decoration: none;">🐦 Twitter</a>
+                <a href="#" style="display: inline-block; margin: 0 8px; color: #6b7280; text-decoration: none;">📸 Instagram</a>
+                <a href="#" style="display: inline-block; margin: 0 8px; color: #6b7280; text-decoration: none;">💼 LinkedIn</a>
+              </div>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Merci encore pour votre participation ! 🙏<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
+          </div>
+        </div>
+      `
+    },
+    {
+      id: 'hybrid-event',
+      name: 'Événement Hybride',
+      subject: '🌐 {{event_name}} - Présentiel & En Ligne',
+      html_content: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 0 auto; background: white;">
+          <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%); padding: 45px 30px; text-align: center;">
+            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+              <div style="background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 10px; backdrop-filter: blur(10px);">
+                <div style="font-size: 30px; margin-bottom: 5px;">🏢</div>
+                <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">Présentiel</div>
+              </div>
+              <div style="color: white; font-size: 30px; align-self: center;">+</div>
+              <div style="background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 10px; backdrop-filter: blur(10px);">
+                <div style="font-size: 30px; margin-bottom: 5px;">💻</div>
+                <div style="color: white; font-size: 12px; font-weight: 600; text-transform: uppercase;">En Ligne</div>
+              </div>
+            </div>
+            <div style="color: rgba(255,255,255,0.9); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; font-weight: 700;">
+              Événement Hybride
+            </div>
+            <h1 style="color: white; margin: 0 0 15px 0; font-size: 34px; font-weight: 700;">
+              {{event_name}}
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0;">
+              📅 {{event_date}} • 📍 {{event_location}} & En ligne
+            </p>
+          </div>
+
+          <div style="padding: 45px 35px;">
+            <p style="color: #0f172a; font-size: 18px; font-weight: 600; margin: 0 0 10px 0; text-align: center;">
+              Bonjour {{participant_firstname}},
+            </p>
+            <p style="color: #475569; font-size: 16px; line-height: 1.7; margin: 0 0 30px 0; text-align: center;">
+              Participez à <strong style="color: #0891b2;">{{event_name}}</strong> selon vos préférences :
+              sur place pour une expérience immersive, ou en ligne pour plus de flexibilité !
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
+              <div style="background: linear-gradient(135deg, #ecfeff, #cffafe); border: 2px solid #06b6d4; border-radius: 12px; padding: 25px; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 15px;">🏢</div>
+                <h3 style="color: #0e7490; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">
+                  Présentiel
+                </h3>
+                <div style="color: #155e75; font-size: 14px; line-height: 1.8;">
+                  <div>✓ Networking direct</div>
+                  <div>✓ Expérience complète</div>
+                  <div>✓ Déjeuner inclus</div>
+                  <div>✓ Kit participant</div>
+                </div>
+                <div style="margin-top: 20px;">
+                  <a href="{{landing_url}}"
+                     style="background: #0891b2; color: white; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: 700; font-size: 14px; display: inline-block; text-transform: uppercase;">
+                    Présentiel
+                  </a>
+                </div>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #0ea5e9; border-radius: 12px; padding: 25px; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 15px;">💻</div>
+                <h3 style="color: #0369a1; margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">
+                  En Ligne
+                </h3>
+                <div style="color: #075985; font-size: 14px; line-height: 1.8;">
+                  <div>✓ Depuis chez vous</div>
+                  <div>✓ Accès flexible</div>
+                  <div>✓ Chat interactif</div>
+                  <div>✓ Replay 48h</div>
+                </div>
+                <div style="margin-top: 20px;">
+                  <a href="{{landing_url}}"
+                     style="background: #0ea5e9; color: white; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: 700; font-size: 14px; display: inline-block; text-transform: uppercase;">
+                    En Ligne
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin: 30px 0;">
+              <h3 style="color: #1e293b; margin: 0 0 20px 0; font-size: 20px; text-align: center; font-weight: 700;">
+                📋 Programme Identique
+              </h3>
+              <p style="color: #475569; margin: 0 0 20px 0; font-size: 15px; text-align: center; line-height: 1.7;">
+                Que vous soyez présent physiquement ou en ligne, vous profiterez du même contenu de qualité et pourrez interagir avec les intervenants.
+              </p>
+              <div style="color: #64748b; font-size: 14px; line-height: 2; text-align: center;">
+                <div>🎤 Conférences en direct</div>
+                <div>❓ Sessions Q&A interactives</div>
+                <div>🎁 Ressources téléchargeables</div>
+                <div>📜 Certificat de participation</div>
+              </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; padding: 20px; margin: 30px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #92400e; margin: 0; font-size: 15px; line-height: 1.7;">
+                💡 <strong>Astuce :</strong> Vous pouvez changer votre mode de participation jusqu'à 48h avant l'événement via votre espace personnel.
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="{{landing_url}}"
+                 style="background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; padding: 18px 45px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
+                🎯 Choisir mon mode de participation
+              </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.6;">
+              Quel que soit votre choix, nous serons ravis de vous compter parmi nous ! 🎉<br>
+              <strong>L'équipe {{event_name}}</strong>
+            </p>
           </div>
         </div>
       `

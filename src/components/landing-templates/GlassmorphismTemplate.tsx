@@ -155,9 +155,10 @@ export default function GlassmorphismTemplate({ event, config, onRegistrationSuc
                   </div>
                   
                   <div className="fade-in stagger-2">
-                    <p className="text-xl md:text-2xl text-white/80 mb-8 font-light">
-                      {config?.customization?.heroSubtitle || event.description}
-                    </p>
+                    <div
+                      className="text-xl md:text-2xl text-white/80 mb-8 font-light"
+                      dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || event.description }}
+                    />
                   </div>
                   
                   <div className="fade-in stagger-3 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -242,9 +243,10 @@ export default function GlassmorphismTemplate({ event, config, onRegistrationSuc
                 
                 <div className="mt-8 glass-card rounded-2xl p-6">
                   <h3 className="text-xl font-semibold text-white mb-4">ℹ️ À propos</h3>
-                  <p className="text-white/80 leading-relaxed">
-                    {event.description}
-                  </p>
+                  <div
+                    className="text-white/80 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: event.description }}
+                  />
                 </div>
               </div>
             </div>
