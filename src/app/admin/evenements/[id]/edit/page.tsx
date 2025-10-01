@@ -584,7 +584,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const handlePreviewLandingPage = (templateId: string, config: LandingPageConfig) => {
     // Open preview in new tab with production URL
     const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app';
-    const previewUrl = `${publicBaseUrl}/landing/${eventId}?preview=true&template=${templateId}`;
+
+    // Encoder les données de personnalisation pour les passer dans l'URL
+    const customizationParams = encodeURIComponent(JSON.stringify(config.customization));
+    const previewUrl = `${publicBaseUrl}/landing/${eventId}?preview=true&template=${templateId}&colors=${customizationParams}`;
+
     window.open(previewUrl, '_blank');
   };
 
