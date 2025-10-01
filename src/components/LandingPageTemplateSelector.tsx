@@ -182,11 +182,13 @@ export default function LandingPageTemplateSelector({
   const [selectedTemplate, setSelectedTemplate] = useState<string>(
     currentConfig?.templateId || LANDING_PAGE_TEMPLATES[0].id
   )
-  const [showCustomization, setShowCustomization] = useState(false)
+  const [showCustomizationModal, setShowCustomizationModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [customization, setCustomization] = useState<LandingPageConfig['customization']>({
     primaryColor: '#3B82F6',
     secondaryColor: '#1F2937',
+    accentColor: '#F59E0B',
+    backgroundColor: '#FFFFFF',
     heroTitle: '',
     heroSubtitle: '',
     heroImage: '',
@@ -196,6 +198,7 @@ export default function LandingPageTemplateSelector({
     customCSS: '',
     ...currentConfig?.customization
   })
+  const [isSaving, setIsSaving] = useState(false)
 
   // Filtrer les templates par catégorie
   const filteredTemplates = selectedCategory === 'all' 
@@ -213,49 +216,116 @@ export default function LandingPageTemplateSelector({
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId)
-    
+
     // Appliquer des couleurs par défaut selon le template
     let defaultColors = { ...customization }
     const template = LANDING_PAGE_TEMPLATES.find(t => t.id === templateId)
-    
+
     if (template) {
-      switch (template.category) {
-        case 'modern':
+      // Définir les couleurs par défaut selon le template spécifique
+      switch (templateId) {
+        case 'modern-gradient':
           defaultColors.primaryColor = '#3B82F6'
-          defaultColors.secondaryColor = '#1E40AF'
+          defaultColors.secondaryColor = '#8B5CF6'
+          defaultColors.accentColor = '#EC4899'
+          defaultColors.backgroundColor = '#F8FAFC'
           break
-        case 'business':
-          defaultColors.primaryColor = '#1F2937'
-          defaultColors.secondaryColor = '#374151'
+        case 'tech-startup':
+          defaultColors.primaryColor = '#00D9FF'
+          defaultColors.secondaryColor = '#7B61FF'
+          defaultColors.accentColor = '#FF3E9D'
+          defaultColors.backgroundColor = '#0A0B1E'
           break
-        case 'minimal':
-          defaultColors.primaryColor = '#000000'
-          defaultColors.secondaryColor = '#6B7280'
+        case 'elegant-gala':
+          defaultColors.primaryColor = '#B8860B'
+          defaultColors.secondaryColor = '#2C1810'
+          defaultColors.accentColor = '#FFD700'
+          defaultColors.backgroundColor = '#0F0F0F'
           break
-        case 'creative':
-          defaultColors.primaryColor = '#EC4899'
-          defaultColors.secondaryColor = '#F59E0B'
+        case 'festival-fun':
+          defaultColors.primaryColor = '#FF6B35'
+          defaultColors.secondaryColor = '#F7931E'
+          defaultColors.accentColor = '#FF1744'
+          defaultColors.backgroundColor = '#FFF8F0'
           break
+        case 'workshop-learning':
+          defaultColors.primaryColor = '#2563EB'
+          defaultColors.secondaryColor = '#7C3AED'
+          defaultColors.accentColor = '#059669'
+          defaultColors.backgroundColor = '#F8FAFC'
+          break
+        case 'creative-event':
+          defaultColors.primaryColor = '#9333EA'
+          defaultColors.secondaryColor = '#EC4899'
+          defaultColors.accentColor = '#F97316'
+          defaultColors.backgroundColor = '#1E1B4B'
+          break
+        case 'conference-pro':
+          defaultColors.primaryColor = '#1E40AF'
+          defaultColors.secondaryColor = '#0F172A'
+          defaultColors.accentColor = '#3B82F6'
+          defaultColors.backgroundColor = '#F8FAFC'
+          break
+        default:
+          // Couleurs par catégorie pour les autres templates
+          switch (template.category) {
+            case 'modern':
+              defaultColors.primaryColor = '#3B82F6'
+              defaultColors.secondaryColor = '#1E40AF'
+              defaultColors.accentColor = '#8B5CF6'
+              break
+            case 'business':
+              defaultColors.primaryColor = '#1F2937'
+              defaultColors.secondaryColor = '#374151'
+              defaultColors.accentColor = '#3B82F6'
+              break
+            case 'minimal':
+              defaultColors.primaryColor = '#000000'
+              defaultColors.secondaryColor = '#6B7280'
+              defaultColors.accentColor = '#3B82F6'
+              break
+            case 'creative':
+              defaultColors.primaryColor = '#EC4899'
+              defaultColors.secondaryColor = '#F59E0B'
+              defaultColors.accentColor = '#8B5CF6'
+              break
+          }
       }
       setCustomization(defaultColors)
     }
-    
-    const newConfig: LandingPageConfig = {
-      templateId,
-      customization: defaultColors
-    }
-    onConfigUpdate(newConfig)
+
+    // Ouvrir le modal de personnalisation
+    setShowCustomizationModal(true)
   }
 
   const handleCustomizationChange = (field: string, value: string) => {
     const newCustomization = { ...customization, [field]: value }
     setCustomization(newCustomization)
-    
-    const newConfig: LandingPageConfig = {
-      templateId: selectedTemplate,
-      customization: newCustomization
+  }
+
+  const handleSaveCustomization = async () => {
+    setIsSaving(true)
+    try {
+      const newConfig: LandingPageConfig = {
+        templateId: selectedTemplate,
+        customization
+      }
+      await onConfigUpdate(newConfig)
+      setShowCustomizationModal(false)
+    } catch (error) {
+      console.error('Error saving customization:', error)
+      alert('Erreur lors de la sauvegarde. Veuillez réessayer.')
+    } finally {
+      setIsSaving(false)
     }
-    onConfigUpdate(newConfig)
+  }
+
+  const handlePreviewFromModal = () => {
+    const config: LandingPageConfig = {
+      templateId: selectedTemplate,
+      customization
+    }
+    onPreview(selectedTemplate, config)
   }
 
   const handlePreview = () => {
@@ -563,17 +633,45 @@ export default function LandingPageTemplateSelector({
         </div>
       </div>
 
-      {/* Panneau de personnalisation */}
-      {showCustomization && selectedTemplateData && (
-        <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-          <h4 className="font-semibold text-gray-900 mb-4">
-            Personnalisation - {selectedTemplateData.name}
-          </h4>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Modal de personnalisation */}
+      {showCustomizationModal && selectedTemplateData && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {/* Fond sombre */}
+            <div
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              aria-hidden="true"
+              onClick={() => setShowCustomizationModal(false)}
+            ></div>
+
+            {/* Centrage du modal */}
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            {/* Contenu du modal */}
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-2xl font-bold text-white" id="modal-title">
+                    Personnaliser - {selectedTemplateData.name}
+                  </h3>
+                  <button
+                    onClick={() => setShowCustomizationModal(false)}
+                    className="text-white hover:text-gray-200 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="bg-white px-6 py-6 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Couleurs */}
             <div>
-              <h5 className="font-medium text-gray-700 mb-3">Couleurs</h5>
+              <h5 className="font-medium text-gray-700 mb-3">Couleurs du Template</h5>
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Couleur principale</label>
@@ -593,7 +691,7 @@ export default function LandingPageTemplateSelector({
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Couleur secondaire</label>
                   <div className="flex items-center space-x-2">
@@ -611,6 +709,46 @@ export default function LandingPageTemplateSelector({
                       placeholder="#1F2937"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Couleur d'accentuation (optionnel)</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={customization.accentColor || '#F59E0B'}
+                      onChange={(e) => handleCustomizationChange('accentColor', e.target.value)}
+                      className="h-10 w-20 border border-gray-300 rounded"
+                    />
+                    <input
+                      type="text"
+                      value={customization.accentColor || ''}
+                      onChange={(e) => handleCustomizationChange('accentColor', e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="#F59E0B"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Utilisé pour les boutons, badges et éléments interactifs</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Couleur de fond (optionnel)</label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={customization.backgroundColor || '#FFFFFF'}
+                      onChange={(e) => handleCustomizationChange('backgroundColor', e.target.value)}
+                      className="h-10 w-20 border border-gray-300 rounded"
+                    />
+                    <input
+                      type="text"
+                      value={customization.backgroundColor || ''}
+                      onChange={(e) => handleCustomizationChange('backgroundColor', e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="#FFFFFF"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Couleur de fond principal du template</p>
                 </div>
               </div>
             </div>
@@ -693,16 +831,65 @@ export default function LandingPageTemplateSelector({
               </div>
             </div>
 
-            {/* CSS personnalisé */}
-            <div>
-              <h5 className="font-medium text-gray-700 mb-3">CSS Personnalisé</h5>
-              <textarea
-                value={customization.customCSS}
-                onChange={(e) => handleCustomizationChange('customCSS', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
-                rows={4}
-                placeholder="/* Votre CSS personnalisé */&#10;.hero-section {&#10;  /* styles personnalisés */&#10;}"
-              />
+                  {/* CSS personnalisé */}
+                  <div>
+                    <h5 className="font-medium text-gray-700 mb-3">CSS Personnalisé</h5>
+                    <textarea
+                      value={customization.customCSS}
+                      onChange={(e) => handleCustomizationChange('customCSS', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm"
+                      rows={4}
+                      placeholder="/* Votre CSS personnalisé */&#10;.hero-section {&#10;  /* styles personnalisés */&#10;}"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer with action buttons */}
+              <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <button
+                  onClick={handlePreviewFromModal}
+                  className="px-6 py-2.5 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold flex items-center space-x-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>Aperçu</span>
+                </button>
+
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setShowCustomizationModal(false)}
+                    className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+                    disabled={isSaving}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleSaveCustomization}
+                    disabled={isSaving}
+                    className="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-colors font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Sauvegarde...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Enregistrer et fermer</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

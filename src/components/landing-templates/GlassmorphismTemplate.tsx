@@ -240,14 +240,6 @@ export default function GlassmorphismTemplate({ event, config, onRegistrationSuc
                     <p className="text-white/80">{event.lieu}</p>
                   </div>
                 </div>
-                
-                <div className="mt-8 glass-card rounded-2xl p-6">
-                  <h3 className="text-xl font-semibold text-white mb-4">ℹ️ À propos</h3>
-                  <div
-                    className="text-white/80 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: event.description }}
-                  />
-                </div>
               </div>
             </div>
           </section>

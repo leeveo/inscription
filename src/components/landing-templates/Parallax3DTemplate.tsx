@@ -1,29 +1,51 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import LandingRegistrationForm from '@/components/ParticipantForm'
+import { LandingPageConfig } from '@/types'
+import LandingRegistrationForm from '@/components/LandingRegistrationForm'
+import { useState, useEffect } from 'react'
 
-interface Parallax3DTemplateProps {
-  eventData: any
-  config: any
+interface Event {
+  id: string
+  nom: string
+  description: string
+  lieu: string
+  date_debut: string
+  date_fin: string
+  prix?: number
+  places_disponibles?: number
+  organisateur?: string
+  email_contact?: string
+  telephone_contact?: string
+  image_url?: string
+  statut?: string
+  type_evenement?: string
 }
 
-export default function Parallax3DTemplate({ eventData, config }: Parallax3DTemplateProps) {
+interface LandingTemplateProps {
+  event: Event
+  config: LandingPageConfig
+  onRegistrationSuccess: () => void
+  registrationSuccess: boolean
+  isPreview?: boolean
+  participantData?: any
+  token?: string | null
+}
+
+export default function Parallax3DTemplate({ event, config, onRegistrationSuccess, registrationSuccess, isPreview = false, participantData, token }: LandingTemplateProps) {
   const [scrollY, setScrollY] = useState(0)
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [mouseX, setMouseX] = useState(0)
+  const [mouseY, setMouseY] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({
-        x: (e.clientX / window.innerWidth) * 2 - 1,
-        y: (e.clientY / window.innerHeight) * 2 - 1
-      })
+      setMouseX((e.clientX / window.innerWidth - 0.5) * 20)
+      setMouseY((e.clientY / window.innerHeight - 0.5) * 20)
     }
 
     window.addEventListener('scroll', handleScroll)
     window.addEventListener('mousemove', handleMouseMove)
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('mousemove', handleMouseMove)
@@ -32,272 +54,261 @@ export default function Parallax3DTemplate({ eventData, config }: Parallax3DTemp
 
   const primaryColor = config?.customization?.primaryColor || '#667EEA'
   const secondaryColor = config?.customization?.secondaryColor || '#764BA2'
+  const accentColor = config?.customization?.accentColor || '#F093FB'
+  const backgroundColor = config?.customization?.backgroundColor || '#0F0F23'
 
   return (
     <>
       <style jsx>{`
-        .parallax-container {
+        .parallax-3d {
+          background: ${backgroundColor};
           perspective: 1000px;
-          perspective-origin: 50% 50%;
         }
-        
-        .parallax-layer {
+
+        .layer-back {
+          transform: translateZ(-100px) scale(1.1) translateY(${scrollY * 0.5}px);
+        }
+
+        .layer-middle {
+          transform: translateZ(0px) translateY(${scrollY * 0.3}px);
+        }
+
+        .layer-front {
+          transform: translateZ(100px) translateY(${scrollY * 0.1}px);
+        }
+
+        .card-3d {
+          transform: rotateX(${mouseY * 0.5}deg) rotateY(${mouseX * 0.5}deg);
           transform-style: preserve-3d;
-        }
-        
-        .layer-1 {
-          transform: translateZ(${scrollY * 0.1}px) translateY(${scrollY * 0.2}px);
-        }
-        
-        .layer-2 {
-          transform: translateZ(${scrollY * 0.2}px) translateY(${scrollY * 0.1}px);
-        }
-        
-        .layer-3 {
-          transform: translateZ(${scrollY * 0.3}px) translateY(${scrollY * 0.05}px);
-        }
-        
-        .mouse-parallax {
-          transform: translateX(${mousePos.x * 20}px) translateY(${mousePos.y * 10}px);
           transition: transform 0.1s ease-out;
         }
-        
-        .floating-3d {
-          transform: 
-            rotateX(${mousePos.y * 5}deg) 
-            rotateY(${mousePos.x * 5}deg) 
-            translateZ(50px);
-          transition: transform 0.2s ease-out;
+
+        .card-3d-inner {
+          transform: translateZ(50px);
         }
-        
+
         .gradient-3d {
-          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor}, ${accentColor});
         }
-        
-        .card-3d {
+
+        .floating-3d {
+          animation: floating-3d 6s ease-in-out infinite;
           transform-style: preserve-3d;
-          transition: transform 0.3s ease;
         }
-        
-        .card-3d:hover {
-          transform: rotateY(5deg) rotateX(5deg) translateZ(20px);
+
+        @keyframes floating-3d {
+          0%, 100% {
+            transform: translateZ(0) translateY(0);
+          }
+          50% {
+            transform: translateZ(50px) translateY(-30px);
+          }
         }
-        
+
+        .cube-3d {
+          width: 100px;
+          height: 100px;
+          position: relative;
+          transform-style: preserve-3d;
+          animation: rotate-cube 20s linear infinite;
+        }
+
+        @keyframes rotate-cube {
+          0% { transform: rotateX(0deg) rotateY(0deg); }
+          100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .cube-face {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          background: linear-gradient(135deg, ${primaryColor}40, ${secondaryColor}40);
+          border: 2px solid ${accentColor}60;
+        }
+
+        .cube-front  { transform: translateZ(50px); }
+        .cube-back   { transform: translateZ(-50px) rotateY(180deg); }
+        .cube-right  { transform: rotateY(90deg) translateZ(50px); }
+        .cube-left   { transform: rotateY(-90deg) translateZ(50px); }
+        .cube-top    { transform: rotateX(90deg) translateZ(50px); }
+        .cube-bottom { transform: rotateX(-90deg) translateZ(50px); }
+
         .text-3d {
-          text-shadow: 
-            0 1px 0 #ccc,
-            0 2px 0 #c9c9c9,
-            0 3px 0 #bbb,
-            0 4px 0 #b9b9b9,
-            0 5px 0 #aaa,
-            0 6px 1px rgba(0,0,0,.1),
-            0 0 5px rgba(0,0,0,.1),
-            0 1px 3px rgba(0,0,0,.3),
-            0 3px 5px rgba(0,0,0,.2),
-            0 5px 10px rgba(0,0,0,.25);
+          text-shadow:
+            0 1px 0 ${secondaryColor},
+            0 2px 0 ${secondaryColor}cc,
+            0 3px 0 ${secondaryColor}aa,
+            0 4px 0 ${secondaryColor}88,
+            0 5px 10px ${primaryColor}40,
+            0 10px 20px ${primaryColor}20;
         }
-        
-        .geometric-bg {
-          background-image: 
-            linear-gradient(30deg, ${primaryColor}20 12%, transparent 12.5%, transparent 87%, ${primaryColor}20 87.5%, ${primaryColor}20),
-            linear-gradient(150deg, ${primaryColor}20 12%, transparent 12.5%, transparent 87%, ${primaryColor}20 87.5%, ${primaryColor}20),
-            linear-gradient(30deg, ${primaryColor}20 12%, transparent 12.5%, transparent 87%, ${primaryColor}20 87.5%, ${primaryColor}20),
-            linear-gradient(150deg, ${primaryColor}20 12%, transparent 12.5%, transparent 87%, ${primaryColor}20 87.5%, ${primaryColor}20);
+
+        .glass-morph-3d {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow:
+            0 8px 32px 0 rgba(0, 0, 0, 0.37),
+            inset 0 0 20px ${primaryColor}10;
+        }
+
+        .depth-shadow {
+          box-shadow:
+            0 10px 30px ${primaryColor}40,
+            0 20px 60px ${secondaryColor}30,
+            0 30px 90px ${accentColor}20;
+        }
+
+        .geometric-pattern {
+          background-image:
+            linear-gradient(30deg, ${primaryColor}10 12%, transparent 12.5%, transparent 87%, ${primaryColor}10 87.5%),
+            linear-gradient(150deg, ${secondaryColor}10 12%, transparent 12.5%, transparent 87%, ${secondaryColor}10 87.5%),
+            linear-gradient(30deg, ${accentColor}10 12%, transparent 12.5%, transparent 87%, ${accentColor}10 87.5%);
           background-size: 80px 140px;
-          background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+          background-position: 0 0, 40px 70px, 80px 140px;
         }
       `}</style>
 
-      <div className="min-h-screen parallax-container overflow-hidden">
-        {/* Background layers */}
-        <div className="fixed inset-0">
-          <div className="absolute inset-0 gradient-3d opacity-90"></div>
-          <div className="absolute inset-0 geometric-bg opacity-30"></div>
-          
-          {/* Floating geometric shapes */}
-          <div className="layer-1 parallax-layer">
-            <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full mouse-parallax"></div>
-            <div className="absolute top-40 right-20 w-24 h-24 bg-white/15 transform rotate-45 mouse-parallax"></div>
-            <div className="absolute bottom-40 left-1/4 w-16 h-16 bg-white/20 rounded-full mouse-parallax"></div>
+      <div className="parallax-3d min-h-screen relative overflow-hidden geometric-pattern">
+        {/* Floating 3D cubes */}
+        <div className="layer-back fixed inset-0 pointer-events-none">
+          <div className="cube-3d absolute top-20 left-10" style={{ animationDelay: '0s' }}>
+            <div className="cube-face cube-front"></div>
+            <div className="cube-face cube-back"></div>
+            <div className="cube-face cube-right"></div>
+            <div className="cube-face cube-left"></div>
+            <div className="cube-face cube-top"></div>
+            <div className="cube-face cube-bottom"></div>
           </div>
-          
-          <div className="layer-2 parallax-layer">
-            <div className="absolute top-60 right-10 w-20 h-20 border-2 border-white/20 rounded-full mouse-parallax"></div>
-            <div className="absolute bottom-20 right-1/3 w-28 h-28 border-2 border-white/15 transform rotate-12 mouse-parallax"></div>
-          </div>
-          
-          <div className="layer-3 parallax-layer">
-            <div className="absolute top-1/3 left-1/2 w-6 h-6 bg-white/30 rounded-full mouse-parallax"></div>
-            <div className="absolute bottom-1/3 left-10 w-12 h-12 border border-white/25 transform rotate-45 mouse-parallax"></div>
+
+          <div className="cube-3d absolute bottom-20 right-20" style={{ animationDelay: '-10s' }}>
+            <div className="cube-face cube-front"></div>
+            <div className="cube-face cube-back"></div>
+            <div className="cube-face cube-right"></div>
+            <div className="cube-face cube-left"></div>
+            <div className="cube-face cube-top"></div>
+            <div className="cube-face cube-bottom"></div>
           </div>
         </div>
 
         {/* Hero Section */}
-        <section className="relative z-10 min-h-screen flex items-center justify-center px-4">
-          <div className="container mx-auto max-w-6xl">
-            <div className="text-center">
-              
-              {/* Main Title with 3D effect */}
-              <div className="floating-3d mb-8">
-                <h1 className="text-6xl md:text-8xl font-black text-white text-3d leading-tight">
-                  {config?.customization?.heroTitle || eventData.nom}
-                </h1>
+        <section className="layer-middle relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
+          <div className="container mx-auto max-w-7xl">
+
+            <div className="text-center mb-16">
+              <div className="floating-3d inline-block mb-6 px-8 py-3 rounded-full gradient-3d">
+                <span className="text-white font-bold uppercase tracking-wider text-sm">
+                  Événement 2024
+                </span>
               </div>
-              
-              {/* Subtitle */}
-              <div className="mouse-parallax mb-12">
-                <div
-                  className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || eventData.description }}
-                />
-              </div>
-              
-              {/* Info Cards with 3D hover */}
-              <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
-                <div className="card-3d bg-white/20 backdrop-blur-md rounded-3xl p-8 border border-white/30">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-16 h-16 gradient-3d rounded-full flex items-center justify-center">
+
+              <h1 className="text-6xl md:text-9xl font-black text-white text-3d mb-8 leading-tight">
+                {config?.customization?.heroTitle || event.nom}
+              </h1>
+
+              <div
+                className="text-2xl text-white/80 mb-12 leading-relaxed max-w-4xl mx-auto"
+                dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || event.description }}
+              />
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+
+              {/* Left: Info Cards with 3D effect */}
+              <div className="space-y-8">
+                <div className="card-3d glass-morph-3d rounded-3xl p-8 depth-shadow">
+                  <div className="card-3d-inner flex items-center space-x-6">
+                    <div className="w-16 h-16 rounded-2xl gradient-3d flex items-center justify-center">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-widest mb-2" style={{ color: accentColor }}>
+                        Date & Heure
+                      </div>
+                      <div className="text-white font-bold text-xl">
+                        {new Date(event.date_debut).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long'
+                        })}
+                      </div>
+                      <div className="text-white/60 text-sm mt-1">
+                        {new Date(event.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Date & Heure</h3>
-                  <p className="text-white/80">
-                    {new Date(eventData.date_debut).toLocaleDateString('fr-FR', { 
-                      weekday: 'long',
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-white/70 text-sm mt-1">
-                    {new Date(eventData.date_debut).toLocaleTimeString('fr-FR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
                 </div>
-                
-                <div className="card-3d bg-white/20 backdrop-blur-md rounded-3xl p-8 border border-white/30">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-16 h-16 gradient-3d rounded-full flex items-center justify-center">
+
+                <div className="card-3d glass-morph-3d rounded-3xl p-8 depth-shadow">
+                  <div className="card-3d-inner flex items-center space-x-6">
+                    <div className="w-16 h-16 rounded-2xl gradient-3d flex items-center justify-center">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-widest mb-2" style={{ color: accentColor }}>
+                        Localisation
+                      </div>
+                      <div className="text-white font-bold text-xl">
+                        {event.lieu}
+                      </div>
+                      <div className="text-white/60 text-sm mt-1">
+                        Centre-ville
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Localisation</h3>
-                  <p className="text-white/80">{eventData.lieu}</p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Registration Section */}
-        <section className="relative z-10 py-20 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              
-              {/* Content */}
-              <div className="mouse-parallax">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 text-3d">
-                  Rejoignez l'aventure
-                </h2>
-                <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                  Une expérience unique vous attend. Ne manquez pas cette opportunité exceptionnelle de faire partie de quelque chose de grand.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 gradient-3d rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-white/80">Inscription gratuite</span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 gradient-3d rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-white/80">Networking premium</span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 gradient-3d rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-white/80">Certificat de participation</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Registration Form */}
-              <div className="floating-3d">
-                <div className="card-3d bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
-                  <div className="text-center mb-6">
-                    <div className="w-16 h-16 gradient-3d rounded-full mx-auto mb-4 flex items-center justify-center">
+                <div className="card-3d glass-morph-3d rounded-3xl p-8 depth-shadow">
+                  <div className="card-3d-inner flex items-center space-x-6">
+                    <div className="w-16 h-16 rounded-2xl gradient-3d flex items-center justify-center">
                       <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                      Inscription
-                    </h3>
-                    <p className="text-gray-600">
-                      Réservez votre place maintenant
-                    </p>
+                    <div>
+                      <div className="text-xs uppercase tracking-widest mb-2" style={{ color: accentColor }}>
+                        Tarif
+                      </div>
+                      <div className="text-white font-bold text-xl">
+                        {event.prix ? `${event.prix}€` : 'Gratuit'}
+                      </div>
+                      <div className="text-white/60 text-sm mt-1">
+                        Inscription obligatoire
+                      </div>
+                    </div>
                   </div>
-                  
-                  <LandingRegistrationForm 
-                    eventId={eventData.id}
-                    onParticipantAdded={() => {}}
-                    onCancel={() => {}}
-                  />
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Details Section */}
-        <section className="relative z-10 py-20 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-white text-3d mb-4">
-                Détails de l'événement
-              </h2>
-              <div className="w-24 h-1 gradient-3d mx-auto rounded-full"></div>
-            </div>
-            
-            <div className="card-3d bg-white/20 backdrop-blur-md rounded-3xl p-8 border border-white/30">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">Programme</h3>
-                  <div className="space-y-3">
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <p className="text-white/70 text-sm">Début</p>
-                      <p className="text-white font-semibold">{new Date(eventData.date_debut).toLocaleString('fr-FR')}</p>
+              {/* Right: Registration Form with 3D card */}
+              <div className="layer-front">
+                <div className="card-3d glass-morph-3d rounded-3xl p-10 depth-shadow">
+                  <div className="card-3d-inner">
+                    <div className="text-center mb-8">
+                      <div className="floating-3d w-24 h-24 mx-auto mb-6 rounded-3xl gradient-3d flex items-center justify-center depth-shadow">
+                        <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                      </div>
+
+                      <h3 className="text-4xl font-black text-white mb-3">
+                        Inscription
+                      </h3>
+                      <p className="text-white/70 text-lg">
+                        Rejoignez l'aventure en 3D
+                      </p>
                     </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <p className="text-white/70 text-sm">Fin</p>
-                      <p className="text-white font-semibold">{new Date(eventData.date_fin).toLocaleString('fr-FR')}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">À propos</h3>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <div
-                      className="text-white/80 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: eventData.description }}
+
+                    <LandingRegistrationForm
+                      eventId={event.id}
+                      onSuccess={onRegistrationSuccess}
+                      participantData={participantData}
+                      token={token}
                     />
                   </div>
                 </div>
@@ -306,12 +317,59 @@ export default function Parallax3DTemplate({ eventData, config }: Parallax3DTemp
           </div>
         </section>
 
+        {/* Features Section */}
+        <section className="layer-middle relative z-10 py-24 px-4">
+          <div className="container mx-auto max-w-6xl">
+            <h2 className="text-5xl font-black text-center mb-16 text-white text-3d">
+              Une expérience en 3 dimensions
+            </h2>
+
+            <div className="grid md:grid-cols-3 gap-10">
+              <div className="card-3d glass-morph-3d rounded-2xl p-8 text-center depth-shadow">
+                <div className="card-3d-inner">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl gradient-3d flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-3">Immersif</h3>
+                  <p className="text-white/70">Plongez dans une expérience unique</p>
+                </div>
+              </div>
+
+              <div className="card-3d glass-morph-3d rounded-2xl p-8 text-center depth-shadow">
+                <div className="card-3d-inner">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl gradient-3d flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-3">Interactif</h3>
+                  <p className="text-white/70">Échangez et créez des liens</p>
+                </div>
+              </div>
+
+              <div className="card-3d glass-morph-3d rounded-2xl p-8 text-center depth-shadow">
+                <div className="card-3d-inner">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl gradient-3d flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-3">Magique</h3>
+                  <p className="text-white/70">Des moments inoubliables</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Footer */}
-        <footer className="relative z-10 py-12 px-4">
-          <div className="container mx-auto max-w-4xl text-center">
-            <div className="card-3d bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-              <p className="text-white/60">
-                © {new Date().getFullYear()} - Événement créé avec innovation
+        <footer className="layer-front relative z-10 py-12 px-4">
+          <div className="container mx-auto text-center">
+            <div className="glass-morph-3d inline-block rounded-2xl px-10 py-6">
+              <p className="text-white/80 font-semibold">
+                © {new Date().getFullYear()} - Événement en relief
               </p>
             </div>
           </div>

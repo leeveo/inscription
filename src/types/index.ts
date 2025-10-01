@@ -24,6 +24,8 @@ export interface LandingPageTemplate {
 export interface LandingPageCustomization {
   primaryColor: string
   secondaryColor: string
+  accentColor?: string
+  backgroundColor?: string
   heroTitle?: string
   heroSubtitle?: string
   heroImage?: string

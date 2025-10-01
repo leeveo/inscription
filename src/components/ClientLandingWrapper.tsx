@@ -7,12 +7,15 @@ import MinimalCleanTemplate from '@/components/landing-templates/MinimalCleanTem
 import FullscreenVideoTemplate from '@/components/landing-templates/FullscreenVideoTemplate'
 import GlassmorphismTemplate from '@/components/landing-templates/GlassmorphismTemplate'
 import ClassicBusinessTemplate from '@/components/landing-templates/ClassicBusinessTemplate'
-// Templates temporairement commentés à cause d'interfaces incompatibles
-// import Parallax3DTemplate from '@/components/landing-templates/Parallax3DTemplate'
-// import ConferenceProTemplate from '@/components/landing-templates/ConferenceProTemplate'
-// import CreativeEventTemplate from '@/components/landing-templates/CreativeEventTemplate'
-// import OnepageScrollTemplate from '@/components/landing-templates/OnepageScrollTemplate'
-// import NeomorphismTemplate from '@/components/landing-templates/NeomorphismTemplate'
+import Parallax3DTemplate from '@/components/landing-templates/Parallax3DTemplate'
+import ConferenceProTemplate from '@/components/landing-templates/ConferenceProTemplate'
+import CreativeEventTemplate from '@/components/landing-templates/CreativeEventTemplate'
+import OnepageScrollTemplate from '@/components/landing-templates/OnepageScrollTemplate'
+import NeomorphismTemplate from '@/components/landing-templates/NeomorphismTemplate'
+import TechStartupTemplate from '@/components/landing-templates/TechStartupTemplate'
+import ElegantGalaTemplate from '@/components/landing-templates/ElegantGalaTemplate'
+import FestivalFunTemplate from '@/components/landing-templates/FestivalFunTemplate'
+import WorkshopLearningTemplate from '@/components/landing-templates/WorkshopLearningTemplate'
 
 interface ClientLandingWrapperProps {
   templateId: string
@@ -104,23 +107,101 @@ export default function ClientLandingWrapper({
         />
       )
 
-      case 'parallax-3d':
-      case 'conference-pro':
-      case 'creative-event':
-      case 'onepage-scroll':
-      case 'neomorphism':
-        // Templates temporairement désactivés - utilise le fallback
-        console.warn(`Template ${templateId} temporairement désactivé, utilisation du template par défaut`)
-        return (
-          <ModernGradientTemplate
-            event={event}
-            config={config}
-            onRegistrationSuccess={handleRegistrationSuccess}
-            registrationSuccess={registrationSuccess}
-            participantData={participantData}
-            token={token}
-          />
-        )
+    case 'parallax-3d':
+      return (
+        <Parallax3DTemplate
+          eventData={event}
+          config={config}
+        />
+      )
+
+    case 'conference-pro':
+      return (
+        <ConferenceProTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
+
+    case 'creative-event':
+      return (
+        <CreativeEventTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
+
+    case 'onepage-scroll':
+      return (
+        <OnepageScrollTemplate
+          eventData={event}
+          config={config}
+        />
+      )
+
+    case 'neomorphism':
+      return (
+        <NeomorphismTemplate
+          eventData={event}
+          config={config}
+        />
+      )
+
+    case 'tech-startup':
+      return (
+        <TechStartupTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
+
+    case 'elegant-gala':
+      return (
+        <ElegantGalaTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
+
+    case 'festival-fun':
+      return (
+        <FestivalFunTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
+
+    case 'workshop-learning':
+      return (
+        <WorkshopLearningTemplate
+          event={event}
+          config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
+        />
+      )
 
     default:
       // Fallback to modern-gradient template for unknown templates

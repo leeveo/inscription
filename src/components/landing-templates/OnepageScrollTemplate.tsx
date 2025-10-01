@@ -1,67 +1,90 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import LandingRegistrationForm from '@/components/ParticipantForm'
+import { LandingPageConfig } from '@/types'
+import LandingRegistrationForm from '@/components/LandingRegistrationForm'
+import { useState, useEffect } from 'react'
 
-interface OnepageScrollTemplateProps {
-  eventData: any
-  config: any
+interface Event {
+  id: string
+  nom: string
+  description: string
+  lieu: string
+  date_debut: string
+  date_fin: string
+  prix?: number
+  places_disponibles?: number
+  organisateur?: string
+  email_contact?: string
+  telephone_contact?: string
+  image_url?: string
+  statut?: string
+  type_evenement?: string
 }
 
-export default function OnepageScrollTemplate({ eventData, config }: OnepageScrollTemplateProps) {
+interface LandingTemplateProps {
+  event: Event
+  config: LandingPageConfig
+  onRegistrationSuccess: () => void
+  registrationSuccess: boolean
+  isPreview?: boolean
+  participantData?: any
+  token?: string | null
+}
+
+export default function OnepageScrollTemplate({ event, config, onRegistrationSuccess, registrationSuccess, isPreview = false, participantData, token }: LandingTemplateProps) {
   const [currentSection, setCurrentSection] = useState(0)
   const [isScrolling, setIsScrolling] = useState(false)
+  const sections = ['hero', 'details', 'features', 'register']
 
-  const sections = ['hero', 'about', 'details', 'register']
-  
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      
       if (isScrolling) return
-      
+      e.preventDefault()
+
       setIsScrolling(true)
-      
+
       if (e.deltaY > 0 && currentSection < sections.length - 1) {
-        setCurrentSection(currentSection + 1)
+        setCurrentSection(prev => prev + 1)
       } else if (e.deltaY < 0 && currentSection > 0) {
-        setCurrentSection(currentSection - 1)
+        setCurrentSection(prev => prev - 1)
       }
-      
-      setTimeout(() => setIsScrolling(false), 1000)
+
+      setTimeout(() => setIsScrolling(false), 800)
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isScrolling) return
-      
-      if (e.key === 'ArrowDown' && currentSection < sections.length - 1) {
+
+      if ((e.key === 'ArrowDown' || e.key === 'PageDown') && currentSection < sections.length - 1) {
         setIsScrolling(true)
-        setCurrentSection(currentSection + 1)
-        setTimeout(() => setIsScrolling(false), 1000)
-      } else if (e.key === 'ArrowUp' && currentSection > 0) {
+        setCurrentSection(prev => prev + 1)
+        setTimeout(() => setIsScrolling(false), 800)
+      } else if ((e.key === 'ArrowUp' || e.key === 'PageUp') && currentSection > 0) {
         setIsScrolling(true)
-        setCurrentSection(currentSection - 1)
-        setTimeout(() => setIsScrolling(false), 1000)
+        setCurrentSection(prev => prev - 1)
+        setTimeout(() => setIsScrolling(false), 800)
       }
     }
 
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('keydown', handleKeyDown)
-    
+
     return () => {
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [currentSection, isScrolling, sections.length])
 
-  const primaryColor = config?.customization?.primaryColor || '#6366F1'
+  const primaryColor = config?.customization?.primaryColor || '#8B5CF6'
   const secondaryColor = config?.customization?.secondaryColor || '#EC4899'
+  const accentColor = config?.customization?.accentColor || '#F59E0B'
+  const backgroundColor = config?.customization?.backgroundColor || '#1F2937'
 
   const navigateToSection = (index: number) => {
     if (isScrolling) return
     setIsScrolling(true)
     setCurrentSection(index)
-    setTimeout(() => setIsScrolling(false), 1000)
+    setTimeout(() => setIsScrolling(false), 800)
   }
 
   return (
@@ -69,323 +92,344 @@ export default function OnepageScrollTemplate({ eventData, config }: OnepageScro
       <style jsx>{`
         .scroll-container {
           transform: translateY(-${currentSection * 100}vh);
-          transition: transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
         }
-        
-        .gradient-primary {
-          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+
+        .section-active {
+          animation: section-fade-in 0.8s ease-out forwards;
         }
-        
-        .gradient-secondary {
-          background: linear-gradient(45deg, ${secondaryColor}, ${primaryColor});
-        }
-        
-        .animate-float {
-          animation: float-smooth 3s ease-in-out infinite;
-        }
-        
-        .animate-float-delay {
-          animation: float-smooth 3s ease-in-out infinite;
-          animation-delay: -1.5s;
-        }
-        
-        @keyframes float-smooth {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(2deg); }
-        }
-        
-        .section-enter {
-          animation: sectionEnter 0.8s ease-out forwards;
-        }
-        
-        @keyframes sectionEnter {
-          from { opacity: 0; transform: translateY(50px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .pulse-ring {
-          animation: pulse-ring 2s ease-out infinite;
-        }
-        
-        @keyframes pulse-ring {
-          0% {
-            transform: scale(0.8);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(2.4);
+
+        @keyframes section-fade-in {
+          from {
             opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
           }
         }
-        
-        .typewriter {
-          overflow: hidden;
-          border-right: 3px solid;
-          white-space: nowrap;
-          animation: 
-            typewriter 3s steps(40) 1s forwards,
-            blink 1s infinite;
+
+        .gradient-animated {
+          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor}, ${accentColor});
+          background-size: 200% 200%;
+          animation: gradient-shift 8s ease infinite;
         }
-        
-        @keyframes typewriter {
-          from { width: 0 }
-          to { width: 100% }
+
+        @keyframes gradient-shift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
-        
-        @keyframes blink {
-          0%, 50% { border-color: transparent }
-          51%, 100% { border-color: white }
+
+        .dot-indicator {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: ${backgroundColor};
+          border: 2px solid white;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+        .dot-indicator.active {
+          width: 14px;
+          height: 14px;
+          background: ${primaryColor};
+          box-shadow: 0 0 20px ${primaryColor};
+        }
+
+        .dot-indicator:hover {
+          transform: scale(1.2);
+        }
+
+        .fullscreen-section {
+          background: ${backgroundColor};
+        }
+
+        .section-title {
+          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .glow-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .glow-card:hover {
+          box-shadow: 0 8px 32px ${primaryColor}40;
+          transform: translateY(-5px);
+        }
+
+        .scroll-indicator {
+          animation: bounce-smooth 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce-smooth {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(10px); }
+        }
+
+        .number-badge {
+          background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor});
+          box-shadow: 0 4px 15px ${primaryColor}60;
+        }
+
+        .progress-circle {
+          stroke-dasharray: 339;
+          stroke-dashoffset: ${339 - (339 * ((currentSection + 1) / sections.length))};
+          transition: stroke-dashoffset 0.8s ease;
+        }
+
+        .floating-shapes {
+          animation: float-shapes 6s ease-in-out infinite;
+        }
+
+        @keyframes float-shapes {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          33% { transform: translateY(-20px) rotate(5deg); }
+          66% { transform: translateY(-10px) rotate(-5deg); }
+        }
+
+        .highlight-pulse {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 20px ${accentColor}40; }
+          50% { box-shadow: 0 0 40px ${accentColor}80; }
         }
       `}</style>
 
-      <div className="h-screen overflow-hidden relative">
-        {/* Navigation dots */}
-        <div className="fixed right-8 top-1/2 transform -translate-y-1/2 z-50">
-          <div className="space-y-4">
-            {sections.map((section, index) => (
+      <div className="h-screen overflow-hidden relative fullscreen-section">
+        {/* Navigation Dots */}
+        <div className="fixed right-8 top-1/2 transform -translate-y-1/2 z-50 space-y-6">
+          {sections.map((section, index) => (
+            <div key={section} className="flex items-center gap-3">
+              <span className={`text-white text-xs font-semibold transition-all ${currentSection === index ? 'opacity-100' : 'opacity-0'}`}>
+                {section.charAt(0).toUpperCase() + section.slice(1)}
+              </span>
               <button
-                key={section}
                 onClick={() => navigateToSection(index)}
-                className={`w-3 h-3 rounded-full border-2 border-white transition-all duration-300 ${
-                  currentSection === index 
-                    ? 'bg-white scale-150' 
-                    : 'bg-transparent hover:bg-white/50'
-                }`}
-                title={section}
+                className={`dot-indicator ${currentSection === index ? 'active' : ''}`}
+                aria-label={`Go to ${section}`}
               />
-            ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Circle */}
+        <div className="fixed top-8 right-8 z-50">
+          <svg className="w-16 h-16 transform -rotate-90">
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke="rgba(255,255,255,0.2)"
+              strokeWidth="4"
+              fill="none"
+            />
+            <circle
+              cx="32"
+              cy="32"
+              r="28"
+              stroke={primaryColor}
+              strokeWidth="4"
+              fill="none"
+              className="progress-circle"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">{currentSection + 1}/{sections.length}</span>
           </div>
         </div>
 
-        {/* Sections container */}
+        {/* Sections Container */}
         <div className="scroll-container">
-          
-          {/* Hero Section */}
-          <section className="h-screen flex items-center justify-center gradient-primary relative overflow-hidden">
-            <div className="absolute inset-0">
-              <div className="animate-float absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full"></div>
-              <div className="animate-float-delay absolute top-40 right-32 w-24 h-24 bg-white/20 rounded-full"></div>
-              <div className="animate-float absolute bottom-32 left-1/3 w-16 h-16 bg-white/15 rounded-full"></div>
-            </div>
-            
-            <div className="container mx-auto px-4 text-center relative z-10">
-              <div className="section-enter">
-                <h1 className="text-6xl md:text-8xl font-black text-white mb-6 typewriter">
-                  {config?.customization?.heroTitle || eventData.nom}
-                </h1>
-                <div
-                  className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || eventData.description }}
-                />
-                
-                {/* Animated arrow */}
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                  <div className="relative">
-                    <div className="pulse-ring absolute inset-0 w-8 h-8 bg-white/30 rounded-full"></div>
-                    <div className="w-8 h-8 bg-white/50 rounded-full flex items-center justify-center animate-bounce">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                      </svg>
-                    </div>
-                  </div>
-                  <p className="text-white/70 text-sm mt-2">Faites défiler</p>
-                </div>
+
+          {/* Section 1: Hero */}
+          <section className="h-screen flex items-center justify-center relative overflow-hidden">
+            <div className="gradient-animated absolute inset-0 opacity-90"></div>
+
+            {/* Floating shapes */}
+            <div className="floating-shapes absolute top-20 left-10 w-32 h-32 rounded-full" style={{ background: `${accentColor}20`, border: `2px solid ${accentColor}` }}></div>
+            <div className="floating-shapes absolute bottom-20 right-20 w-40 h-40" style={{ background: `${primaryColor}20`, border: `2px solid ${primaryColor}`, animationDelay: '-2s' }}></div>
+
+            <div className="container mx-auto px-4 text-center relative z-10 section-active">
+              <div className="number-badge w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white mx-auto mb-8">
+                01
+              </div>
+
+              <h1 className="text-7xl md:text-9xl font-black text-white mb-8 leading-tight">
+                {config?.customization?.heroTitle || event.nom}
+              </h1>
+
+              <div
+                className="text-2xl md:text-3xl text-white/90 mb-12 leading-relaxed max-w-4xl mx-auto"
+                dangerouslySetInnerHTML={{ __html: config?.customization?.heroSubtitle || event.description }}
+              />
+
+              <div className="scroll-indicator">
+                <svg className="w-8 h-8 mx-auto text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
               </div>
             </div>
           </section>
 
-          {/* About Section */}
-          <section className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
-            <div className="container mx-auto px-4">
-              <div className="grid lg:grid-cols-2 gap-12 items-center">
-                <div className="section-enter">
-                  <h2 className="text-5xl font-bold text-white mb-8">
-                    À propos de l'événement
-                  </h2>
-                  <div
-                    className="text-xl text-white/80 leading-relaxed mb-8"
-                    dangerouslySetInnerHTML={{ __html: eventData.description }}
-                  />
-                  
-                  <div className="space-y-6">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">Innovation</h3>
-                        <p className="text-white/70">Découvrez les dernières tendances</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 gradient-secondary rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">Networking</h3>
-                        <p className="text-white/70">Rencontrez des professionnels</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">Inspiration</h3>
-                        <p className="text-white/70">Repartez avec de nouvelles idées</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="section-enter">
-                  <div className="relative">
-                    <div className="w-80 h-80 gradient-primary rounded-full mx-auto opacity-20 animate-pulse"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-32 h-32 gradient-secondary rounded-full mx-auto mb-4 flex items-center justify-center animate-float">
-                          <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3l14 9-14 9V3z" />
-                          </svg>
-                        </div>
-                        <p className="text-white/60">Expérience immersive</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Section 2: Details */}
+          <section className="h-screen flex items-center justify-center relative fullscreen-section">
+            <div className="container mx-auto px-4 relative z-10 section-active">
+              <div className="number-badge w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white mx-auto mb-12">
+                02
               </div>
-            </div>
-          </section>
 
-          {/* Details Section */}
-          <section className="h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-blue-900 to-cyan-900">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12 section-enter">
-                <h2 className="text-5xl font-bold text-white mb-4">
-                  Informations pratiques
-                </h2>
-                <div className="w-24 h-1 gradient-primary mx-auto rounded-full"></div>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <div className="section-enter bg-white/10 backdrop-blur-md rounded-3xl p-8 text-center">
-                  <div className="w-20 h-20 gradient-primary rounded-full mx-auto mb-6 flex items-center justify-center">
+              <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 section-title">
+                Informations essentielles
+              </h2>
+
+              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div className="glow-card rounded-3xl p-10 text-center">
+                  <div className="w-20 h-20 rounded-2xl gradient-animated mx-auto mb-6 flex items-center justify-center">
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-4">Date & Heure</h3>
-                  <div className="space-y-2">
-                    <p className="text-white/90 font-semibold">
-                      {new Date(eventData.date_debut).toLocaleDateString('fr-FR', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </p>
-                    <p className="text-white/70">
-                      De {new Date(eventData.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                      à {new Date(eventData.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Date</h3>
+                  <p className="text-white/80 font-semibold text-lg">
+                    {new Date(event.date_debut).toLocaleDateString('fr-FR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                  <p className="text-white/60 mt-2">
+                    {new Date(event.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} -
+                    {new Date(event.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
-                
-                <div className="section-enter bg-white/10 backdrop-blur-md rounded-3xl p-8 text-center">
-                  <div className="w-20 h-20 gradient-secondary rounded-full mx-auto mb-6 flex items-center justify-center">
+
+                <div className="glow-card rounded-3xl p-10 text-center">
+                  <div className="w-20 h-20 rounded-2xl gradient-animated mx-auto mb-6 flex items-center justify-center">
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-4">Lieu</h3>
-                  <p className="text-white/90">{eventData.lieu}</p>
+                  <h3 className="text-2xl font-bold text-white mb-4">Lieu</h3>
+                  <p className="text-white/80 font-semibold text-lg">{event.lieu}</p>
+                  <p className="text-white/60 mt-2">Accès facile</p>
                 </div>
-                
-                <div className="section-enter bg-white/10 backdrop-blur-md rounded-3xl p-8 text-center">
-                  <div className="w-20 h-20 gradient-primary rounded-full mx-auto mb-6 flex items-center justify-center">
+
+                <div className="glow-card rounded-3xl p-10 text-center">
+                  <div className="w-20 h-20 rounded-2xl gradient-animated mx-auto mb-6 flex items-center justify-center">
                     <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-4">Tarif</h3>
-                  <p className="text-2xl font-bold text-white mb-2">Gratuit</p>
-                  <p className="text-white/70 text-sm">Inscription obligatoire</p>
+                  <h3 className="text-2xl font-bold text-white mb-4">Places</h3>
+                  <p className="text-white/80 font-semibold text-lg">
+                    {event.places_disponibles || 'Limitées'}
+                  </p>
+                  <p className="text-white/60 mt-2">Réservation conseillée</p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Registration Section */}
-          <section className="h-screen flex items-center justify-center gradient-secondary relative overflow-hidden">
-            <div className="absolute inset-0">
-              <div className="animate-float absolute top-32 right-20 w-40 h-40 bg-white/5 rounded-full"></div>
-              <div className="animate-float-delay absolute bottom-40 left-32 w-32 h-32 bg-white/10 rounded-full"></div>
+          {/* Section 3: Features */}
+          <section className="h-screen flex items-center justify-center relative fullscreen-section">
+            <div className="container mx-auto px-4 relative z-10 section-active">
+              <div className="number-badge w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white mx-auto mb-12">
+                03
+              </div>
+
+              <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 section-title">
+                Pourquoi participer ?
+              </h2>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {[
+                  { icon: '🎯', title: 'Excellence', desc: 'Contenus de qualité exceptionnelle' },
+                  { icon: '💡', title: 'Innovation', desc: 'Découvrez les dernières tendances' },
+                  { icon: '🤝', title: 'Réseau', desc: 'Rencontrez des experts du domaine' },
+                  { icon: '🎓', title: 'Apprentissage', desc: 'Développez vos compétences' }
+                ].map((feature, index) => (
+                  <div key={index} className="glow-card rounded-2xl p-8 text-center highlight-pulse">
+                    <div className="text-6xl mb-4">{feature.icon}</div>
+                    <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
+                    <p className="text-white/70 text-sm">{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            
+          </section>
+
+          {/* Section 4: Register */}
+          <section className="h-screen flex items-center justify-center relative fullscreen-section">
             <div className="container mx-auto px-4 relative z-10">
-              <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-                
-                <div className="section-enter text-center lg:text-left">
-                  <h2 className="text-5xl md:text-6xl font-black text-white mb-8">
-                    Prêt à nous rejoindre ?
+              <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto section-active">
+
+                <div className="text-white">
+                  <div className="number-badge w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white mb-8">
+                    04
+                  </div>
+
+                  <h2 className="text-5xl md:text-7xl font-black mb-8 section-title">
+                    Prêt à démarrer ?
                   </h2>
-                  <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                    L'inscription ne prend que quelques minutes. Rejoignez une communauté passionnée et vivez une expérience inoubliable.
+
+                  <p className="text-2xl text-white/80 mb-8 leading-relaxed">
+                    Rejoignez-nous pour une expérience inoubliable. L'inscription est rapide et simple.
                   </p>
-                  
-                  <div className="flex items-center justify-center lg:justify-start space-x-8 mb-8">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-white">100+</div>
-                      <div className="text-white/70 text-sm">Participants</div>
-                    </div>
-                    <div className="w-px h-12 bg-white/30"></div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-white">5★</div>
-                      <div className="text-white/70 text-sm">Satisfaction</div>
-                    </div>
-                    <div className="w-px h-12 bg-white/30"></div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-white">Gratuit</div>
-                      <div className="text-white/70 text-sm">Inscription</div>
-                    </div>
+
+                  <div className="space-y-4">
+                    {['Confirmation instantanée', 'Accès prioritaire', 'Support dédié'].map((item, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full gradient-animated flex items-center justify-center">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="text-white/90 text-lg font-semibold">{item}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                
-                <div className="section-enter">
-                  <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-md mx-auto">
-                    <div className="text-center mb-6">
-                      <div className="w-16 h-16 gradient-primary rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                        Inscription gratuite
-                      </h3>
-                      <p className="text-gray-600">
-                        Quelques informations suffisent
-                      </p>
+
+                <div className="glow-card rounded-3xl p-10 highlight-pulse">
+                  <div className="text-center mb-8">
+                    <div className="w-20 h-20 rounded-2xl gradient-animated mx-auto mb-6 flex items-center justify-center">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                      </svg>
                     </div>
-                    
-                    <LandingRegistrationForm 
-                      eventId={eventData.id}
-                      onParticipantAdded={() => {}}
-                      onCancel={() => {}}
-                    />
+
+                    <h3 className="text-3xl font-bold text-white mb-2">
+                      Inscription
+                    </h3>
+                    <p className="text-white/70">
+                      Votre aventure commence ici
+                    </p>
                   </div>
+
+                  <LandingRegistrationForm
+                    eventId={event.id}
+                    onSuccess={onRegistrationSuccess}
+                    participantData={participantData}
+                    token={token}
+                  />
                 </div>
               </div>
             </div>
           </section>
+
         </div>
       </div>
     </>
