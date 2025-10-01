@@ -110,8 +110,12 @@ export default function ClientLandingWrapper({
     case 'parallax-3d':
       return (
         <Parallax3DTemplate
-          eventData={event}
+          event={event}
           config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
         />
       )
 
@@ -142,16 +146,24 @@ export default function ClientLandingWrapper({
     case 'onepage-scroll':
       return (
         <OnepageScrollTemplate
-          eventData={event}
+          event={event}
           config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
         />
       )
 
     case 'neomorphism':
       return (
         <NeomorphismTemplate
-          eventData={event}
+          event={event}
           config={config}
+          onRegistrationSuccess={handleRegistrationSuccess}
+          registrationSuccess={registrationSuccess}
+          participantData={participantData}
+          token={token}
         />
       )
 
