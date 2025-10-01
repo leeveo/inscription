@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// Vérification des variables d'environnement
+if (!supabaseUrl) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL is required but not defined')
+}
+
+if (!supabaseServiceKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required but not defined')
+}
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -48,7 +57,7 @@ export async function GET(request: NextRequest) {
         url_twitter,
         url_instagram,
         evenement_id,
-        token,
+        token_landing_page,
         inscription_evenements:evenement_id (
           id,
           nom,
@@ -60,7 +69,7 @@ export async function GET(request: NextRequest) {
           organisateur
         )
       `)  
-      .eq('token', token)
+      .eq('token_landing_page', token)
       .single()
 
     if (error || !participant) {
@@ -96,7 +105,7 @@ export async function GET(request: NextRequest) {
       participant: {
         ...participant,
         // Ne pas exposer le token dans la réponse
-        token: undefined
+        token_landing_page: undefined
       }
     })
   } catch (error) {
@@ -108,8 +117,14 @@ export async function GET(request: NextRequest) {
 // POST - Générer ou régénérer un token pour un participant
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔑 Variables d\'environnement:')
+    console.log('- NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'DÉFINI' : 'MANQUANT')
+    console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? `DÉFINI (${supabaseServiceKey.substring(0, 20)}...)` : 'MANQUANT')
+    
     const body = await request.json()
     const { participantId, action } = body
+    
+    console.log('📝 Requête reçue:', { participantId, action })
 
     if (!participantId) {
       return NextResponse.json({ error: 'Participant ID is required' }, { status: 400 })
@@ -124,13 +139,23 @@ export async function POST(request: NextRequest) {
       token = generateToken()
       attempts++
       
-      const { data: existing } = await supabaseAdmin
+      console.log(`🔄 Tentative ${attempts}: génération token ${token.substring(0, 8)}...`)
+      
+      const { data: existing, error: checkError } = await supabaseAdmin
         .from('inscription_participants')
         .select('id')
-        .eq('token', token)
+        .eq('token_landing_page', token)
         .single()
       
-      if (!existing) break
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Erreur lors de la vérification du token:', checkError)
+        throw checkError
+      }
+      
+      if (!existing) {
+        console.log('✅ Token unique trouvé')
+        break
+      }
       
       if (attempts >= maxAttempts) {
         throw new Error('Unable to generate unique token')
@@ -138,16 +163,25 @@ export async function POST(request: NextRequest) {
     } while (true)
 
     // Mettre à jour le participant avec le nouveau token
+    console.log(`💾 Mise à jour du participant ${participantId} avec le token ${token.substring(0, 8)}...`)
+    
     const { data: updatedParticipant, error } = await supabaseAdmin
       .from('inscription_participants')
-      .update({ token: token })
+      .update({ token_landing_page: token })
       .eq('id', participantId)
-      .select('id, nom, prenom, email, evenement_id, token')
+      .select('id, nom, prenom, email, evenement_id, token_landing_page')
       .single()
 
     if (error) {
+      console.error('❌ Erreur lors de la mise à jour du participant:', error)
       throw error
     }
+    
+    console.log('✅ Participant mis à jour avec succès:', {
+      id: updatedParticipant.id,
+      nom: updatedParticipant.nom,
+      prenom: updatedParticipant.prenom
+    })
 
     // Générer l'URL complète avec le domaine public pour les landing pages
     const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
@@ -156,7 +190,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       token,
       landingUrl,
-      participant: updatedParticipant
+      participant: {
+        ...updatedParticipant,
+        token: updatedParticipant.token_landing_page // Compatibilité avec l'interface frontend
+      }
     })
   } catch (error: any) {
     console.error('API Error:', error)

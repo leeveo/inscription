@@ -54,11 +54,11 @@ export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplat
   ]
 
   const categories = [
-    { id: 'all', name: 'Tous', icon: '📚' },
-    { id: 'business', name: 'Business', icon: '💼' },
-    { id: 'modern', name: 'Moderne', icon: '✨' },
-    { id: 'creative', name: 'Créatif', icon: '🎨' },
-    { id: 'minimal', name: 'Minimal', icon: '⚡' }
+    { id: 'all', name: 'Tous', icon: '⬡' },
+    { id: 'business', name: 'Business', icon: '◊' },
+    { id: 'modern', name: 'Moderne', icon: '◈' },
+    { id: 'creative', name: 'Créatif', icon: '◉' },
+    { id: 'minimal', name: 'Minimal', icon: '○' }
   ]
 
   // Charger le modèle existant
@@ -570,10 +570,10 @@ export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplat
 
 function getCategoryIcon(category: string): string {
   const icons: Record<string, string> = {
-    business: '💼',
-    modern: '✨',
-    creative: '🎨',
-    minimal: '⚡'
+    business: '◊',
+    modern: '◈',
+    creative: '◉',
+    minimal: '○'
   }
-  return icons[category] || '📧'
+  return icons[category] || '⬡'
 }

@@ -47,52 +47,79 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
   </style>
 </head>
 <body style="padding: 20px;">
-  <!-- Badge Horizontal Format -->
-  <div class="ticket-badge" style="max-width: 900px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; height: 400px;">
+  <!-- Badge Vertical Format Optimisé -->
+  <div class="ticket-badge" style="max-width: 650px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
 
-    <!-- Left Section: Event Info -->
-    <div style="flex: 2; padding: 40px; color: white; display: flex; flex-direction: column; justify-content: space-between;">
-      <div>
-        <h1 style="font-size: 42px; font-weight: 900; margin-bottom: 15px; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
-          {{event_name}}
-        </h1>
-        <div style="font-size: 18px; margin-top: 20px;">
-          <div style="background: rgba(255,255,255,0.25); display: inline-block; padding: 10px 20px; border-radius: 25px; margin: 5px 5px 5px 0; backdrop-filter: blur(10px);">
-            📅 {{event_date}}
-          </div>
-          <div style="background: rgba(255,255,255,0.25); display: inline-block; padding: 10px 20px; border-radius: 25px; margin: 5px; backdrop-filter: blur(10px);">
-            📍 {{event_location}}
-          </div>
+    <!-- Header Section: Event Info -->
+    <div style="padding: 35px 40px; color: white; text-align: center; border-bottom: 2px solid rgba(255,255,255,0.2);">
+      <h1 style="font-size: 38px; font-weight: 900; margin-bottom: 15px; letter-spacing: -1px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+        {{event_name}}
+      </h1>
+      <div style="font-size: 16px; margin-top: 15px;">
+        <div style="background: rgba(255,255,255,0.25); display: inline-block; padding: 10px 20px; border-radius: 25px; margin: 5px; backdrop-filter: blur(10px);">
+          📅 {{event_date}}
+        </div>
+        <div style="background: rgba(255,255,255,0.25); display: inline-block; padding: 10px 20px; border-radius: 25px; margin: 5px; backdrop-filter: blur(10px);">
+          📍 {{event_location}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content: Participant Info + QR -->
+    <div style="background: white; padding: 40px;">
+
+      <!-- Participant Info -->
+      <div style="text-align: center; margin-bottom: 35px; padding: 25px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 2px solid #667eea;">
+        <p style="font-size: 16px; color: #6c757d; margin-bottom: 5px; font-weight: 600;">{{participant_profession}}</p>
+        <p style="font-size: 14px; color: #adb5bd;">{{participant_email}}</p>
+      </div>
+
+      <!-- QR Code Section -->
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 16px; display: inline-block; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);">
+          {{qr_code}}
+        </div>
+        <p style="margin-top: 20px; font-size: 18px; color: #667eea; font-weight: 700;">
+          🎫 SCAN POUR CHECK-IN
+        </p>
+        <p style="margin-top: 8px; font-size: 13px; color: #6b7280;">
+          Présentez ce QR code à l'entrée de l'événement
+        </p>
+      </div>
+
+      <!-- Sessions -->
+      <div style="padding: 20px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; border-left: 4px solid #10b981;">
+        <p style="font-size: 11px; color: #065f46; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+          ✅ Vos sessions inscrites
+        </p>
+        <div style="font-size: 13px; color: #047857; text-align: center;">
+          {{participant_sessions}}
         </div>
       </div>
 
-      <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">
-        <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 10px;">
-          {{participant_firstname}} {{participant_lastname}}
-        </h2>
-        <p style="font-size: 16px; opacity: 0.95;">{{participant_profession}}</p>
-        <p style="font-size: 14px; opacity: 0.9; margin-top: 5px;">{{participant_email}}</p>
-      </div>
     </div>
 
-    <!-- Right Section: QR Code -->
-    <div style="flex: 1; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px;">
-      <div style="text-align: center;">
-        {{qr_code}}
-        <p style="margin-top: 20px; font-size: 16px; color: #667eea; font-weight: 700;">
-          🎫 SCAN POUR CHECK-IN
-        </p>
-        <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-          Présentez ce QR code à l'entrée
-        </p>
-      </div>
+    <!-- Footer Gradient -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; text-align: center;">
+      <p style="color: white; font-size: 11px; opacity: 0.9; font-weight: 600; letter-spacing: 1px;">
+        TICKET OFFICIEL • {{event_name}}
+      </p>
+    </div>
+  </div>
 
-      <div style="margin-top: 30px; padding: 15px; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 8px; width: 100%;">
-        <p style="font-size: 12px; color: #065f46; font-weight: 600; text-align: center;">
-          ✅ {{participant_sessions}}
-        </p>
+  <!-- Ligne de découpe -->
+  <div class="no-print" style="max-width: 650px; margin: 30px auto; text-align: center; position: relative;">
+    <div style="border-top: 2px dashed #667eea; margin: 0 50px; position: relative;">
+      <div style="position: absolute; left: -25px; top: -12px; background: white; padding: 5px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <span style="font-size: 20px;">✂️</span>
+      </div>
+      <div style="position: absolute; right: -25px; top: -12px; background: white; padding: 5px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <span style="font-size: 20px;">✂️</span>
       </div>
     </div>
+    <p style="margin-top: 10px; font-size: 12px; color: #667eea; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+      ✂️ Découpez ici pour garder uniquement votre ticket
+    </p>
   </div>
 
   <!-- Email Content (no-print for badge) -->
@@ -166,13 +193,10 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <!-- Participant Info -->
     <div style="padding: 35px 25px; text-align: center; border-bottom: 2px dashed #e0e0e0;">
       <div style="background: #ecf0f1; width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 4px solid #3498db;">
-        <span style="font-size: 56px; font-weight: 900; color: #2c3e50;">
+        <span style="font-size: 36px; font-weight: 900; color: #2c3e50;">
           {{participant_firstname|first}}{{participant_lastname|first}}
         </span>
       </div>
-      <h2 style="color: #2c3e50; font-size: 26px; font-weight: 800; margin-bottom: 8px;">
-        {{participant_firstname}} {{participant_lastname}}
-      </h2>
       <p style="color: #7f8c8d; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
         {{participant_profession}}
       </p>
@@ -205,6 +229,21 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <div style="padding: 15px; background: #2c3e50; text-align: center;">
       <p style="color: #bdc3c7; font-size: 10px;">© {{event_name}} - All rights reserved</p>
     </div>
+  </div>
+
+  <!-- Ligne de découpe -->
+  <div class="no-print" style="max-width: 420px; margin: 30px auto; text-align: center; position: relative;">
+    <div style="border-top: 2px dashed #2c3e50; margin: 0 50px; position: relative;">
+      <div style="position: absolute; left: -25px; top: -12px; background: white; padding: 5px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <span style="font-size: 20px;">✂️</span>
+      </div>
+      <div style="position: absolute; right: -25px; top: -12px; background: white; padding: 5px; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <span style="font-size: 20px;">✂️</span>
+      </div>
+    </div>
+    <p style="margin-top: 10px; font-size: 12px; color: #2c3e50; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+      ✂️ Cut here for badge only
+    </p>
   </div>
 
   <!-- Email Content -->
@@ -252,71 +291,90 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
   </style>
 </head>
 <body style="padding: 20px;">
-  <!-- Ticket Horizontal Colorful -->
-  <div class="ticket-badge" style="max-width: 950px; margin: 0 auto; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f7b731, #5f27cd); border-radius: 24px; padding: 6px; box-shadow: 0 25px 70px rgba(0,0,0,0.25);">
-    <div style="background: white; border-radius: 20px; display: flex; overflow: hidden; height: 420px;">
+  <!-- Ticket Vertical Colorful Optimisé -->
+  <div class="ticket-badge" style="max-width: 650px; margin: 0 auto; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f7b731, #5f27cd); border-radius: 24px; padding: 6px; box-shadow: 0 25px 70px rgba(0,0,0,0.25);">
+    <div style="background: white; border-radius: 20px; overflow: hidden;">
 
-      <!-- Left Colorful Section -->
-      <div style="flex: 1.5; background: linear-gradient(135deg, #ff6b6b 0%, #f7b731 50%, #4ecdc4 100%); padding: 40px; color: white; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+      <!-- Header Colorful Section -->
+      <div style="background: linear-gradient(135deg, #ff6b6b 0%, #f7b731 50%, #4ecdc4 100%); padding: 40px; color: white; text-align: center; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
         <div style="position: absolute; bottom: -80px; left: -80px; width: 250px; height: 250px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
 
         <div style="position: relative; z-index: 1;">
-          <div style="font-size: 48px; margin-bottom: 15px;">🎨</div>
-          <h1 style="font-size: 46px; font-weight: 900; margin-bottom: 15px; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); line-height: 1.1;">
+          <div style="font-size: 52px; margin-bottom: 15px;">🎨</div>
+          <h1 style="font-size: 42px; font-weight: 900; margin-bottom: 15px; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); line-height: 1.2;">
             {{event_name}}
           </h1>
-          <div style="font-size: 18px; margin-top: 20px;">
-            <div style="background: rgba(255,255,255,0.3); display: inline-block; padding: 12px 24px; border-radius: 30px; margin: 5px 5px 5px 0; backdrop-filter: blur(10px); font-weight: 700;">
+          <div style="font-size: 16px; margin-top: 20px;">
+            <div style="background: rgba(255,255,255,0.3); display: inline-block; padding: 12px 24px; border-radius: 30px; margin: 8px 5px; backdrop-filter: blur(10px); font-weight: 700;">
               📅 {{event_date}}
             </div>
-            <div style="background: rgba(255,255,255,0.3); display: inline-block; padding: 12px 24px; border-radius: 30px; margin: 5px; backdrop-filter: blur(10px); font-weight: 700;">
+            <div style="background: rgba(255,255,255,0.3); display: inline-block; padding: 12px 24px; border-radius: 30px; margin: 8px 5px; backdrop-filter: blur(10px); font-weight: 700;">
               📍 {{event_location}}
             </div>
           </div>
         </div>
-
-        <div style="position: relative; z-index: 1;">
-          <div style="background: rgba(255,255,255,0.3); padding: 25px; border-radius: 16px; backdrop-filter: blur(15px); border: 2px solid rgba(255,255,255,0.5);">
-            <p style="font-size: 14px; opacity: 0.95; margin-bottom: 8px; font-weight: 600;">PASS CRÉATIF</p>
-            <h2 style="font-size: 32px; font-weight: 900; margin-bottom: 8px; text-transform: uppercase;">
-              {{participant_firstname}} {{participant_lastname}}
-            </h2>
-            <p style="font-size: 16px; opacity: 0.95; font-weight: 600;">{{participant_profession}}</p>
-          </div>
-        </div>
       </div>
 
-      <!-- Right White Section -->
-      <div style="flex: 1; background: white; padding: 40px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <div style="text-align: center;">
-          <div style="background: linear-gradient(135deg, #ff6b6b, #4ecdc4); padding: 25px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+      <!-- White Content Section -->
+      <div style="background: white; padding: 40px;">
+
+        <!-- Participant Pass -->
+        <div style="background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); padding: 30px; border-radius: 20px; border: 3px solid #ff6b6b; margin-bottom: 35px; text-align: center;">
+          <p style="font-size: 12px; opacity: 0.8; margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #ff6b6b;">
+            PASS CRÉATIF
+          </p>
+          <p style="font-size: 16px; font-weight: 700; color: #e17055;">{{participant_profession}}</p>
+          <p style="font-size: 13px; color: #999; margin-top: 8px;">{{participant_email}}</p>
+        </div>
+
+        <!-- QR Code Section -->
+        <div style="text-align: center; margin-bottom: 30px;">
+          <div style="background: linear-gradient(135deg, #ff6b6b, #4ecdc4); padding: 25px; border-radius: 20px; display: inline-block; box-shadow: 0 15px 40px rgba(255, 107, 107, 0.3);">
             {{qr_code}}
           </div>
-          <p style="margin-top: 25px; font-size: 20px; color: #ff6b6b; font-weight: 900;">
+          <p style="margin-top: 25px; font-size: 22px; color: #ff6b6b; font-weight: 900;">
             🎫 SCAN ME!
           </p>
-          <p style="margin-top: 10px; font-size: 13px; color: #666; font-weight: 600;">
-            Présentez ce code à l'entrée
+          <p style="margin-top: 10px; font-size: 14px; color: #666; font-weight: 600;">
+            Présentez ce code à l'entrée de l'événement
           </p>
         </div>
 
-        <div style="margin-top: 35px; width: 100%;">
-          <div style="background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); padding: 20px; border-radius: 12px; border-left: 5px solid #ff6b6b;">
-            <p style="font-size: 12px; color: #d63031; font-weight: 700; text-align: center;">
-              ✨ SESSIONS ✨
-            </p>
-            <p style="font-size: 11px; color: #e17055; margin-top: 8px; text-align: center;">
-              {{participant_sessions}}
-            </p>
+        <!-- Sessions -->
+        <div style="background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); padding: 25px; border-radius: 16px; border-left: 6px solid #ff6b6b;">
+          <p style="font-size: 13px; color: #d63031; font-weight: 900; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">
+            ✨ VOS SESSIONS ✨
+          </p>
+          <div style="font-size: 13px; color: #e17055; font-weight: 600; text-align: center; line-height: 1.6;">
+            {{participant_sessions}}
           </div>
         </div>
 
-        <div style="margin-top: 25px; text-align: center;">
-          <p style="font-size: 11px; color: #999;">{{participant_email}}</p>
-        </div>
+      </div>
+
+      <!-- Footer Colorful -->
+      <div style="background: linear-gradient(135deg, #ff6b6b, #f7b731, #4ecdc4); padding: 18px; text-align: center;">
+        <p style="color: white; font-size: 12px; font-weight: 900; letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
+          🎨 FESTIVAL PASS • {{event_name}}
+        </p>
       </div>
     </div>
+  </div>
+
+  <!-- Ligne de découpe créative -->
+  <div class="no-print" style="max-width: 650px; margin: 30px auto; text-align: center; position: relative;">
+    <div style="border-top: 3px dashed #ff6b6b; margin: 0 50px; position: relative;">
+      <div style="position: absolute; left: -25px; top: -15px; background: linear-gradient(135deg, #ff6b6b, #4ecdc4); padding: 8px; border-radius: 50%; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);">
+        <span style="font-size: 18px;">✂️</span>
+      </div>
+      <div style="position: absolute; right: -25px; top: -15px; background: linear-gradient(135deg, #4ecdc4, #ff6b6b); padding: 8px; border-radius: 50%; box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);">
+        <span style="font-size: 18px;">✂️</span>
+      </div>
+    </div>
+    <p style="margin-top: 15px; font-size: 13px; color: #ff6b6b; font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">
+      ✨ Découpe ici pour ton pass créatif ! ✨
+    </p>
   </div>
 
   <!-- Email Content -->
@@ -346,7 +404,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     thumbnail: '/templates/minimal-clean.png',
     category: 'minimal',
     isPrintable: true,
-    subject: 'Ticket {{event_name}} - {{participant_firstname}} {{participant_lastname}}',
+    subject: 'Ticket {{event_name}} - {{participant_firstname}}',
     htmlContent: `
 <!DOCTYPE html>
 <html lang="fr">
@@ -385,13 +443,10 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <div style="padding: 35px 30px; border-bottom: 1px solid #e0e0e0;">
       <div style="text-align: center;">
         <div style="width: 80px; height: 80px; border-radius: 50%; background: #f5f5f5; border: 2px solid #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-          <span style="font-size: 32px; font-weight: 900; color: #000;">
+          <span style="font-size: 20px; font-weight: 900; color: #000;">
             {{participant_firstname|first}}{{participant_lastname|first}}
           </span>
         </div>
-        <h2 style="color: #000; font-size: 24px; font-weight: 700; margin-bottom: 8px;">
-          {{participant_firstname}} {{participant_lastname}}
-        </h2>
         <p style="color: #666; font-size: 14px; font-weight: 500; margin-bottom: 5px;">
           {{participant_profession}}
         </p>
@@ -424,6 +479,21 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
         TICKET #{{participant_email|hash}}
       </p>
     </div>
+  </div>
+
+  <!-- Ligne de découpe minimaliste -->
+  <div class="no-print" style="max-width: 380px; margin: 30px auto; text-align: center; position: relative;">
+    <div style="border-top: 1px dashed #000; margin: 0 40px; position: relative;">
+      <div style="position: absolute; left: -20px; top: -10px; background: white; padding: 4px; border: 1px solid #000; border-radius: 50%;">
+        <span style="font-size: 16px;">✂</span>
+      </div>
+      <div style="position: absolute; right: -20px; top: -10px; background: white; padding: 4px; border: 1px solid #000; border-radius: 50%;">
+        <span style="font-size: 16px;">✂</span>
+      </div>
+    </div>
+    <p style="margin-top: 12px; font-size: 10px; color: #000; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+      Cut here
+    </p>
   </div>
 
   <!-- Email Content -->
@@ -476,7 +546,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
 
     <!-- VIP Header -->
     <div style="background: linear-gradient(135deg, #d4af37 0%, #f4e4a7 50%, #d4af37 100%); padding: 8px; text-align: center;">
-      <p style="color: #1a1a1a; font-size: 14px; font-weight: 900; letter-spacing: 3px;">EXCLUSIVE ACCESS</p>
+      <p style="color: #1a1a1a; font-size: 14px; font-weight: 900; letter-spacing: 3px;">ACCES EXCLUSIF</p>
     </div>
 
     <div style="padding: 40px 30px 30px; background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%); position: relative;">
@@ -503,14 +573,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
         </div>
 
         <div style="text-align: center;">
-          <div style="border: 3px solid #d4af37; border-radius: 50%; width: 110px; height: 110px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #d4af37, #f4e4a7); box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);">
-            <span style="font-size: 48px; font-weight: 900; color: #1a1a1a;">
-              {{participant_firstname|first}}{{participant_lastname|first}}
-            </span>
-          </div>
-          <h2 style="color: #d4af37; font-size: 28px; font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px;">
-            {{participant_firstname}} {{participant_lastname}}
-          </h2>
+          
           <p style="color: #f4e4a7; font-size: 15px; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.5px;">
             {{participant_profession}}
           </p>
@@ -543,8 +606,23 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
 
     <!-- Premium Footer -->
     <div style="background: linear-gradient(135deg, #d4af37 0%, #f4e4a7 50%, #d4af37 100%); padding: 12px; text-align: center;">
-      <p style="color: #1a1a1a; font-size: 11px; font-weight: 900; letter-spacing: 2px;">PREMIUM EXPERIENCE</p>
+      <p style="color: #1a1a1a; font-size: 11px; font-weight: 900; letter-spacing: 2px;">EXPERIENCE PREMIUM</p>
     </div>
+  </div>
+
+  <!-- Ligne de découpe VIP -->
+  <div class="no-print" style="max-width: 450px; margin: 30px auto; text-align: center; position: relative;">
+    <div style="border-top: 3px dashed #d4af37; margin: 0 50px; position: relative;">
+      <div style="position: absolute; left: -30px; top: -15px; background: linear-gradient(135deg, #d4af37, #f4e4a7); padding: 8px; border-radius: 50%; box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4); border: 2px solid #f4e4a7;">
+        <span style="font-size: 18px;">✂️</span>
+      </div>
+      <div style="position: absolute; right: -30px; top: -15px; background: linear-gradient(135deg, #f4e4a7, #d4af37); padding: 8px; border-radius: 50%; box-shadow: 0 8px 20px rgba(244, 228, 167, 0.4); border: 2px solid #d4af37;">
+        <span style="font-size: 18px;">✂️</span>
+      </div>
+    </div>
+    <p style="margin-top: 15px; font-size: 11px; color: #d4af37; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
+      👑 Exclusive Badge Cut Line 👑
+    </p>
   </div>
 
   <!-- Email Content -->
@@ -582,11 +660,11 @@ export default function TicketEmailLibrary({ onSelectTemplate, onClose }: Ticket
   const [searchTerm, setSearchTerm] = useState('')
 
   const categories = [
-    { id: 'all', name: 'Tous', icon: '📚' },
-    { id: 'business', name: 'Business', icon: '💼' },
-    { id: 'modern', name: 'Moderne', icon: '✨' },
-    { id: 'creative', name: 'Créatif', icon: '🎨' },
-    { id: 'minimal', name: 'Minimal', icon: '⚡' }
+    { id: 'all', name: 'Tous', icon: '⬡' },
+    { id: 'business', name: 'Business', icon: '◊' },
+    { id: 'modern', name: 'Moderne', icon: '◈' },
+    { id: 'creative', name: 'Créatif', icon: '◉' },
+    { id: 'minimal', name: 'Minimal', icon: '○' }
   ]
 
   const filteredTemplates = ticketEmailTemplates.filter(template => {
@@ -715,12 +793,12 @@ export default function TicketEmailLibrary({ onSelectTemplate, onClose }: Ticket
 
 function getCategoryIcon(category: string): string {
   const icons: Record<string, string> = {
-    business: '💼',
-    modern: '✨',
-    creative: '🎨',
-    minimal: '⚡'
+    business: '◊',
+    modern: '◈',
+    creative: '◉',
+    minimal: '○'
   }
-  return icons[category] || '📧'
+  return icons[category] || '⬡'
 }
 
 function getCategoryLabel(category: string): string {
