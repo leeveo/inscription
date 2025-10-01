@@ -434,7 +434,7 @@ export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplat
                 <p className="text-xs text-blue-200/70 mb-3">
                   Cliquez sur une variable pour l'insérer dans l'éditeur
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                   {availableVariables.map((variable, index) => (
                     <button
                       key={index}

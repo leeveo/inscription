@@ -14,7 +14,7 @@ export default function TicketTemplateModal({ eventId, isOpen, onClose }: Ticket
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10">
+      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-2xl w-full max-w-7xl h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10">
         <TicketTemplateWizard
           eventId={eventId}
           onClose={onClose}

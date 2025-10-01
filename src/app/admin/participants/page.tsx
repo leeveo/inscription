@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import Link from 'next/link'
-import Modal from '@/components/Modal'
-import TicketTemplateManager from '@/components/TicketTemplateManager'
+import TicketTemplateViewer from '@/components/TicketTemplateViewer'
+import TicketTemplateModal from '@/components/TicketTemplateModal'
 
 type Participant = {
   id: number
@@ -295,6 +295,16 @@ export default function ParticipantsPage() {
           </div>
         </div>
 
+        {/* Template Viewer - Afficher le template validé */}
+        {selectedEvent && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <TicketTemplateViewer
+              eventId={String(selectedEvent)}
+              onEdit={() => setIsTicketTemplateModalOpen(true)}
+            />
+          </div>
+        )}
+
         {/* Actions section */}
         <div className="mt-6 pt-4 border-t border-gray-200">
           <div className="flex flex-wrap gap-3">
@@ -313,7 +323,7 @@ export default function ParticipantsPage() {
               </svg>
               Gérer les templates de tickets
             </button>
-            
+
             {selectedEvent && (
               <div className="text-sm text-gray-600 flex items-center">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -586,19 +596,13 @@ export default function ParticipantsPage() {
       )}
       
       {/* Modal for ticket template management */}
-      <Modal
-        isOpen={isTicketTemplateModalOpen}
-        onClose={() => setIsTicketTemplateModalOpen(false)}
-        title="Gestion des modèles de tickets"
-        size="3xl"
-      >
-        {selectedEvent && (
-          <TicketTemplateManager
-            eventId={selectedEvent}
-            onClose={() => setIsTicketTemplateModalOpen(false)}
-          />
-        )}
-      </Modal>
+      {selectedEvent && (
+        <TicketTemplateModal
+          eventId={String(selectedEvent)}
+          isOpen={isTicketTemplateModalOpen}
+          onClose={() => setIsTicketTemplateModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

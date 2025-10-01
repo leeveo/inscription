@@ -19,6 +19,7 @@ import ParticipantEmailManager from '@/components/ParticipantEmailManager';
 import ImportParticipantsModal from '@/components/ImportParticipantsModal';
 import EmailTemplatePreview from '@/components/EmailTemplatePreview';
 import TicketTemplateModal from '@/components/TicketTemplateModal';
+import TicketTemplateViewer from '@/components/TicketTemplateViewer';
 import FullAgendaModal from '@/components/FullAgendaModal';
 import DetailedStatsModal from '@/components/DetailedStatsModal';
 import LandingLinkForm from '@/components/LandingLinkForm';
@@ -1056,6 +1057,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       {activeTab === 'participants' && (
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="p-6">
+            {/* Template Viewer */}
+            <div className="mb-8">
+              <TicketTemplateViewer
+                eventId={eventId}
+                onEdit={() => setShowTicketTemplateModal(true)}
+              />
+            </div>
+
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
@@ -1065,7 +1074,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   Gérez les participants de cet événement
                 </p>
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
                 <button
@@ -1107,16 +1116,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   Envoyer emails
-                </button>
-
-                <button
-                  onClick={() => setShowTicketTemplateModal(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                  </svg>
-                  Templates Email
                 </button>
 
                 <button

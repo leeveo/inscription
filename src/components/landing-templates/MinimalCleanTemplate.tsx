@@ -243,11 +243,10 @@ export default function MinimalCleanTemplate({
                 <LandingRegistrationForm
                   eventId={event.id}
                   onSuccess={onRegistrationSuccess}
-                  isPreview={isPreview}
                   participantData={participantData}
                   token={token}
-                  buttonStyle={buttonStyle}
-                  accentColor={customization.primaryColor}
+                  customButtonStyle={buttonStyle}
+                  customAccentColor={customization.primaryColor}
                 />
               </div>
             ) : (
