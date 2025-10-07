@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { supabaseBrowser } from '@/lib/supabase/client'
+import type { Intervenant } from './IntervenantsManager'
+import Image from 'next/image'
 
 // Schema validation
 const sessionSchema = z.object({
@@ -13,6 +16,8 @@ const sessionSchema = z.object({
   heure_debut: z.string().min(1, 'L\'heure de début est requise'),
   heure_fin: z.string().min(1, 'L\'heure de fin est requise'),
   intervenant: z.string().optional(),
+  intervenant_id: z.string().optional(),
+  programme: z.string().optional(),
   lieu: z.string().optional(),
   type: z.string().min(1, 'Le type de session est requis'),
   max_participants: z.string().optional(),
@@ -29,6 +34,8 @@ type Session = {
   heure_debut: string
   heure_fin: string
   intervenant?: string
+  intervenant_id?: number | null
+  programme?: string
   lieu?: string
   type: string
   max_participants?: number | null
@@ -45,7 +52,9 @@ interface SessionFormProps {
 export default function SessionForm({ eventId, session, onSessionSaved, onCancel }: SessionFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+  const [intervenants, setIntervenants] = useState<Intervenant[]>([])
+  const [selectedIntervenant, setSelectedIntervenant] = useState<Intervenant | null>(null)
+
   const {
     register,
     handleSubmit,
@@ -61,6 +70,8 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       heure_debut: session.heure_debut || '',
       heure_fin: session.heure_fin || '',
       intervenant: session.intervenant || '',
+      intervenant_id: session.intervenant_id?.toString() || '',
+      programme: session.programme || '',
       lieu: session.lieu || '',
       type: session.type || '',
       max_participants: session.max_participants?.toString() || '',
@@ -69,12 +80,52 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       type: 'conférence', // Set default type
       date: new Date().toISOString().split('T')[0], // Today's date
       max_participants: '',
+      intervenant_id: '',
+      programme: '',
     }
   })
+
+  // Fetch intervenants for this event
+  useEffect(() => {
+    const fetchIntervenants = async () => {
+      try {
+        const supabase = supabaseBrowser()
+        const { data, error } = await supabase
+          .from('inscription_intervenants')
+          .select('*')
+          .eq('evenement_id', eventId)
+          .order('ordre', { ascending: true })
+
+        if (error) throw error
+        setIntervenants(data || [])
+
+        // If editing session with intervenant_id, set selected intervenant
+        if (session?.intervenant_id && data) {
+          const intervenant = data.find(i => i.id === session.intervenant_id)
+          if (intervenant) setSelectedIntervenant(intervenant)
+        }
+      } catch (error) {
+        console.error('Error fetching intervenants:', error)
+      }
+    }
+
+    fetchIntervenants()
+  }, [eventId, session])
 
   // Watch the form values for debugging
   const formValues = watch();
   console.log("Current form values:", formValues);
+
+  // Watch intervenant_id changes to update selected intervenant
+  const intervenantId = watch('intervenant_id')
+  useEffect(() => {
+    if (intervenantId && intervenantId !== '') {
+      const intervenant = intervenants.find(i => i.id?.toString() === intervenantId)
+      setSelectedIntervenant(intervenant || null)
+    } else {
+      setSelectedIntervenant(null)
+    }
+  }, [intervenantId, intervenants])
 
   const onSubmit = async (data: SessionFormData) => {
     try {
@@ -96,6 +147,8 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         heure_debut: data.heure_debut,
         heure_fin: data.heure_fin,
         intervenant: data.intervenant || '',
+        intervenant_id: data.intervenant_id && data.intervenant_id.trim() !== '' ? parseInt(data.intervenant_id, 10) : null,
+        programme: data.programme || '',
         lieu: data.lieu || '',
         type: data.type,
         max_participants: data.max_participants && data.max_participants.trim() !== '' ? parseInt(data.max_participants, 10) : null,
@@ -285,18 +338,29 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="intervenant" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="intervenant_id" className="block text-sm font-medium text-gray-700 mb-1">
               Intervenant
             </label>
-            <input
-              id="intervenant"
-              type="text"
-              {...register('intervenant')}
+            <select
+              id="intervenant_id"
+              {...register('intervenant_id')}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Nom de l'intervenant"
-            />
+            >
+              <option value="">Sélectionner un intervenant</option>
+              {intervenants.map((intervenant) => (
+                <option key={intervenant.id} value={intervenant.id}>
+                  {intervenant.prenom} {intervenant.nom}
+                  {intervenant.titre && ` - ${intervenant.titre}`}
+                </option>
+              ))}
+            </select>
+            {intervenants.length === 0 && (
+              <p className="mt-1 text-sm text-gray-500">
+                Aucun intervenant disponible. Ajoutez d'abord des intervenants dans l'onglet Intervenants.
+              </p>
+            )}
           </div>
-          
+
           <div>
             <label htmlFor="lieu" className="block text-sm font-medium text-gray-700 mb-1">
               Lieu
@@ -309,6 +373,72 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
               placeholder="Ex: Salle A, Auditorium, etc."
             />
           </div>
+        </div>
+
+        {/* Fiche intervenant sélectionné */}
+        {selectedIntervenant && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-blue-900 mb-3">Intervenant sélectionné</h4>
+            <div className="flex items-start space-x-4">
+              {selectedIntervenant.photo_url ? (
+                <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+                  <Image
+                    src={selectedIntervenant.photo_url}
+                    alt={`${selectedIntervenant.prenom} ${selectedIntervenant.nom}`}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h5 className="font-semibold text-gray-900">
+                  {selectedIntervenant.prenom} {selectedIntervenant.nom}
+                </h5>
+                {selectedIntervenant.titre && (
+                  <p className="text-sm text-gray-700 mt-1">{selectedIntervenant.titre}</p>
+                )}
+                {selectedIntervenant.entreprise && (
+                  <p className="text-sm text-gray-600">{selectedIntervenant.entreprise}</p>
+                )}
+                {selectedIntervenant.biographie && (
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-3">{selectedIntervenant.biographie}</p>
+                )}
+                <div className="flex items-center space-x-3 mt-2">
+                  {selectedIntervenant.email && (
+                    <a href={`mailto:${selectedIntervenant.email}`} className="text-xs text-blue-600 hover:text-blue-700">
+                      {selectedIntervenant.email}
+                    </a>
+                  )}
+                  {selectedIntervenant.telephone && (
+                    <span className="text-xs text-gray-600">{selectedIntervenant.telephone}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div>
+          <label htmlFor="programme" className="block text-sm font-medium text-gray-700 mb-1">
+            Programme de la session
+          </label>
+          <textarea
+            id="programme"
+            {...register('programme')}
+            rows={5}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Détails du programme, points clés, déroulement de la session..."
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            Décrivez le programme détaillé de cette session (agenda, points abordés, activités...)
+          </p>
         </div>
         
         <div className="flex justify-end space-x-3 pt-4">

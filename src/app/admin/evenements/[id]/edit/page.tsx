@@ -23,6 +23,9 @@ import TicketTemplateViewer from '@/components/TicketTemplateViewer';
 import FullAgendaModal from '@/components/FullAgendaModal';
 import DetailedStatsModal from '@/components/DetailedStatsModal';
 import LandingLinkForm from '@/components/LandingLinkForm';
+import PageBuilderSelector from '@/components/PageBuilderSelector';
+import BasicPageSelector from '@/components/BasicPageSelector';
+import IntervenantsManager from '@/components/IntervenantsManager';
 import { exportParticipantsToCSV, exportSelectedParticipantsToCSV } from '@/utils/csvExport';
 import { useSessionsStats } from '@/hooks/useSessionsStats';
 
@@ -44,6 +47,7 @@ type Evenement = {
   statut?: string
   type_evenement?: string
   code_acces?: string
+  builder_page_id?: string | null
 }
 
 type Participant = {
@@ -82,7 +86,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'email' | 'participants' | 'sessions' | 'checkin' | 'landing-page' | 'participant-urls'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'email' | 'participants' | 'sessions' | 'intervenants' | 'checkin' | 'landing-page' | 'participant-urls' | 'page-builder'>('details');
   const [showEmailTemplateEditor, setShowEmailTemplateEditor] = useState(false);
   const [showParticipantEmailManager, setShowParticipantEmailManager] = useState(false);
   const [showTicketTemplateModal, setShowTicketTemplateModal] = useState(false);
@@ -109,6 +113,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [statut, setStatut] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [codeAcces, setCodeAcces] = useState('');
+  const [builderPageId, setBuilderPageId] = useState<string | null>(null);
+  const [builderPages, setBuilderPages] = useState<any[]>([]);
+  const [isLoadingBuilderPages, setIsLoadingBuilderPages] = useState(false);
 
   // Participants state
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -133,6 +140,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
 
+  // Builder forms state
+  const [showDeleteFormModal, setShowDeleteFormModal] = useState(false);
+  const [formToDelete, setFormToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingForm, setIsDeletingForm] = useState(false);
+
   // Check-in state
   const [checkedInParticipants, setCheckedInParticipants] = useState<Participant[]>([]);
   const [isLoadingCheckedIn, setIsLoadingCheckedIn] = useState(false);
@@ -152,6 +164,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [isLoadingLandingPage, setIsLoadingLandingPage] = useState(false);
   const [landingPageError, setLandingPageError] = useState<string | null>(null);
 
+  
   useEffect(() => {
     const getParams = async () => {
       const resolvedParams = await params;
@@ -170,7 +183,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         
         const { data, error } = await supabase
           .from('inscription_evenements')
-          .select('*, code_acces')
+          .select('*, code_acces, builder_page_id')
           .eq('id', eventId)
           .single();
           
@@ -192,7 +205,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setStatut(event.statut || '');
           setLogoUrl(event.logo_url || ''); // Load existing logo
           setCodeAcces(event.code_acces || ''); // Load existing access code
-        }
+          setBuilderPageId(event.builder_page_id || null); // Load builder page ID
+                  }
 
         // Load landing page configuration
         try {
@@ -216,9 +230,133 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         setIsLoading(false);
       }
     };
+
+    const fetchBuilderPages = async () => {
+      try {
+        setIsLoadingBuilderPages(true);
+        const supabase = supabaseBrowser();
+        
+        // Charger TOUTES les pages de builder (debug temporaire)
+        const { data, error } = await supabase
+          .from('builder_pages')
+          .select('*')
+          .order('updated_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        console.log('📄 Loaded builder pages:', data);
+        console.log('📄 Total pages found:', data?.length || 0);
+        if (data) {
+          data.forEach(page => {
+            console.log(`📄 Page: ${page.name || 'Sans titre'} - Status: ${page.status} - Updated: ${page.updated_at}`);
+          });
+        }
+        setBuilderPages(data || []);
+      } catch (err) {
+        console.error('Error fetching builder pages:', err);
+      } finally {
+        setIsLoadingBuilderPages(false);
+      }
+    };
     
     fetchEvent();
+    fetchBuilderPages();
   }, [eventId]);
+
+  // Refetch builder pages when landing-page tab becomes active
+  useEffect(() => {
+    if (activeTab === 'landing-page' && eventId) {
+      const fetchBuilderPages = async () => {
+        try {
+          setIsLoadingBuilderPages(true);
+          const supabase = supabaseBrowser();
+          
+          const { data, error } = await supabase
+            .from('builder_pages')
+            .select('*')
+            .order('updated_at', { ascending: false });
+            
+          if (error) throw error;
+          
+          console.log('📄 Refreshed builder pages:', data);
+          console.log('📄 Total pages found (refresh):', data?.length || 0);
+          setBuilderPages(data || []);
+        } catch (err) {
+          console.error('Error refreshing builder pages:', err);
+        } finally {
+          setIsLoadingBuilderPages(false);
+        }
+      };
+      
+      fetchBuilderPages();
+    }
+  }, [activeTab, eventId]);
+
+  // Reusable function to fetch builder pages
+  const fetchBuilderPages = async () => {
+    if (!eventId) {
+      console.log('📄 fetchBuilderPages - Pas d\'eventId fourni');
+      return;
+    }
+    
+    try {
+      setIsLoadingBuilderPages(true);
+      console.log('📄 Chargement des formulaires pour l\'événement:', eventId);
+      
+      const supabase = supabaseBrowser();
+      
+      // D'abord, charger seulement les formulaires de cet événement
+      const { data: eventForms, error: eventError } = await supabase
+        .from('builder_pages')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('updated_at', { ascending: false });
+      
+      if (eventError) throw eventError;
+      
+      // Ensuite, charger quelques formulaires orphelins récents (max 5) pour pouvoir les assigner
+      const { data: orphanForms, error: orphanError } = await supabase
+        .from('builder_pages')
+        .select('*')
+        .is('event_id', null)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+      
+      if (orphanError) throw orphanError;
+      
+      // Combiner les résultats : formulaires de l'événement + quelques orphelins
+      const data = [...(eventForms || []), ...(orphanForms || [])];
+        
+      if (error) {
+        console.error('📄 Erreur lors du chargement:', error);
+        throw error;
+      }
+      
+      console.log('📄 Formulaires chargés pour l\'événement', eventId + ':', data?.length || 0, 'formulaire(s)');
+      console.log('📄 Détails des formulaires:', data);
+      
+      // Debug détaillé de chaque formulaire
+      if (data) {
+        data.forEach((form: any, index: number) => {
+          console.log(`📄 Formulaire ${index + 1}:`, {
+            id: form.id,
+            name: form.name,
+            event_id: form.event_id,
+            status: form.status,
+            isOrphan: !form.event_id,
+            belongsToCurrentEvent: form.event_id === eventId
+          });
+        });
+      }
+      
+      setBuilderPages(data || []);
+    } catch (err) {
+      console.error('📄 Erreur fetchBuilderPages:', err);
+      setBuilderPages([]); // S'assurer qu'on a une liste vide en cas d'erreur
+    } finally {
+      setIsLoadingBuilderPages(false);
+    }
+  };
 
   // Fetch participants
   const fetchParticipants = async () => {
@@ -318,6 +456,42 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     // Pas besoin de les rafraîchir manuellement ici
   }, [eventId, activeTab, participantSearch, checkinSearchTerm, autoRefresh]);
 
+  const generatePublicLandingUrl = () => {
+    // Utiliser le domaine public pour les landing pages
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://admin.waivent.app';
+    return `${publicBaseUrl}/landing/${eventId}`;
+  };
+
+  const copyPublicUrlToClipboard = async () => {
+    try {
+      const url = generatePublicLandingUrl();
+      await navigator.clipboard.writeText(url);
+
+      // Feedback visuel
+      const button = document.getElementById('copy-public-url-btn');
+      if (button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg><span>Copié!</span>';
+        button.classList.add('bg-green-600');
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.classList.remove('bg-green-600');
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Erreur lors de la copie:', err);
+    }
+  };
+
+  const handlePreviewFormBuilder = () => {
+    // Open preview in new tab with production URL
+    const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://admin.waivent.app';
+
+    // Preview de la landing page
+    const previewUrl = `${publicBaseUrl}/landing/${eventId}`;
+    window.open(previewUrl, '_blank');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -344,7 +518,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         type_evenement: typeEvenement,
         statut,
         logo_url: logoUrl || null,
-        code_acces: codeAcces || null
+        code_acces: codeAcces || null,
       };
       
       console.log('Update data being sent:', updateData);
@@ -553,6 +727,135 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     exportParticipantsToCSV(checkedInParticipants, filename);
   };
 
+  // Builder forms management functions
+  const handleDeleteForm = async () => {
+    if (!formToDelete) {
+      console.log('🗑️ Aucun formulaire à supprimer');
+      return;
+    }
+
+    console.log('🗑️ === DÉBUT SUPPRESSION ===');
+    console.log('🗑️ Formulaire à supprimer:', formToDelete);
+    console.log('🗑️ Event ID actuel:', eventId);
+    
+    setIsDeletingForm(true);
+    try {
+      const response = await fetch(`/api/builder/pages/${formToDelete.id}`, {
+        method: 'DELETE'
+      });
+
+      console.log('🗑️ Réponse API suppression:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('🗑️ Erreur API:', errorData);
+        throw new Error('Erreur lors de la suppression du formulaire');
+      }
+
+      const result = await response.json();
+      console.log('🗑️ Résultat suppression API:', result);
+
+      // Refresh the builder pages list
+      console.log('🔄 Rechargement de la liste des formulaires...');
+      console.log('🔄 Formulaires AVANT rechargement:', builderPages.length);
+      
+      // Attendre un peu pour laisser le temps à la suppression
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await fetchBuilderPages();
+      
+      console.log('🔄 Rechargement terminé');
+      
+      // Vérifier si le formulaire a vraiment été supprimé
+      const stillExists = builderPages.find((p: any) => p.id === formToDelete.id);
+      if (stillExists) {
+        console.error('❌ PROBLÈME: Le formulaire existe encore après suppression!', stillExists);
+        alert('⚠️ Attention: Le formulaire semble encore présent après suppression. Actualisez la page.');
+      } else {
+        console.log('✅ Confirmation: Le formulaire a bien été supprimé de la liste');
+      }
+      
+      // Close modal and reset states
+      setShowDeleteFormModal(false);
+      setFormToDelete(null);
+      
+      console.log('🗑️ === FIN SUPPRESSION ===');
+      alert('Formulaire supprimé avec succès');
+    } catch (error) {
+      console.error('🗑️ Erreur lors de la suppression:', error);
+      alert('Erreur lors de la suppression du formulaire');
+    } finally {
+      setIsDeletingForm(false);
+    }
+  };
+
+  const openDeleteFormModal = (pageId: string, pageName: string) => {
+    setFormToDelete({ id: pageId, name: pageName });
+    setShowDeleteFormModal(true);
+  };
+
+  const closeDeleteFormModal = () => {
+    setShowDeleteFormModal(false);
+    setFormToDelete(null);
+  };
+
+  // Assign orphan form to current event
+  const assignFormToEvent = async (formId: string, formName: string) => {
+    console.log('Assigner formulaire:', formId, 'à l\'événement:', eventId);
+    
+    try {
+      // Check if event already has a form
+      const eventForms = builderPages.filter((page: any) => page.event_id === eventId);
+      if (eventForms.length > 0) {
+        alert('Cet événement a déjà un formulaire assigné. Un seul formulaire par événement est autorisé.');
+        return;
+      }
+
+      // Update the form to assign it to this event
+      const response = await fetch(`/api/builder/pages/${formId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_id: eventId,
+          name: formName
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'assignation du formulaire');
+      }
+
+      const result = await response.json();
+      console.log('✅ Formulaire assigné avec succès:', result);
+      
+      // Refresh the builder pages list
+      await fetchBuilderPages();
+      
+      alert(`Formulaire "${formName}" assigné avec succès à cet événement !`);
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'assignation:', error);
+      alert('Erreur lors de l\'assignation du formulaire. Veuillez réessayer.');
+    }
+  };
+
+  // Check if creating new form is allowed (max 1 form for this event)
+  const canCreateNewForm = () => {
+    const eventForms = builderPages.filter((page: any) => page.event_id === eventId);
+    console.log('🔍 Vérification création formulaire:', {
+      eventId,
+      totalForms: builderPages.length,
+      eventForms: eventForms.length,
+      canCreate: eventForms.length === 0
+    });
+    return eventForms.length === 0;
+  };
+
   // Landing page functions
   const handleLandingPageConfigUpdate = async (config: LandingPageConfig) => {
     try {
@@ -585,7 +888,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     // Open preview in new tab with production URL
     const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app';
 
-    // Encoder les données de personnalisation pour les passer dans l'URL
+    // Sinon utiliser le système de template classique
     const customizationParams = encodeURIComponent(JSON.stringify(config.customization));
     const previewUrl = `${publicBaseUrl}/landing/${eventId}?preview=true&template=${templateId}&colors=${customizationParams}`;
 
@@ -594,7 +897,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600"></div>
         </div>
@@ -604,7 +907,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   if (error && !nom) {
     return (
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -632,7 +935,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* En-tête */}
       <div className="mb-8">
         <Link
@@ -654,8 +957,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       <div className="mb-8">
         <div className="bg-white p-2 rounded-2xl shadow-lg border-2 border-gray-200">
           <nav className="flex flex-wrap gap-2">
+            {/* 1. Détails */}
             <button
               onClick={() => setActiveTab('details')}
+              title="Informations générales de l'événement (nom, dates, lieu, description)"
               className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'details'
                   ? 'bg-blue-600 text-white shadow-md'
@@ -668,8 +973,119 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <span>Détails</span>
             </button>
 
+            {/* 2. Intervenants */}
+            <button
+              onClick={() => setActiveTab('intervenants')}
+              title="Gestion des conférenciers et intervenants de l'événement"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'intervenants'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Intervenants</span>
+            </button>
+
+            {/* 3. Sessions */}
+            <button
+              onClick={() => setActiveTab('sessions')}
+              title="Programme et agenda de l'événement, création de sessions et ateliers"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'sessions'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Sessions</span>
+            </button>
+
+            {/* 4. Landing Page */}
+            <button
+              onClick={() => setActiveTab('landing-page')}
+              title="Configuration de la page d'inscription publique avec templates personnalisables"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'landing-page'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span>Creation de formulaire</span>
+            </button>
+
+
+            {/* 5. URLs */}
+            <button
+              onClick={() => setActiveTab('participant-urls')}
+              title="Liens personnalisés pour chaque participant et codes QR"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'participant-urls'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <span>URLs</span>
+            </button>
+
+            {/* 6. Page Builder */}
+            <button
+              onClick={() => setActiveTab('page-builder')}
+              title="Éditeur visuel pour créer des pages personnalisées sans code"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'page-builder'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+              <span>Page Builder</span>
+            </button>
+
+            {/* 6b. Gestionnaire de Pages */}
+            <button
+              onClick={() => window.open('/admin/pages-builder', '_blank')}
+              title="Gestionnaire centralisé de toutes les pages (landing pages et formulaires)"
+              className="group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 bg-purple-100 text-purple-700 hover:bg-purple-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span>Gestionnaire</span>
+            </button>
+
+            {/* 7. Email */}
+            <button
+              onClick={() => setActiveTab('email')}
+              title="Templates d'emails, envoi de billets et invitations aux participants"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'email'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span>Email</span>
+            </button>
+
+            {/* 8. Participants */}
             <button
               onClick={() => setActiveTab('participants')}
+              title="Liste des participants inscrits, import CSV, gestion des inscriptions"
               className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'participants'
                   ? 'bg-blue-600 text-white shadow-md'
@@ -689,8 +1105,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               )}
             </button>
 
+            {/* 9. Check-in */}
             <button
               onClick={() => setActiveTab('checkin')}
+              title="Gestion des présences, scan QR codes, statistiques de check-in"
               className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'checkin'
                   ? 'bg-blue-600 text-white shadow-md'
@@ -701,62 +1119,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Check-in</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('sessions')}
-              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'sessions'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span>Sessions</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('landing-page')}
-              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'landing-page'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              <span>Landing Page</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('participant-urls')}
-              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'participant-urls'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-              <span>URLs</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('email')}
-              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'email'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span>Email</span>
             </button>
           </nav>
         </div>
@@ -772,6 +1134,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </div>
             )}
 
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Nom de l'événement */}
               <div className="md:col-span-2">
@@ -1352,6 +1715,15 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
+      {/* Intervenants Tab */}
+      {activeTab === 'intervenants' && (
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="p-6">
+            <IntervenantsManager eventId={eventId} />
+          </div>
+        </div>
+      )}
+
       {/* Check-in Tab */}
       {activeTab === 'checkin' && (
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
@@ -1728,20 +2100,21 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
       {/* Landing Page Tab */}
       {activeTab === 'landing-page' && (
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <div className="p-6">
-            {landingPageError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                <p>{landingPageError}</p>
-              </div>
-            )}
-            
-            <LandingPageTemplateSelector
-              eventId={eventId}
-              currentConfig={landingPageConfig}
-              onConfigUpdate={handleLandingPageConfigUpdate}
-              onPreview={handlePreviewLandingPage}
-            />
+        <div className="space-y-6">
+  
+          {/* Formulaire Builder */}
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div className="p-6">
+              <BasicPageSelector
+                eventId={eventId}
+                currentPageId={builderPageId}
+                onPageSelected={(pageId) => {
+                  setBuilderPageId(pageId);
+                }}
+                pageTitle="Formulaire d'inscription"
+                pageType="registration_form"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1791,11 +2164,35 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 Personnalisez le modèle d&apos;email qui sera envoyé aux participants
               </p>
             </div>
-            
-            <EmailTemplatePreview 
+
+            <EmailTemplatePreview
               eventId={eventId}
               eventName={nom}
               onEditTemplate={() => setShowEmailTemplateEditor(true)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Page Builder Tab */}
+      {activeTab === 'page-builder' && (
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Page Builder</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Choisissez ou créez une page builder pour cet événement. Les données de l&apos;événement seront automatiquement intégrées dans les modules de la page.
+              </p>
+            </div>
+
+            <BasicPageSelector
+              eventId={eventId}
+              currentPageId={builderPageId}
+              onPageSelected={(pageId) => {
+                setBuilderPageId(pageId);
+              }}
+              pageTitle="Landing Page"
+              pageType="landing_page"
             />
           </div>
         </div>
@@ -1808,6 +2205,55 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             eventId={eventId}
             onClose={() => setShowEmailTemplateEditor(false)}
           />
+        </div>
+      )}
+
+      {/* Delete Form Modal */}
+      {showDeleteFormModal && formToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-medium text-gray-900">Confirmer la suppression</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Êtes-vous sûr de vouloir supprimer le formulaire "{formToDelete.name}" ?
+                  </p>
+                  <p className="text-sm text-red-600 mt-1 font-medium">
+                    Cette action est irréversible.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={closeDeleteFormModal}
+                  disabled={isDeletingForm}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDeleteForm}
+                  disabled={isDeletingForm}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
+                >
+                  {isDeletingForm && (
+                    <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+                      <path fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75" />
+                    </svg>
+                  )}
+                  {isDeletingForm ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

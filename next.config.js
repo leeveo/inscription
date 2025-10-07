@@ -2,7 +2,24 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['chart.googleapis.com', 'via.placeholder.com', 'utfs.io'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'chart.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'utfs.io',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.ufs.sh',
+      },
+    ],
   },
 }
 

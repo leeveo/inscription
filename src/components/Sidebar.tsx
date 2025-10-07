@@ -8,7 +8,8 @@ import {
   FiUsers,
   FiGrid,
   FiCamera,
-  FiLogOut
+  FiLogOut,
+  FiLayout
 } from 'react-icons/fi';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -17,6 +18,7 @@ const eventAdminLinks = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: <FiGrid className="w-5 h-5" /> },
   { href: '/admin/evenements', label: 'Événements', icon: <FiCalendar className="w-5 h-5" /> },
   { href: '/admin/participants', label: 'Participants', icon: <FiUsers className="w-5 h-5" /> },
+  { href: '/admin/pages-builder', label: 'Page Builder', icon: <FiLayout className="w-5 h-5" /> },
 ];
 
 export default function Sidebar() {
@@ -25,6 +27,13 @@ export default function Sidebar() {
   const supabase = supabaseBrowser();
   const [user, setUser] = useState<User | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Ne pas afficher la sidebar sur les pages builder (avec UUID)
+  const isBuilderEditorPage = /^\/admin\/builder\/[a-f0-9-]{36}/i.test(pathname || '');
+
+  if (isBuilderEditorPage) {
+    return null;
+  }
 
   useEffect(() => {
     // Récupérer l'utilisateur connecté

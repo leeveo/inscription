@@ -175,13 +175,15 @@ interface LandingPageTemplateSelectorProps {
   currentConfig?: LandingPageConfig | null
   onConfigUpdate: (config: LandingPageConfig) => Promise<void>
   onPreview: (templateId: string, config: LandingPageConfig) => void
+  registrationFormBuilderId?: string | null
 }
 
 export default function LandingPageTemplateSelector({
   eventId,
   currentConfig,
   onConfigUpdate,
-  onPreview
+  onPreview,
+  registrationFormBuilderId
 }: LandingPageTemplateSelectorProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string>(
     currentConfig?.templateId || LANDING_PAGE_TEMPLATES[0].id
@@ -333,6 +335,8 @@ export default function LandingPageTemplateSelector({
   }
 
   const handlePreview = () => {
+    // Si un form builder est sélectionné, appeler onPreview avec le template actuel mais la logique
+    // handlePreviewLandingPage dans la page parent utilisera le form builder
     const config: LandingPageConfig = {
       templateId: selectedTemplate,
       customization
@@ -343,7 +347,13 @@ export default function LandingPageTemplateSelector({
   const generateLandingPageUrl = () => {
     // Utiliser le domaine public pour les landing pages
     const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://waivent.app'
-    return `${publicBaseUrl}/landing/${eventId}?template=${selectedTemplate}`
+
+    // Si un form builder est sélectionné, l'utiliser sinon utiliser le template classique
+    if (registrationFormBuilderId) {
+      return `${publicBaseUrl}/landing/${eventId}?formBuilder=${registrationFormBuilderId}`
+    } else {
+      return `${publicBaseUrl}/landing/${eventId}?template=${selectedTemplate}`
+    }
   }
 
   const copyUrlToClipboard = async () => {
@@ -409,7 +419,7 @@ export default function LandingPageTemplateSelector({
               </button>
             </div>
             <p className="text-sm text-blue-700 mt-2">
-              💡 Cette URL se met automatiquement à jour avec le template sélectionné
+              💡 Cette URL se met automatiquement à jour avec le template ou le builder d'inscription sélectionné
             </p>
           </div>
           <button
@@ -420,7 +430,7 @@ export default function LandingPageTemplateSelector({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span>Prévisualiser</span>
+            <span>{registrationFormBuilderId ? "Prévisualiser le builder" : "Prévisualiser"}</span>
           </button>
         </div>
       </div>

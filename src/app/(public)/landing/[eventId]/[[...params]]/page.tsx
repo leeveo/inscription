@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { supabaseServer } from '@/lib/supabase/server'
 import ClientLandingWrapper from '@/components/ClientLandingWrapper'
+import ClientFormBuilderWrapper from '@/components/ClientFormBuilderWrapper'
 
 // Force dynamic rendering pour éviter les erreurs 500 en production
 // Ces pages doivent être rendues à la demande car elles dépendent de tokens dynamiques
@@ -39,7 +40,7 @@ async function getEventData(eventId: string) {
 
 async function getLandingPageConfig(eventId: string) {
   const supabase = await supabaseServer()
-  
+
   const { data: config } = await supabase
     .from('landing_page_configs')
     .select('*')
@@ -62,6 +63,7 @@ async function getLandingPageConfig(eventId: string) {
     }
   }
 }
+
 
 async function getParticipantData(token: string, eventId: string) {
   try {
@@ -114,24 +116,73 @@ async function getParticipantData(token: string, eventId: string) {
 }
 
 export default async function LandingPage({ params, searchParams }: PageProps) {
+  console.log('=== Landing Page ===')
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams || {}
   const { eventId } = resolvedParams
-  
+  console.log('eventId:', eventId)
+  console.log('resolvedSearchParams:', resolvedSearchParams)
+
   // Extraire le token des paramètres optionnels
   const token = resolvedParams.params?.[0] || null
-  
-  // Récupération des données de l'événement et de la configuration
-  const [event, config] = await Promise.all([
-    getEventData(eventId),
-    getLandingPageConfig(eventId)
-  ])
+  console.log('token:', token)
+
+  // Récupération des données de l'événement
+  const event = await getEventData(eventId)
+  console.log('event.registration_form_builder_id:', event.registration_form_builder_id)
 
   // Récupération des données du participant si un token est fourni
   let participantData = null
   if (token) {
     participantData = await getParticipantData(token, eventId)
   }
+
+  // Vérifier si on utilise le formBuilder (via URL ou événement)
+  const formBuilderIdFromUrl = resolvedSearchParams.formBuilder
+  const useFormBuilder = formBuilderIdFromUrl || event.registration_form_builder_id
+  console.log('formBuilderIdFromUrl:', formBuilderIdFromUrl)
+  console.log('useFormBuilder:', useFormBuilder)
+
+  // Forcer l'utilisation du form builder si disponible
+  if (useFormBuilder) {
+    // Mode Form Builder
+    const formBuilder = await getRegistrationFormBuilder(useFormBuilder)
+
+    if (formBuilder) {
+      return (
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        }>
+          <ClientFormBuilderWrapper
+            formTree={JSON.stringify(formBuilder.tree)}
+            eventId={eventId}
+            eventName={event.nom}
+            eventDescription={event.description}
+            participantData={participantData}
+            token={token}
+          />
+        </Suspense>
+      )
+    } else {
+      // Si le form builder n'existe pas, afficher une erreur
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-600 text-xl mb-4">❌ Formulaire non trouvé</div>
+            <p className="text-gray-600 mb-4">Le formulaire d'inscription sélectionné n'existe pas.</p>
+            <a href="/" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Retour à l'accueil
+            </a>
+          </div>
+        </div>
+      )
+    }
+  }
+
+  // Mode Template classique (rétrocompatibilité)
+  const config = await getLandingPageConfig(eventId)
 
   // Gestion des paramètres de prévisualisation
   let templateId = config.template_id
@@ -182,26 +233,25 @@ export default async function LandingPage({ params, searchParams }: PageProps) {
 export async function generateMetadata({ params }: PageProps) {
   try {
     const resolvedParams = await params
-    const event = await getEventData(resolvedParams.eventId)
-    
+
     return {
-      title: `${event.nom} - Inscription`,
-      description: event.description || `Inscrivez-vous à ${event.nom}`,
+      title: 'Formulaire d\'inscription',
+      description: 'Remplissez le formulaire d\'inscription pour participer à l\'événement',
       openGraph: {
-        title: `${event.nom} - Inscription`,
-        description: event.description || `Inscrivez-vous à ${event.nom}`,
+        title: 'Formulaire d\'inscription',
+        description: 'Remplissez le formulaire d\'inscription pour participer à l\'événement',
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${event.nom} - Inscription`,
-        description: event.description || `Inscrivez-vous à ${event.nom}`,
+        title: 'Formulaire d\'inscription',
+        description: 'Remplissez le formulaire d\'inscription pour participer à l\'événement',
       },
     }
   } catch {
     return {
-      title: 'Inscription à l\'événement',
-      description: 'Inscrivez-vous à cet événement',
+      title: 'Formulaire d\'inscription',
+      description: 'Remplissez le formulaire d\'inscription pour participer à l\'événement',
     }
   }
 }

@@ -1,0 +1,505 @@
+{
+  "id": "template-webinar",
+  "name": "Webinar",
+  "description": "Template optimisé pour webinaires en ligne avec focus sur l'inscription et les informations pratiques",
+  "category": "online",
+  "preview_image": "/templates/webinar-preview.png",
+  "tree": {
+    "ROOT": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "hidden": false,
+      "nodes": ["hero-section", "countdown-section", "benefits-section", "speakers-section", "faq-section", "cta-section", "footer-section"],
+      "linkedNodes": {}
+    },
+    "hero-section": {
+      "type": {
+        "resolvedName": "Hero"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Webinar: Maîtrisez les Nouvelles Technologies",
+        "subtitle": "Rejoignez notre session en direct et apprenez des experts",
+        "backgroundImage": "https://images.unsplash.com/photo-1591115765373-5207764f72e7?w=1920&q=80",
+        "ctaText": "S'inscrire gratuitement",
+        "ctaLink": "#inscription",
+        "alignment": "center",
+        "height": "medium",
+        "overlay": true,
+        "overlayOpacity": 70
+      },
+      "displayName": "Hero",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "countdown-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "bg-white py-12 border-b-4 border-indigo-600"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["countdown"],
+      "linkedNodes": {}
+    },
+    "countdown": {
+      "type": {
+        "resolvedName": "Countdown"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Le webinar commence dans",
+        "targetDate": "2025-06-20T14:00:00",
+        "showDays": true,
+        "showHours": true,
+        "showMinutes": true,
+        "showSeconds": true,
+        "textColor": "#1F2937",
+        "numberColor": "#4F46E5",
+        "backgroundColor": "transparent"
+      },
+      "displayName": "Countdown",
+      "custom": {},
+      "parent": "countdown-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefits-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 max-w-6xl mx-auto"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["benefits-title", "benefits-grid"],
+      "linkedNodes": {}
+    },
+    "benefits-title": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<h2 class='text-3xl font-bold text-center mb-12 text-gray-900'>Ce que vous allez apprendre</h2>",
+        "fontSize": 32,
+        "textAlign": "center",
+        "color": "#111827"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefits-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefits-grid": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "grid md:grid-cols-3 gap-8"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "benefits-section",
+      "hidden": false,
+      "nodes": ["benefit-1", "benefit-2", "benefit-3"],
+      "linkedNodes": {}
+    },
+    "benefit-1": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "benefits-grid",
+      "hidden": false,
+      "nodes": ["benefit-1-icon", "benefit-1-text"],
+      "linkedNodes": {}
+    },
+    "benefit-1-icon": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<div class='text-5xl mb-4'>🎯</div>",
+        "fontSize": 48,
+        "textAlign": "center"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-1",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefit-1-text": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<h3 class='text-xl font-bold mb-2 text-gray-900'>Stratégies Concrètes</h3><p class='text-gray-600'>Des techniques éprouvées que vous pourrez appliquer immédiatement</p>",
+        "fontSize": 16,
+        "textAlign": "center",
+        "color": "#4B5563"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-1",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefit-2": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "benefits-grid",
+      "hidden": false,
+      "nodes": ["benefit-2-icon", "benefit-2-text"],
+      "linkedNodes": {}
+    },
+    "benefit-2-icon": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<div class='text-5xl mb-4'>💡</div>",
+        "fontSize": 48,
+        "textAlign": "center"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-2",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefit-2-text": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<h3 class='text-xl font-bold mb-2 text-gray-900'>Insights d'Experts</h3><p class='text-gray-600'>Apprenez directement de professionnels reconnus du secteur</p>",
+        "fontSize": 16,
+        "textAlign": "center",
+        "color": "#4B5563"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-2",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefit-3": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "benefits-grid",
+      "hidden": false,
+      "nodes": ["benefit-3-icon", "benefit-3-text"],
+      "linkedNodes": {}
+    },
+    "benefit-3-icon": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<div class='text-5xl mb-4'>🤝</div>",
+        "fontSize": 48,
+        "textAlign": "center"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-3",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "benefit-3-text": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<h3 class='text-xl font-bold mb-2 text-gray-900'>Session Q&A Interactive</h3><p class='text-gray-600'>Posez vos questions en direct et obtenez des réponses personnalisées</p>",
+        "fontSize": 16,
+        "textAlign": "center",
+        "color": "#4B5563"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "benefit-3",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "speakers-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-gray-50"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["speakers"],
+      "linkedNodes": {}
+    },
+    "speakers": {
+      "type": {
+        "resolvedName": "Speakers"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Vos Formateurs",
+        "layout": "grid",
+        "columns": 2,
+        "showBio": true,
+        "showSocial": true
+      },
+      "displayName": "Speakers",
+      "custom": {},
+      "parent": "speakers-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "faq-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 max-w-4xl mx-auto"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["faq"],
+      "linkedNodes": {}
+    },
+    "faq": {
+      "type": {
+        "resolvedName": "FAQ"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Questions Fréquentes",
+        "items": [
+          {
+            "question": "Le webinar est-il gratuit ?",
+            "answer": "Oui, ce webinar est 100% gratuit. Aucun frais caché."
+          },
+          {
+            "question": "Aurai-je accès au replay ?",
+            "answer": "Oui, tous les inscrits recevront un lien vers le replay disponible pendant 30 jours."
+          },
+          {
+            "question": "Quelle plateforme utilisez-vous ?",
+            "answer": "Nous utilisons Zoom pour une expérience interactive de qualité. Le lien vous sera envoyé 24h avant le webinar."
+          },
+          {
+            "question": "Puis-je poser des questions pendant le webinar ?",
+            "answer": "Absolument ! Nous aurons une session Q&A dédiée de 30 minutes à la fin de la présentation."
+          },
+          {
+            "question": "Recevrai-je un certificat de participation ?",
+            "answer": "Oui, un certificat de participation numérique vous sera envoyé après le webinar."
+          }
+        ],
+        "accordion": true
+      },
+      "displayName": "FAQ",
+      "custom": {},
+      "parent": "faq-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "cta-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-gradient-to-r from-indigo-600 to-purple-600"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["cta-content"],
+      "linkedNodes": {}
+    },
+    "cta-content": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "max-w-3xl mx-auto text-center"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "cta-section",
+      "hidden": false,
+      "nodes": ["cta-title", "cta-subtitle", "cta-button"],
+      "linkedNodes": {}
+    },
+    "cta-title": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<h2 class='text-4xl font-bold text-white mb-4'>Prêt à transformer vos compétences ?</h2>",
+        "fontSize": 36,
+        "textAlign": "center",
+        "color": "#FFFFFF"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "cta-content",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "cta-subtitle": {
+      "type": {
+        "resolvedName": "Text"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "<p class='text-xl text-indigo-100 mb-8'>Rejoignez des centaines de professionnels qui ont déjà franchi le pas</p>",
+        "fontSize": 20,
+        "textAlign": "center",
+        "color": "#E0E7FF"
+      },
+      "displayName": "Text",
+      "custom": {},
+      "parent": "cta-content",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "cta-button": {
+      "type": {
+        "resolvedName": "Button"
+      },
+      "isCanvas": false,
+      "props": {
+        "text": "Réserver ma place maintenant",
+        "link": "#inscription",
+        "variant": "primary",
+        "size": "large",
+        "backgroundColor": "#FFFFFF",
+        "textColor": "#4F46E5",
+        "borderRadius": 8
+      },
+      "displayName": "Button",
+      "custom": {},
+      "parent": "cta-content",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "footer-section": {
+      "type": {
+        "resolvedName": "Footer"
+      },
+      "isCanvas": false,
+      "props": {
+        "companyName": "EventPro Academy",
+        "logo": "",
+        "description": "Formation en ligne de qualité pour professionnels ambitieux",
+        "links": [
+          {
+            "title": "Webinars",
+            "items": [
+              { "label": "Prochains événements", "url": "#" },
+              { "label": "Replays", "url": "#" },
+              { "label": "Certificats", "url": "#" }
+            ]
+          },
+          {
+            "title": "Support",
+            "items": [
+              { "label": "Centre d'aide", "url": "/help" },
+              { "label": "Contact", "url": "/contact" },
+              { "label": "FAQ", "url": "#faq" }
+            ]
+          },
+          {
+            "title": "Légal",
+            "items": [
+              { "label": "Conditions d'utilisation", "url": "/terms" },
+              { "label": "Confidentialité", "url": "/privacy" }
+            ]
+          }
+        ],
+        "socialLinks": [
+          { "platform": "LinkedIn", "url": "https://linkedin.com" },
+          { "platform": "Twitter", "url": "https://twitter.com" },
+          { "platform": "Facebook", "url": "https://facebook.com" },
+          { "platform": "Instagram", "url": "https://instagram.com" }
+        ],
+        "copyright": "© 2025 EventPro Academy. Tous droits réservés."
+      },
+      "displayName": "Footer",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    }
+  }
+}

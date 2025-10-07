@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
         heure_debut: sessionData.heure_debut,
         heure_fin: sessionData.heure_fin,
         intervenant: sessionData.intervenant || '',
+        intervenant_id: sessionData.intervenant_id || null,
+        programme: sessionData.programme || '',
         lieu: sessionData.lieu || '',
         type: sessionData.type,
         max_participants: sessionData.max_participants
@@ -101,6 +103,8 @@ export async function PUT(request: NextRequest) {
         heure_debut: sessionData.heure_debut,
         heure_fin: sessionData.heure_fin,
         intervenant: sessionData.intervenant || '',
+        intervenant_id: sessionData.intervenant_id || null,
+        programme: sessionData.programme || '',
         lieu: sessionData.lieu || '',
         type: sessionData.type,
         max_participants: sessionData.max_participants

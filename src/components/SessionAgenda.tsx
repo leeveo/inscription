@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { supabaseBrowser } from '@/lib/supabase/client'
 import Modal from '@/components/Modal'
 import SessionParticipantsList from '@/components/SessionParticipantsList'
@@ -11,6 +12,16 @@ type SessionParticipant = {
   prenom: string;
   email: string;
 };
+
+type IntervenantData = {
+  id: number;
+  nom: string;
+  prenom: string;
+  titre?: string;
+  photo_url?: string;
+  entreprise?: string;
+  biographie?: string;
+}
 
 type Session = {
   id: string;
@@ -25,6 +36,9 @@ type Session = {
   is_registered?: boolean;
   type: string;
   intervenant?: string;
+  intervenant_id?: number | null;
+  intervenant_data?: IntervenantData | null;
+  programme?: string;
   lieu?: string;
   max_participants?: number | null;
 }
@@ -140,6 +154,20 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
                 email: p.inscription_participants.email,
               })) || [];
 
+            // Fetch intervenant data if intervenant_id exists
+            let intervenantData = null;
+            if (session.intervenant_id) {
+              const { data: intervenant, error: intervenantError } = await supabase
+                .from('inscription_intervenants')
+                .select('id, nom, prenom, titre, photo_url, entreprise, biographie')
+                .eq('id', session.intervenant_id)
+                .single();
+
+              if (!intervenantError && intervenant) {
+                intervenantData = intervenant;
+              }
+            }
+
             return {
               id: String(session.id),
               evenement_id: String(session.evenement_id),
@@ -153,6 +181,9 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
               is_registered: Boolean(session.is_registered),
               type: String(session.type),
               intervenant: session.intervenant ? String(session.intervenant) : undefined,
+              intervenant_id: session.intervenant_id ? Number(session.intervenant_id) : null,
+              intervenant_data: intervenantData,
+              programme: session.programme ? String(session.programme) : undefined,
               lieu: session.lieu ? String(session.lieu) : undefined,
               max_participants: session.max_participants ? Number(session.max_participants) : null,
             };
@@ -190,7 +221,105 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
     
     fetchSessions()
   }, [eventId])
-  
+
+  // Function to manually refresh sessions
+  const refreshSessions = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const supabase = supabaseBrowser();
+
+      const { data, error } = await supabase
+        .from('inscription_sessions')
+        .select('*')
+        .eq('evenement_id', eventId)
+        .order('date')
+        .order('heure_debut');
+
+      if (error) throw error;
+
+      const sessionsWithParticipants = await Promise.all(
+        (data || []).map(async (session) => {
+          const { count, error: countError } = await supabase
+            .from('inscription_session_participants')
+            .select('*', { count: 'exact', head: true })
+            .eq('session_id', session.id);
+
+          const { data: participants, error: participantsError } = await supabase
+            .from('inscription_session_participants')
+            .select('participant_id, inscription_participants(nom, prenom, email)')
+            .eq('session_id', session.id);
+
+          const formattedParticipants = participants?.map((p: any) => ({
+            nom: p.inscription_participants.nom,
+            prenom: p.inscription_participants.prenom,
+            email: p.inscription_participants.email,
+          })) || [];
+
+          // Fetch intervenant data if intervenant_id exists
+          let intervenantData = null;
+          if (session.intervenant_id) {
+            const { data: intervenant, error: intervenantError } = await supabase
+              .from('inscription_intervenants')
+              .select('id, nom, prenom, titre, photo_url, entreprise, biographie')
+              .eq('id', session.intervenant_id)
+              .single();
+
+            if (!intervenantError && intervenant) {
+              intervenantData = intervenant;
+            }
+          }
+
+          return {
+            id: String(session.id),
+            evenement_id: String(session.evenement_id),
+            titre: String(session.titre),
+            description: String(session.description || ''),
+            date: String(session.date),
+            heure_debut: String(session.heure_debut),
+            heure_fin: String(session.heure_fin),
+            participant_count: Number(count || 0),
+            participants: formattedParticipants,
+            is_registered: Boolean(session.is_registered),
+            type: String(session.type),
+            intervenant: session.intervenant ? String(session.intervenant) : undefined,
+            intervenant_id: session.intervenant_id ? Number(session.intervenant_id) : null,
+            intervenant_data: intervenantData,
+            programme: session.programme ? String(session.programme) : undefined,
+            lieu: session.lieu ? String(session.lieu) : undefined,
+            max_participants: session.max_participants ? Number(session.max_participants) : null,
+          };
+        })
+      );
+
+      const validSessions = sessionsWithParticipants.filter(isValidSession);
+      setSessions(validSessions);
+
+      const grouped = validSessions.reduce((acc: Record<string, Session[]>, session) => {
+        const date = new Date(session.date).toLocaleDateString('fr-FR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(session);
+        return acc;
+      }, {});
+
+      setGroupedSessions(grouped);
+    } catch (err: unknown) {
+      console.error('Error refreshing sessions:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du rafraîchissement des sessions');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   // New function to format time for display
   const formatTimeDisplay = (timeStr: string) => {
     const [hours, minutes] = timeStr.split(':');
@@ -435,18 +564,41 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
   
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      {/* Header with title and add button */}
+      {/* Header with title and buttons */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">Agenda des sessions</h2>
-        <button
-          onClick={onAddSession}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
-        >
-          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Ajouter une session
-        </button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={refreshSessions}
+            disabled={isLoading}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Rafraîchir les données"
+          >
+            <svg
+              className={`w-5 h-5 mr-1 ${isLoading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {isLoading ? 'Chargement...' : 'Actualiser'}
+          </button>
+          <button
+            onClick={onAddSession}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center"
+          >
+            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Ajouter une session
+          </button>
+        </div>
       </div>
       
       {/* Error message if present */}
@@ -563,7 +715,35 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
                                     </>
                                   )}
                                 </div>
-                                {session.intervenant && (
+                                {/* Intervenant info avec photo */}
+                                {session.intervenant_data ? (
+                                  <div className="mt-3 flex items-start space-x-3 bg-white/50 p-2 rounded-lg border border-gray-200">
+                                    {session.intervenant_data.photo_url ? (
+                                      <img
+                                        src={session.intervenant_data.photo_url}
+                                        alt={`${session.intervenant_data.prenom} ${session.intervenant_data.nom}`}
+                                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                                      />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {session.intervenant_data.prenom} {session.intervenant_data.nom}
+                                      </p>
+                                      {session.intervenant_data.titre && (
+                                        <p className="text-xs text-gray-600">{session.intervenant_data.titre}</p>
+                                      )}
+                                      {session.intervenant_data.entreprise && (
+                                        <p className="text-xs text-gray-500">{session.intervenant_data.entreprise}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : session.intervenant && (
                                   <div className="mt-1 text-sm text-gray-600 flex items-center">
                                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -573,6 +753,13 @@ export default function SessionAgenda({ eventId, onAddSession, onEditSession }: 
                                 )}
                                 {session.description && (
                                   <p className="mt-2 text-sm text-gray-600 line-clamp-2">{session.description}</p>
+                                )}
+                                {/* Programme de la session */}
+                                {session.programme && (
+                                  <div className="mt-2 bg-blue-50/50 border border-blue-100 rounded p-2">
+                                    <p className="text-xs font-medium text-blue-900 mb-1">Programme :</p>
+                                    <p className="text-xs text-blue-800 line-clamp-3">{session.programme}</p>
+                                  </div>
                                 )}
                               </div>
                               

@@ -1,0 +1,94 @@
+{
+  "templates": [
+    {
+      "id": "template-conference-1day",
+      "name": "Conférence 1 Jour",
+      "description": "Template complet pour une conférence d'une journée avec agenda, speakers et inscription",
+      "category": "event",
+      "previewImage": "/templates/conference-1day-preview.png",
+      "thumbnailImage": "/templates/conference-1day-thumb.png",
+      "tags": ["conference", "event", "in-person", "agenda", "speakers"],
+      "features": [
+        "Hero banner avec image de fond",
+        "Compte à rebours en temps réel",
+        "Programme détaillé avec sessions",
+        "Galerie de speakers avec photos",
+        "Carte interactive de localisation",
+        "Section FAQ accordion",
+        "Footer complet avec liens"
+      ],
+      "blocks": [
+        "Hero",
+        "Countdown",
+        "Agenda",
+        "Speakers",
+        "Map",
+        "FAQ",
+        "Footer"
+      ],
+      "suitableFor": [
+        "Conférences d'entreprise",
+        "Salons professionnels",
+        "Événements académiques",
+        "Séminaires",
+        "Rencontres networking"
+      ],
+      "dataSources": [
+        "inscription_sessions",
+        "inscription_participants"
+      ],
+      "colorScheme": {
+        "primary": "#3B82F6",
+        "secondary": "#8B5CF6",
+        "accent": "#10B981"
+      },
+      "difficulty": "intermediate",
+      "estimatedSetupTime": "15-30 minutes"
+    },
+    {
+      "id": "template-webinar",
+      "name": "Webinar",
+      "description": "Template optimisé pour webinaires en ligne avec focus sur l'inscription et les informations pratiques",
+      "category": "online",
+      "previewImage": "/templates/webinar-preview.png",
+      "thumbnailImage": "/templates/webinar-thumb.png",
+      "tags": ["webinar", "online", "formation", "virtual"],
+      "features": [
+        "Hero optimisé pour conversion",
+        "Compte à rebours visible",
+        "Section bénéfices avec icônes",
+        "Speakers/formateurs avec bios",
+        "FAQ détaillée pour répondre aux objections",
+        "CTA puissant pour inscription",
+        "Footer avec liens de support"
+      ],
+      "blocks": [
+        "Hero",
+        "Countdown",
+        "Container (Benefits)",
+        "Text",
+        "Speakers",
+        "FAQ",
+        "Button",
+        "Footer"
+      ],
+      "suitableFor": [
+        "Formations en ligne",
+        "Webinaires marketing",
+        "Sessions de démonstration",
+        "Lancements de produit virtuels",
+        "Ateliers en ligne"
+      ],
+      "dataSources": [
+        "inscription_participants"
+      ],
+      "colorScheme": {
+        "primary": "#4F46E5",
+        "secondary": "#8B5CF6",
+        "accent": "#FFFFFF"
+      },
+      "difficulty": "beginner",
+      "estimatedSetupTime": "10-20 minutes"
+    }
+  ]
+}

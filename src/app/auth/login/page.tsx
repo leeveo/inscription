@@ -5,11 +5,13 @@ import { supabaseBrowser } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { WaiEventLogoLarge } from '@/components/WaiEventLogo'
+import AuthLoader from '@/components/AuthLoader'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
@@ -21,28 +23,58 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      console.log('Attempting login...')
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('Login response:', { data, error: signInError })
+
       if (signInError) {
-        setError(signInError.message)
-        setLoading(false)
+        // Traduire les messages d'erreur courants
+        let errorMessage = signInError.message
+        if (signInError.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou mot de passe incorrect'
+        } else if (signInError.message.includes('Email not confirmed')) {
+          errorMessage = 'Veuillez confirmer votre adresse email'
+        }
+        setError(errorMessage)
+        console.error('Login error:', signInError)
         return
       }
 
-      if (data.user) {
-        router.push('/admin/dashboard')
-        router.refresh()
+      if (data.session) {
+        console.log('Session created:', data.session)
+
+        // Afficher le loader de redirection
+        setIsRedirecting(true)
+
+        // Attendre un peu pour que les cookies soient bien définis
+        await new Promise(resolve => setTimeout(resolve, 800))
+
+        // Vérifier la session
+        const { data: sessionCheck } = await supabase.auth.getSession()
+        console.log('Session check:', sessionCheck)
+
+        // Redirection immédiate avec refresh de la page
+        window.location.href = '/admin/dashboard'
+      } else {
+        setError('Aucune session créée. Veuillez réessayer.')
       }
 
     } catch (err) {
       setError('Une erreur est survenue lors de la connexion')
-      console.error(err)
+      console.error('Login error:', err)
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loader during redirection
+  if (isRedirecting) {
+    return <AuthLoader message="Connexion réussie" />
   }
 
   return (

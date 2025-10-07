@@ -18,14 +18,15 @@ export default function ImageUpload({ currentImageUrl, onImageUploaded, classNam
 
   const handleUploadComplete = (res: ClientUploadedFileData<{ uploadedBy: string; url: string }>[]) => {
     if (res && res.length > 0) {
-      const fileUrl = res[0].url
+      // Use ufsUrl instead of deprecated url property
+      const fileUrl = (res[0] as any).ufsUrl || res[0].url
       console.log('=== DEBUG IMAGE UPLOAD ===');
       console.log('File URL from UploadThing:', fileUrl);
-      
+
       setPreviewUrl(fileUrl)
       onImageUploaded(fileUrl)
       setError(null)
-      
+
       console.log('onImageUploaded callback called with:', fileUrl);
       console.log("Upload réussi:", fileUrl)
     }
@@ -59,6 +60,7 @@ export default function ImageUpload({ currentImageUrl, onImageUploaded, classNam
               src={previewUrl}
               alt="Logo de l'événement"
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain"
             />
           </div>
