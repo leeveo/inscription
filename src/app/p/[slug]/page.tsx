@@ -49,13 +49,17 @@ export default async function PublicBuilderPage({ params }: PublicPageProps) {
   const supabase = await supabaseServer()
 
   // Récupérer la page par son slug
-  const { data: page, error } = await supabase
+  // D'abord essayer de trouver une page publiée avec ce slug
+  let { data: page, error } = await supabase
     .from('builder_pages')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published') // Seulement les pages publiées
+    .order('published_at', { ascending: false }) // Prendre la plus récente
+    .limit(1)
     .single()
 
+  // Si aucune page trouvée, retourner 404
   if (error || !page) {
     console.error('Error loading published page:', error)
     notFound()

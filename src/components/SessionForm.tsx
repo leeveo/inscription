@@ -101,7 +101,7 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
 
         // If editing session with intervenant_id, set selected intervenant
         if (session?.intervenant_id && data) {
-          const intervenant = data.find(i => i.id === session.intervenant_id)
+          const intervenant = data.find((i: Intervenant) => i.id === session.intervenant_id)
           if (intervenant) setSelectedIntervenant(intervenant)
         }
       } catch (error) {
@@ -120,7 +120,7 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
   const intervenantId = watch('intervenant_id')
   useEffect(() => {
     if (intervenantId && intervenantId !== '') {
-      const intervenant = intervenants.find(i => i.id?.toString() === intervenantId)
+      const intervenant = intervenants.find((i: Intervenant) => i.id?.toString() === intervenantId)
       setSelectedIntervenant(intervenant || null)
     } else {
       setSelectedIntervenant(null)
@@ -136,74 +136,120 @@ export default function SessionForm({ eventId, session, onSessionSaved, onCancel
       setIsSubmitting(true)
       setError(null)
       
-      // Log the data we're about to send
-      console.log("Sending session data:", data);
+      console.log("🔄 Submitting session form with data:", data);
+      
+      // Validation supplémentaire côté client
+      if (!data.titre?.trim()) {
+        throw new Error("Le titre est requis")
+      }
+      
+      if (!data.date) {
+        throw new Error("La date est requise")
+      }
+      
+      if (!data.heure_debut) {
+        throw new Error("L'heure de début est requise")
+      }
+      
+      if (!data.heure_fin) {
+        throw new Error("L'heure de fin est requise")
+      }
+      
+      if (!data.type) {
+        throw new Error("Le type de session est requis")
+      }
       
       // Ensure all fields are included, even if they're empty strings
       const formattedData = {
-        titre: data.titre,
-        description: data.description || '',
+        titre: data.titre.trim(),
+        description: data.description?.trim() || null,
         date: data.date,
         heure_debut: data.heure_debut,
         heure_fin: data.heure_fin,
-        intervenant: data.intervenant || '',
+        intervenant: data.intervenant?.trim() || null,
         intervenant_id: data.intervenant_id && data.intervenant_id.trim() !== '' ? parseInt(data.intervenant_id, 10) : null,
-        programme: data.programme || '',
-        lieu: data.lieu || '',
+        programme: data.programme?.trim() || null,
+        lieu: data.lieu?.trim() || null,
         type: data.type,
         max_participants: data.max_participants && data.max_participants.trim() !== '' ? parseInt(data.max_participants, 10) : null,
       };
       
+      console.log("📝 Formatted data:", formattedData);
+      
       if (session) {
         // Update existing session via API
-        console.log("Updating session with ID:", session.id);
+        console.log("🔄 Updating session with ID:", session.id);
+        
+        const requestBody = {
+          sessionId: session.id,
+          ...formattedData
+        };
+        
+        console.log("📤 Sending PUT request with body:", requestBody);
         
         const response = await fetch('/api/sessions', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            sessionId: session.id,
-            ...formattedData
-          })
+          body: JSON.stringify(requestBody)
         });
+        
+        console.log("📥 Response status:", response.status, response.statusText);
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur lors de la mise à jour');
+          console.error("❌ API Error:", errorData);
+          throw new Error(errorData.error || `Erreur ${response.status}: ${response.statusText}`);
         }
         
-        const { session: updatedSession } = await response.json();
-        console.log("Session updated successfully:", updatedSession);
-        onSessionSaved(updatedSession as Session)
+        const result = await response.json();
+        console.log("✅ Session updated successfully:", result);
+        
+        if (!result.session) {
+          throw new Error("La réponse de l'API ne contient pas les données de session");
+        }
+        
+        onSessionSaved(result.session as Session)
       } else {
         // Create new session via API
-        console.log("Creating new session for event:", eventId);
+        console.log("➕ Creating new session for event:", eventId);
+        
+        const requestBody = {
+          eventId,
+          ...formattedData
+        };
+        
+        console.log("📤 Sending POST request with body:", requestBody);
         
         const response = await fetch('/api/sessions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            eventId,
-            ...formattedData
-          })
+          body: JSON.stringify(requestBody)
         });
+        
+        console.log("📥 Response status:", response.status, response.statusText);
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Erreur lors de la création');
+          console.error("❌ API Error:", errorData);
+          throw new Error(errorData.error || `Erreur ${response.status}: ${response.statusText}`);
         }
         
-        const { session: newSession } = await response.json();
-        console.log("Session created successfully:", newSession);
-        onSessionSaved(newSession as Session)
+        const result = await response.json();
+        console.log("✅ Session created successfully:", result);
+        
+        if (!result.session) {
+          throw new Error("La réponse de l'API ne contient pas les données de session");
+        }
+        
+        onSessionSaved(result.session as Session)
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'enregistrement';
-      console.error('Error submitting session form:', errorMessage);
+      console.error('❌ Error submitting session form:', errorMessage);
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);

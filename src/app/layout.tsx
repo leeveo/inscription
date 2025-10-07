@@ -43,7 +43,7 @@ export default async function RootLayout({
   const isBuilderEditorPage = /^\/admin\/builder\/[a-f0-9-]{36}/i.test(pathname)
   const isPreviewPage = pathname.startsWith('/preview/') || pathname.startsWith('/p/')
 
-  console.log('RootLayout - isBuilderEditorPage:', isBuilderEditorPage, 'pathname:', pathname)
+  console.log('RootLayout - isBuilderEditorPage:', isBuilderEditorPage, 'isPreviewPage:', isPreviewPage, 'pathname:', pathname)
 
   // Utiliser un layout simplifié pour ces pages
   if (isLandingPage || isQRScannerPage || isAuthPage || isHomePage || isTicketPage || isInscriptionPage || isCheckinPage || isBuilderEditorPage || isPreviewPage) {

@@ -14,6 +14,7 @@ import {
   FiClock,
   FiHelpCircle,
   FiMessageSquare,
+  FiEdit3,
 } from 'react-icons/fi';
 
 // Import all block components
@@ -38,6 +39,9 @@ import { CreativeForm } from './blocks/CreativeForm';
 import { CorporateForm } from './blocks/CorporateForm';
 import { TechForm } from './blocks/TechForm';
 import { Session } from './blocks/Session';
+import { TwoColumnSection } from './blocks/TwoColumnSection';
+import { ParticipantInfo } from './blocks/ParticipantInfo';
+import { FormulaireDynamique } from './blocks/FormulaireDynamique';
 
 interface BlockCategory {
   id: string;
@@ -67,6 +71,8 @@ const blocks: BlockItem[] = [
   // Layout blocks
   { id: 'container', label: 'Conteneur', icon: <FiSquare />, categoryId: 'layout', component: Container, isCanvas: true },
   { id: 'section', label: 'Section', icon: <FiGrid />, categoryId: 'layout', component: Container, isCanvas: true },
+  { id: 'twoColumnSection', label: 'Section 2 Colonnes 📊', icon: <FiGrid />, categoryId: 'layout', component: TwoColumnSection, isCanvas: true },
+  { id: 'participantInfo', label: 'Infos Participant 👤', icon: <FiUsers />, categoryId: 'content', component: ParticipantInfo, isCanvas: false },
 
   // Content blocks
   { id: 'simpleText', label: 'Texte Simple', icon: <FiType />, categoryId: 'content', component: SimpleText },
@@ -78,6 +84,7 @@ const blocks: BlockItem[] = [
 
   // Form blocks
   { id: 'registrationForm', label: 'Formulaire d\'inscription', icon: <FiMessageSquare />, categoryId: 'forms', component: RegistrationForm },
+  { id: 'formulaireDynamique', label: 'Formulaire Configurable 📝', icon: <FiEdit3 />, categoryId: 'forms', component: FormulaireDynamique, isCanvas: false },
   { id: 'designForm', label: 'Formulaire Design', icon: <FiMessageSquare />, categoryId: 'forms', component: DesignForm },
   { id: 'creativeForm', label: 'Formulaire Créatif 🎨', icon: <FiMessageSquare />, categoryId: 'forms', component: CreativeForm },
   { id: 'corporateForm', label: 'Formulaire Entreprise 💼', icon: <FiMessageSquare />, categoryId: 'forms', component: CorporateForm },

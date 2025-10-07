@@ -11,6 +11,8 @@ interface CorporateFormProps {
   submitButtonText?: string
   showSessions?: boolean
   showSocialMedia?: boolean
+  width?: string
+  horizontalAlign?: string
 }
 
 export const CorporateForm = ({
@@ -21,6 +23,8 @@ export const CorporateForm = ({
   submitButtonText = "S'inscrire à l'événement",
   showSessions = true,
   showSocialMedia = true,
+  width = '100%',
+  horizontalAlign = 'left',
 }: CorporateFormProps) => {
   const {
     connectors: { connect, drag },
@@ -31,12 +35,29 @@ export const CorporateForm = ({
     hovered: state.events.hovered,
   }));
 
+  // Fonction pour obtenir le style d'alignement horizontal
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
+      case 'left':
+      default:
+        return { marginLeft: '0', marginRight: '0', display: 'block' };
+    }
+  };
+
+  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+
   return (
     <div
       ref={(ref) => ref && connect(drag(ref))}
-      className="relative w-full my-4"
+      className="relative my-4"
       style={{
         border: selected || hovered ? '2px solid #2563EB' : '2px solid transparent',
+        width,
+        ...alignStyle,
       }}
     >
       {/* Selection Indicator */}
@@ -223,6 +244,8 @@ export const CorporateFormSettings = () => {
     submitButtonText,
     showSessions,
     showSocialMedia,
+    width,
+    horizontalAlign,
   } = useNode((node) => ({
     id: node.id,
     title: node.data.props.title,
@@ -231,6 +254,8 @@ export const CorporateFormSettings = () => {
     submitButtonText: node.data.props.submitButtonText,
     showSessions: node.data.props.showSessions,
     showSocialMedia: node.data.props.showSocialMedia,
+    width: node.data.props.width,
+    horizontalAlign: node.data.props.horizontalAlign,
   }));
 
   const { actions } = useNode((state) => ({
@@ -302,6 +327,98 @@ export const CorporateFormSettings = () => {
         </div>
       </div>
 
+      {/* Width and Alignment */}
+      <div className="pt-4 border-t border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Largeur et Alignement</h4>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Largeur du formulaire
+            </label>
+            <div className="space-y-2">
+              <select
+                value={width || '100%'}
+                onChange={(e) => setProp((props: CorporateFormProps) => (props.width = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+              </select>
+              <input
+                type="text"
+                value={width || '100%'}
+                onChange={(e) => setProp((props: CorporateFormProps) => (props.width = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="100%, 500px, 20rem, etc."
+              />
+              <p className="text-xs text-gray-500">
+                Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alignement horizontal du formulaire
+            </label>
+            <div className="space-y-2">
+              <select
+                value={horizontalAlign || 'left'}
+                onChange={(e) => setProp((props: CorporateFormProps) => (props.horizontalAlign = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="left">Gauche</option>
+                <option value="center">Centre</option>
+                <option value="right">Droite</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setProp((props: CorporateFormProps) => (props.horizontalAlign = 'left'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'left'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">⬅️</span>
+                  Gauche
+                </button>
+                <button
+                  onClick={() => setProp((props: CorporateFormProps) => (props.horizontalAlign = 'center'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'center'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">↔️</span>
+                  Centre
+                </button>
+                <button
+                  onClick={() => setProp((props: CorporateFormProps) => (props.horizontalAlign = 'right'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'right'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">➡️</span>
+                  Droite
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Permet de centrer le formulaire sur la page
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Display Options */}
       <div className="pt-4 border-t border-gray-200">
         <h4 className="text-sm font-semibold text-gray-900 mb-3">Options d'affichage</h4>
@@ -328,8 +445,7 @@ export const CorporateFormSettings = () => {
           </label>
         </div>
       </div>
-
-          </div>
+    </div>
   );
 };
 
@@ -343,6 +459,8 @@ CorporateForm.craft = {
     submitButtonText: "S'inscrire à l'événement",
     showSessions: true,
     showSocialMedia: true,
+    width: '100%',
+    horizontalAlign: 'left',
   },
   related: {
     settings: CorporateFormSettings,

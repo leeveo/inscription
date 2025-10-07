@@ -12,6 +12,8 @@ export { FAQ } from './FAQ';
 export { Gallery } from './Gallery';
 export { Footer } from './Footer';
 export { RegistrationForm } from './RegistrationForm';
+export { ImageHero } from './ImageHero';
+export { TwoColumnSection } from './TwoColumnSection';
 export {
   ConferenceFormBlock,
   WorkshopFormBlock,
@@ -33,6 +35,8 @@ import { FAQ as FAQSettings } from './FAQ';
 import { Gallery as GallerySettings } from './Gallery';
 import { Footer as FooterSettings } from './Footer';
 import { RegistrationForm as RegistrationFormSettings } from './RegistrationForm';
+import { ImageHero as ImageHeroSettings } from './ImageHero';
+import { TwoColumnSection as TwoColumnSectionSettings } from './TwoColumnSection';
 
 export const craftSettings = {
   Container: ContainerSettings.craft,
@@ -48,4 +52,6 @@ export const craftSettings = {
   Gallery: GallerySettings.craft,
   Footer: FooterSettings.craft,
   RegistrationForm: RegistrationFormSettings.craft,
+  ImageHero: ImageHeroSettings.craft,
+  TwoColumnSection: TwoColumnSectionSettings.craft,
 };

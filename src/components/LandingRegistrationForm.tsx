@@ -28,6 +28,7 @@ const registrationSchema = z.object({
   email: z.string().email('Adresse email invalide'),
   telephone: z.string().min(6, 'Numéro de téléphone invalide'),
   profession: z.string().optional(),
+  entreprise: z.string().optional(),
   date_naissance: z.string().optional(),
   url_linkedin: z.string().url('URL LinkedIn invalide').optional().or(z.literal('')),
   url_facebook: z.string().url('URL Facebook invalide').optional().or(z.literal('')),
@@ -101,6 +102,7 @@ export default function LandingRegistrationForm({
       setValue('email', participantData.email || '')
       setValue('telephone', participantData.telephone || '')
       setValue('profession', participantData.profession || '')
+      setValue('entreprise', participantData.entreprise || '')
       setValue('date_naissance', participantData.date_naissance || '')
       setValue('url_linkedin', participantData.url_linkedin || '')
       setValue('url_facebook', participantData.url_facebook || '')
@@ -317,7 +319,8 @@ export default function LandingRegistrationForm({
             prenom: finalData.prenom,
             email: finalData.email,
             telephone: finalData.telephone,
-            profession: finalData.profession
+            profession: finalData.profession,
+            entreprise: finalData.entreprise
           })
           .eq('id', participantData.id)
           .select()
@@ -743,9 +746,25 @@ export default function LandingRegistrationForm({
             id="profession"
             {...register('profession')}
             className={inputClasses}
+            placeholder="Votre profession"
           />
         </div>
 
+        <div>
+          <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700">
+            Entreprise
+          </label>
+          <input
+            type="text"
+            id="entreprise"
+            {...register('entreprise')}
+            className={inputClasses}
+            placeholder="Nom de votre entreprise"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="date_naissance" className="block text-sm font-medium text-gray-700">
             Date de naissance

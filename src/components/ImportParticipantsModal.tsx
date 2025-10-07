@@ -29,6 +29,7 @@ interface CSVParticipant {
   email: string;
   telephone?: string;
   profession?: string;
+  entreprise?: string;
 }
 
 export default function ImportParticipantsModal({ 

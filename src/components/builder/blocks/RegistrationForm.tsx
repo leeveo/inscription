@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Element } from '@craftjs/core'
+import { Element, useNode } from '@craftjs/core'
 
 interface RegistrationFormProps {
   eventId?: string
@@ -14,6 +14,8 @@ interface RegistrationFormProps {
   successMessage?: string
   errorMessage?: string
   className?: string
+  width?: string
+  horizontalAlign?: string
 }
 
 export const RegistrationForm = React.forwardRef<HTMLDivElement, RegistrationFormProps>(({
@@ -26,10 +28,34 @@ export const RegistrationForm = React.forwardRef<HTMLDivElement, RegistrationFor
   submitButtonText = "S'inscrire à l'événement",
   successMessage = "Inscription réussie !",
   errorMessage = "Une erreur est survenue lors de l'inscription.",
-  className = "my-4"
+  className = "my-4",
+  width = '100%',
+  horizontalAlign = 'left'
 }, ref) => {
+  // Fonction pour obtenir le style d'alignement horizontal
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
+      case 'left':
+      default:
+        return { marginLeft: '0', marginRight: '0', display: 'block' };
+    }
+  };
+
+  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+
   return (
-    <div ref={ref} className={className}>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        width,
+        ...alignStyle,
+      }}
+    >
       <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
@@ -195,6 +221,135 @@ export const RegistrationForm = React.forwardRef<HTMLDivElement, RegistrationFor
 RegistrationForm.displayName = 'RegistrationForm'
 
 // Configuration Craft.js
+// Settings component pour RegistrationForm
+export const RegistrationFormSettings = () => {
+  const {
+    actions: { setProp },
+    title,
+    description,
+    width,
+    horizontalAlign,
+  } = useNode((node) => ({
+    title: node.data.props.title,
+    description: node.data.props.description,
+    width: node.data.props.width,
+    horizontalAlign: node.data.props.horizontalAlign,
+  }));
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Titre du formulaire
+        </label>
+        <input
+          type="text"
+          value={title || ''}
+          onChange={(e) => setProp((props: RegistrationFormProps) => (props.title = e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Description
+        </label>
+        <textarea
+          value={description || ''}
+          onChange={(e) => setProp((props: RegistrationFormProps) => (props.description = e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          rows={3}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Largeur du formulaire
+        </label>
+        <div className="space-y-2">
+          <select
+            value={width || '100%'}
+            onChange={(e) => setProp((props: RegistrationFormProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="100%">100% (pleine largeur)</option>
+            <option value="75%">75%</option>
+            <option value="66.66%">66.66% (2/3)</option>
+            <option value="50%">50% (moitié)</option>
+            <option value="33.33%">33.33% (1/3)</option>
+            <option value="25%">25%</option>
+          </select>
+          <input
+            type="text"
+            value={width || '100%'}
+            onChange={(e) => setProp((props: RegistrationFormProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            placeholder="100%, 500px, 20rem, etc."
+          />
+          <p className="text-xs text-gray-500">
+            Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Alignement horizontal du formulaire
+        </label>
+        <div className="space-y-2">
+          <select
+            value={horizontalAlign || 'left'}
+            onChange={(e) => setProp((props: RegistrationFormProps) => (props.horizontalAlign = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="left">Gauche</option>
+            <option value="center">Centre</option>
+            <option value="right">Droite</option>
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setProp((props: RegistrationFormProps) => (props.horizontalAlign = 'left'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'left'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">⬅️</span>
+              Gauche
+            </button>
+            <button
+              onClick={() => setProp((props: RegistrationFormProps) => (props.horizontalAlign = 'center'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'center'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">↔️</span>
+              Centre
+            </button>
+            <button
+              onClick={() => setProp((props: RegistrationFormProps) => (props.horizontalAlign = 'right'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'right'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">➡️</span>
+              Droite
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Permet de centrer le formulaire sur la page
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 RegistrationForm.craft = {
   displayName: 'RegistrationForm',
   props: {
@@ -207,9 +362,11 @@ RegistrationForm.craft = {
     submitButtonText: "S'inscrire à l'événement",
     successMessage: "Inscription réussie !",
     errorMessage: "Une erreur est survenue lors de l'inscription.",
-    className: "my-4"
+    className: "my-4",
+    width: '100%',
+    horizontalAlign: 'left'
   },
   related: {
-    // Pas de settings panel personnalisé pour le moment
+    settings: RegistrationFormSettings,
   },
 };

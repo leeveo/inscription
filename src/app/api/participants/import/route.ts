@@ -21,6 +21,7 @@ interface CSVParticipant {
   email: string;
   telephone?: string;
   profession?: string;
+  entreprise?: string;
 }
 
 interface ValidationError {
@@ -164,6 +165,8 @@ async function handleCSVUpload(req: NextRequest) {
         participant.telephone = value;
       } else if (header === 'profession' || header === 'job' || header === 'metier' || header === 'occupation') {
         participant.profession = value;
+      } else if (header === 'entreprise' || header === 'company' || header === 'societe' || header === 'organisation') {
+        participant.entreprise = value;
       }
     });
 
@@ -265,7 +268,8 @@ async function handleCSVUpload(req: NextRequest) {
     email: participant.email,
     telephone: participant.telephone, // Obligatoire !
     // Colonnes optionnelles
-    ...(participant.profession && { profession: participant.profession })
+    ...(participant.profession && { profession: participant.profession }),
+    ...(participant.entreprise && { entreprise: participant.entreprise })
   }));
 
   console.log('Attempting to insert participants:', participantsToInsert);

@@ -102,7 +102,7 @@ export default function Sidebar() {
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-2">
             <div className="w-1 h-4 bg-gradient-to-b from-blue-400 to-cyan-400 rounded-full"></div>
-            <span className="font-semibold text-white/90 text-sm uppercase tracking-wider">Gestion des Inscriptions</span>
+            <span className="font-semibold text-white/90 text-sm uppercase tracking-wider">Inscriptions</span>
           </div>
           <ul className="space-y-2">
             {eventAdminLinks.map(link => (

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { FiPlus, FiEdit, FiEye, FiCheck } from 'react-icons/fi';
+import Toast from './Toast';
 
 interface BasicPageSelectorProps {
   eventId: string;
@@ -36,6 +37,11 @@ export default function BasicPageSelector({
   const [pages, setPages] = useState<PageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
 
   const fetchPages = async () => {
     try {
@@ -88,34 +94,82 @@ export default function BasicPageSelector({
         return;
       }
 
-      // Update the site to link to this event
-      if (page.builder_sites && !page.builder_sites.event_id) {
-        const { error: updateError } = await supabaseBrowser()
-          .from('builder_sites')
-          .update({ event_id: eventId })
-          .eq('id', page.builder_sites.id);
+      // Use the API endpoint to properly set builder_page_id in inscription_evenements
+      const response = await fetch(`/api/events/${eventId}/builder-page`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pageId }),
+      });
 
-        if (updateError) {
-          console.error('❌ BasicPageSelector - Update error:', updateError);
-          throw updateError;
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ BasicPageSelector - API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to assign page');
       }
 
       console.log('✅ BasicPageSelector - Page assigned successfully');
       onPageSelected(pageId);
 
-      // Show success message
-      alert('Page assignée avec succès !');
+      // Show success toast
+      setToast({
+        show: true,
+        message: 'Page assignée avec succès !',
+        type: 'success'
+      });
       fetchPages(); // Refresh
 
     } catch (err) {
       console.error('❌ BasicPageSelector - Error assigning page:', err);
-      alert('Erreur lors de l\'assignation de la page');
+      setToast({
+        show: true,
+        message: 'Erreur lors de l\'assignation de la page',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleUnassignPage = async () => {
+    if (!currentPageId) return;
+
+    const confirmed = window.confirm('Êtes-vous sûr de vouloir dissocier cette page de l\'événement ?');
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/events/${eventId}/builder-page`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ BasicPageSelector - API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to unassign page');
+      }
+
+      console.log('✅ BasicPageSelector - Page unassigned successfully');
+      onPageSelected(null);
+
+      // Show success toast
+      setToast({
+        show: true,
+        message: 'Page dissociée avec succès !',
+        type: 'success'
+      });
+      fetchPages(); // Refresh
+
+    } catch (err) {
+      console.error('❌ BasicPageSelector - Error unassigning page:', err);
+      setToast({
+        show: true,
+        message: 'Erreur lors de la dissociation de la page',
+        type: 'error'
+      });
     }
   };
 
   const isPageAssignedToEvent = (page: PageItem) => {
-    return page.builder_sites?.event_id === eventId;
+    return page.id === currentPageId;
   };
 
   const unassignedPages = pages.filter(page => !isPageAssignedToEvent(page));
@@ -188,6 +242,15 @@ export default function BasicPageSelector({
                 title="Modifier"
               >
                 <FiEdit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleUnassignPage}
+                className="p-2 text-red-600 hover:text-red-800"
+                title="Dissocier"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             </div>
           </div>
@@ -267,6 +330,14 @@ export default function BasicPageSelector({
           </button>
         </div>
       )}
+
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

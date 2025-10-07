@@ -25,6 +25,7 @@ import DetailedStatsModal from '@/components/DetailedStatsModal';
 import LandingLinkForm from '@/components/LandingLinkForm';
 import PageBuilderSelector from '@/components/PageBuilderSelector';
 import BasicPageSelector from '@/components/BasicPageSelector';
+import DomainManager from '@/components/DomainManager';
 import IntervenantsManager from '@/components/IntervenantsManager';
 import { exportParticipantsToCSV, exportSelectedParticipantsToCSV } from '@/utils/csvExport';
 import { useSessionsStats } from '@/hooks/useSessionsStats';
@@ -58,6 +59,7 @@ type Participant = {
   email: string
   telephone: string
   profession?: string
+  entreprise?: string
   created_at: string
   checked_in?: boolean
   checked_in_at?: string
@@ -133,7 +135,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     prenom: '',
     email: '',
     telephone: '',
-    profession: ''
+    profession: '',
+    entreprise: ''
   });
 
   // Sessions state
@@ -163,6 +166,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [landingPageConfig, setLandingPageConfig] = useState<LandingPageConfig | null>(null);
   const [isLoadingLandingPage, setIsLoadingLandingPage] = useState(false);
   const [landingPageError, setLandingPageError] = useState<string | null>(null);
+
+  // Builder page data state
+  const [builderPageData, setBuilderPageData] = useState<any>(null);
 
   
   useEffect(() => {
@@ -456,6 +462,32 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     // Pas besoin de les rafraîchir manuellement ici
   }, [eventId, activeTab, participantSearch, checkinSearchTerm, autoRefresh]);
 
+  // Load builder page data when builderPageId changes
+  useEffect(() => {
+    const fetchBuilderPageData = async () => {
+      if (!builderPageId) {
+        setBuilderPageData(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/builder/pages/${builderPageId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setBuilderPageData(data.page);
+        } else {
+          console.error('Failed to fetch builder page data');
+          setBuilderPageData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching builder page data:', error);
+        setBuilderPageData(null);
+      }
+    };
+
+    fetchBuilderPageData();
+  }, [builderPageId]);
+
   const generatePublicLandingUrl = () => {
     // Utiliser le domaine public pour les landing pages
     const publicBaseUrl = process.env.NEXT_PUBLIC_PUBLIC_BASE_URL || 'https://admin.waivent.app';
@@ -605,7 +637,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         prenom: '',
         email: '',
         telephone: '',
-        profession: ''
+        profession: '',
+        entreprise: ''
       });
       
       setShowAddParticipantModal(false);
@@ -1570,6 +1603,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         Téléphone
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Entreprise
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Statut Check-in
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1599,6 +1635,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                             {participant.profession && (
                               <div className="text-sm text-gray-500">{participant.profession}</div>
                             )}
+                            {participant.entreprise && (
+                              <div className="text-sm text-gray-500">{participant.entreprise}</div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -1606,6 +1645,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {participant.telephone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {participant.entreprise || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {participant.checked_in ? (
@@ -2176,25 +2218,57 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
       {/* Page Builder Tab */}
       {activeTab === 'page-builder' && (
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Page Builder</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Choisissez ou créez une page builder pour cet événement. Les données de l&apos;événement seront automatiquement intégrées dans les modules de la page.
-              </p>
-            </div>
+        <div className="space-y-6">
+          {/* Page Selection */}
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div className="p-6">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Page Builder</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Choisissez ou créez une page builder pour cet événement. Les données de l&apos;événement seront automatiquement intégrées dans les modules de la page.
+                </p>
+              </div>
 
-            <BasicPageSelector
-              eventId={eventId}
-              currentPageId={builderPageId}
-              onPageSelected={(pageId) => {
-                setBuilderPageId(pageId);
-              }}
-              pageTitle="Landing Page"
-              pageType="landing_page"
-            />
+              <BasicPageSelector
+                eventId={eventId}
+                currentPageId={builderPageId}
+                onPageSelected={(pageId) => {
+                  setBuilderPageId(pageId);
+                }}
+                pageTitle="Landing Page"
+                pageType="landing_page"
+              />
+            </div>
           </div>
+
+          {/* Domain Management - Only show if a page is selected */}
+          {builderPageId && (
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="p-6">
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Options de Publication</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Configurez comment votre page sera accessible publiquement. Vous pouvez utiliser notre adresse SaaS gratuite ou configurer votre propre domaine personnalisé.
+                  </p>
+                </div>
+
+                <DomainManager
+                  pageId={builderPageId}
+                  currentPage={builderPageData ? {
+                    id: builderPageData.id,
+                    slug: builderPageData.slug || 'temp-slug',
+                    status: builderPageData.status || 'draft',
+                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/p/${builderPageData.slug || 'temp-slug'}`
+                  } : {
+                    id: builderPageId,
+                    slug: 'temp-slug',
+                    status: 'draft',
+                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/p/temp-slug`
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2315,17 +2389,33 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Profession
-                  </label>
-                  <input
-                    type="text"
-                    value={newParticipant.profession}
-                    onChange={(e) => setNewParticipant(prev => ({ ...prev, profession: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Profession
+                    </label>
+                    <input
+                      type="text"
+                      value={newParticipant.profession}
+                      onChange={(e) => setNewParticipant(prev => ({ ...prev, profession: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Ingénieur, Médecin, etc."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Entreprise
+                    </label>
+                    <input
+                      type="text"
+                      value={newParticipant.entreprise}
+                      onChange={(e) => setNewParticipant(prev => ({ ...prev, entreprise: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Nom de l'entreprise"
+                    />
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
                   <button

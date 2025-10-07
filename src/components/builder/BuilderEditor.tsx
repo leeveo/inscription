@@ -41,6 +41,9 @@ import { TechForm } from './blocks/TechForm';
 
 // Session Blocks
 import { Session } from './blocks/Session';
+import { TwoColumnSection } from './blocks/TwoColumnSection';
+import { ParticipantInfo } from './blocks/ParticipantInfo';
+import { FormulaireDynamique } from './blocks/FormulaireDynamique';
 
 interface BuilderEditorProps {
   initialPage: BuilderPage;
@@ -119,6 +122,9 @@ export default function BuilderEditor({ initialPage }: BuilderEditorProps) {
     CorporateForm,
     TechForm,
     Session,
+    TwoColumnSection,
+    ParticipantInfo,
+    FormulaireDynamique,
   };
 
   // Show loading state if not mounted

@@ -5,6 +5,7 @@ type Participant = {
   email: string
   telephone: string
   profession?: string
+  entreprise?: string
   created_at: string
   checked_in?: boolean
   checked_in_at?: string
@@ -59,6 +60,7 @@ export function exportParticipantsToCSV(participants: Participant[], filename: s
     'email',
     'telephone',
     'profession',
+    'entreprise',
     'date_inscription',
     'checked_in',
     'date_checkin',
@@ -71,6 +73,7 @@ export function exportParticipantsToCSV(participants: Participant[], filename: s
     email: participant.email,
     telephone: participant.telephone,
     profession: participant.profession || '',
+    entreprise: participant.entreprise || '',
     date_inscription: new Date(participant.created_at).toLocaleDateString('fr-FR'),
     checked_in: participant.checked_in ? 'Oui' : 'Non',
     date_checkin: participant.checked_in_at 

@@ -17,6 +17,8 @@ export interface SimpleButtonProps {
   showBorder?: boolean;
   hoverColor?: string;
   border?: string;
+  width?: string;
+  horizontalAlign?: string;
 }
 
 export const SimpleButton = ({
@@ -32,6 +34,8 @@ export const SimpleButton = ({
   showBorder = false,
   hoverColor = '#2563eb',
   border = 'none',
+  width = 'auto',
+  horizontalAlign = 'left',
 }: SimpleButtonProps) => {
   const { isEditing } = useBuilderMode();
   const {
@@ -43,6 +47,21 @@ export const SimpleButton = ({
     hovered: state.events.hovered,
   }));
 
+  // Fonction pour obtenir le style d'alignement horizontal
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
+      case 'left':
+      default:
+        return { marginLeft: '0', marginRight: '0', display: 'inline-block' };
+    }
+  };
+
+  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+
   return (
     <div
       ref={isEditing ? (ref) => ref && connect(drag(ref)) : undefined}
@@ -51,7 +70,9 @@ export const SimpleButton = ({
         padding: '4px',
         borderRadius: '8px',
         margin: '8px 0',
-        display: 'inline-block',
+        width,
+        minWidth: width === 'auto' ? 'auto' : '80px',
+        ...alignStyle,
       }}
     >
       {/* Selection Indicator */}
@@ -119,6 +140,8 @@ export const SimpleButtonSettings = () => {
     showBorder,
     hoverColor,
     border,
+    width,
+    horizontalAlign,
   } = useNode((node) => ({
     text: node.data.props.text,
     backgroundColor: node.data.props.backgroundColor,
@@ -132,6 +155,8 @@ export const SimpleButtonSettings = () => {
     showBorder: node.data.props.showBorder,
     hoverColor: node.data.props.hoverColor,
     border: node.data.props.border,
+    width: node.data.props.width,
+    horizontalAlign: node.data.props.horizontalAlign,
   }));
 
   return (
@@ -158,6 +183,92 @@ export const SimpleButtonSettings = () => {
           onChange={(e) => setProp((props: SimpleButtonProps) => (props.fontSize = parseInt(e.target.value)))}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Largeur du bouton
+        </label>
+        <div className="space-y-2">
+          <select
+            value={width || 'auto'}
+            onChange={(e) => setProp((props: SimpleButtonProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="auto">Auto (contenu)</option>
+            <option value="100%">100% (pleine largeur)</option>
+            <option value="75%">75%</option>
+            <option value="66.66%">66.66% (2/3)</option>
+            <option value="50%">50% (moitié)</option>
+            <option value="33.33%">33.33% (1/3)</option>
+            <option value="25%">25%</option>
+          </select>
+          <input
+            type="text"
+            value={width || 'auto'}
+            onChange={(e) => setProp((props: SimpleButtonProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            placeholder="auto, 100%, 200px, etc."
+          />
+          <p className="text-xs text-gray-500">
+            Auto = s'adapte au texte | Utilisez % ou px pour une largeur fixe
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Alignement horizontal du bouton
+        </label>
+        <div className="space-y-2">
+          <select
+            value={horizontalAlign || 'left'}
+            onChange={(e) => setProp((props: SimpleButtonProps) => (props.horizontalAlign = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="left">Gauche</option>
+            <option value="center">Centre</option>
+            <option value="right">Droite</option>
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setProp((props: SimpleButtonProps) => (props.horizontalAlign = 'left'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'left'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">⬅️</span>
+              Gauche
+            </button>
+            <button
+              onClick={() => setProp((props: SimpleButtonProps) => (props.horizontalAlign = 'center'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'center'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">↔️</span>
+              Centre
+            </button>
+            <button
+              onClick={() => setProp((props: SimpleButtonProps) => (props.horizontalAlign = 'right'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'right'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">➡️</span>
+              Droite
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Permet de centrer le bouton sur la page
+          </p>
+        </div>
       </div>
 
       <div>
@@ -364,6 +475,8 @@ SimpleButton.craft = {
     showBorder: false,
     hoverColor: '#2563eb',
     border: 'none',
+    width: 'auto',
+    horizontalAlign: 'left',
   },
   related: {
     settings: SimpleButtonSettings,

@@ -15,6 +15,7 @@ const participantSchema = z.object({
   site_web: z.string().url('URL invalide').optional().or(z.literal('')),
   // Nouveaux champs
   profession: z.string().min(2, 'La profession doit contenir au moins 2 caractères').optional().or(z.literal('')),
+  entreprise: z.string().min(2, 'Le nom de l\'entreprise doit contenir au moins 2 caractères').optional().or(z.literal('')),
   date_naissance: z.string().optional().or(z.literal('')),
   url_linkedin: z.string().url('URL LinkedIn invalide').optional().or(z.literal('')),
   url_facebook: z.string().url('URL Facebook invalide').optional().or(z.literal('')),
@@ -65,6 +66,7 @@ export default function ParticipantForm({
       site_web: participant.site_web || '',
       // Nouveaux champs
       profession: participant.profession || '',
+      entreprise: participant.entreprise || '',
       date_naissance: participant.date_naissance || '',
       url_linkedin: participant.url_linkedin || '',
       url_facebook: participant.url_facebook || '',
@@ -88,6 +90,7 @@ export default function ParticipantForm({
         ...data,
         site_web: data.site_web || null,
         profession: data.profession || null,
+        entreprise: data.entreprise || null,
         date_naissance: data.date_naissance || null,
         url_linkedin: data.url_linkedin || null,
         url_facebook: data.url_facebook || null,
@@ -206,21 +209,39 @@ export default function ParticipantForm({
           )}
         </div>
         
-        {/* Nouveau champ : Profession */}
-        <div>
-          <label htmlFor="profession" className="block text-sm font-medium text-gray-700 mb-1">
-            Profession (optionnel)
-          </label>
-          <input
-            id="profession"
-            type="text"
-            {...register('profession')}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Ingénieur, Médecin, Étudiant..."
-          />
-          {errors.profession && (
-            <p className="mt-1 text-sm text-red-600">{errors.profession.message}</p>
-          )}
+        {/* Nouveaux champs : Profession et Entreprise */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="profession" className="block text-sm font-medium text-gray-700 mb-1">
+              Profession (optionnel)
+            </label>
+            <input
+              id="profession"
+              type="text"
+              {...register('profession')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Ingénieur, Médecin, Étudiant..."
+            />
+            {errors.profession && (
+              <p className="mt-1 text-sm text-red-600">{errors.profession.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700 mb-1">
+              Entreprise (optionnel)
+            </label>
+            <input
+              id="entreprise"
+              type="text"
+              {...register('entreprise')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Nom de votre entreprise ou organisation"
+            />
+            {errors.entreprise && (
+              <p className="mt-1 text-sm text-red-600">{errors.entreprise.message}</p>
+            )}
+          </div>
         </div>
         
         {/* Nouveau champ : Date de naissance */}

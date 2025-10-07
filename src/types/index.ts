@@ -1,12 +1,22 @@
 export interface Participant {
   id?: string;
-  nom: string;  // Nous choisissons de rendre nom obligatoire
-  prenom: string;
-  email: string;
+  nom: string;  // Champ obligatoire
+  prenom: string;  // Champ obligatoire
+  email: string;  // Champ obligatoire
   telephone?: string;
+  entreprise?: string; // Nouveau champ entreprise
+  profession?: string;
+  site_web?: string;
+  date_naissance?: string;
+  url_linkedin?: string;
+  url_facebook?: string;
+  url_twitter?: string;
+  url_instagram?: string;
   statut?: string;
   evenement_id?: string;
-  // Ajoutez d'autres champs selon vos besoins
+  created_at?: string;
+  updated_at?: string;
+  checked_in?: boolean;
 }
 
 // Types pour les modèles de landing page

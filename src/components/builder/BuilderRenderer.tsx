@@ -25,6 +25,9 @@ import { CreativeForm } from './blocks/CreativeForm'
 import { CorporateForm } from './blocks/CorporateForm'
 import { TechForm } from './blocks/TechForm'
 import { SessionWithEventData } from './blocks/SessionWithEventData'
+import { TwoColumnSection } from './blocks/TwoColumnSection'
+import { ParticipantInfo } from './blocks/ParticipantInfo'
+import { FormulaireDynamique } from './blocks/FormulaireDynamique'
 
 interface BuilderRendererProps {
   schema: any
@@ -83,6 +86,9 @@ export default function BuilderRenderer({
               CorporateForm,
               TechForm,
               Session: SessionWithEventData,
+              TwoColumnSection,
+              ParticipantInfo,
+              FormulaireDynamique,
             }}
             enabled={false}
           >
@@ -129,6 +135,9 @@ export default function BuilderRenderer({
               CorporateForm,
               TechForm,
               Session: SessionWithEventData,
+              TwoColumnSection,
+              ParticipantInfo,
+              FormulaireDynamique,
             }}
             enabled={false}
           >

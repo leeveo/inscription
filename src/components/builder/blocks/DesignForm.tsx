@@ -1,7 +1,32 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNode } from '@craftjs/core'
+
+interface Session {
+  id: number
+  titre: string
+  description?: string
+  date: string
+  heure_debut: string
+  heure_fin: string
+  intervenant?: string
+  lieu?: string
+  type?: string
+  max_participants?: number
+}
+
+interface Event {
+  id: string
+  nom: string
+  description?: string
+  lieu?: string
+  date_debut: string
+  date_fin: string
+  statut: string
+  type_evenement?: string
+  created_at: string
+}
 
 interface DesignFormProps {
   eventId?: string
@@ -13,8 +38,26 @@ interface DesignFormProps {
   title?: string
   description?: string
   submitButtonText?: string
+  // Champs obligatoires (toujours présents)
+  showNom?: boolean
+  showPrenom?: boolean
+  showEmail?: boolean
+  // Champs optionnels configurables
+  showTelephone?: boolean
+  showEntreprise?: boolean
+  showProfession?: boolean
+  showSiteWeb?: boolean
+  showDateNaissance?: boolean
+  showUrlLinkedin?: boolean
+  showUrlFacebook?: boolean
+  showUrlTwitter?: boolean
+  showUrlInstagram?: boolean
+  showMessage?: boolean
+  // Options d'affichage existantes
   showSessions?: boolean
   showSocialMedia?: boolean
+  width?: string
+  horizontalAlign?: string
 }
 
 export const DesignForm = ({
@@ -27,9 +70,30 @@ export const DesignForm = ({
   title = "Formulaire d'inscription",
   description = "Remplissez ce formulaire pour vous inscrire à l'événement",
   submitButtonText = "S'inscrire à l'événement",
+  // Champs obligatoires (par défaut activés)
+  showNom = true,
+  showPrenom = true,
+  showEmail = true,
+  // Champs optionnels (par défaut désactivés)
+  showTelephone = true,
+  showEntreprise = false,
+  showProfession = true,
+  showSiteWeb = false,
+  showDateNaissance = false,
+  showUrlLinkedin = false,
+  showUrlFacebook = false,
+  showUrlTwitter = false,
+  showUrlInstagram = false,
+  showMessage = true,
+  // Options d'affichage existantes
   showSessions = true,
-  showSocialMedia = true,
+  showSocialMedia = false,
+  width = '100%',
+  horizontalAlign = 'left',
 }: DesignFormProps) => {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loadingSessions, setLoadingSessions] = useState(false)
+
   const {
     connectors: { connect, drag },
     selected,
@@ -38,6 +102,28 @@ export const DesignForm = ({
     selected: state.events.selected,
     hovered: state.events.hovered,
   }));
+
+  // Charger les sessions depuis l'API
+  useEffect(() => {
+    const fetchSessions = async () => {
+      if (!eventId || !showSessions) return
+
+      setLoadingSessions(true)
+      try {
+        const response = await fetch(`/api/sessions?eventId=${eventId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setSessions(data.sessions || [])
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des sessions:', error)
+      } finally {
+        setLoadingSessions(false)
+      }
+    }
+
+    fetchSessions()
+  }, [eventId, showSessions])
 
   const getTemplateStyles = () => {
     switch (formTemplate) {
@@ -111,6 +197,33 @@ export const DesignForm = ({
 
   const styles = getTemplateStyles()
 
+  // Fonction pour obtenir le style d'alignement horizontal
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
+      case 'left':
+      default:
+        return { marginLeft: '0', marginRight: '0', display: 'block' };
+    }
+  };
+
+  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+
+  // Formater les sessions pour l'affichage
+  const formatSessionForDisplay = (session: Session) => {
+    const date = new Date(session.date)
+    const formattedDate = date.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+    return `${session.titre} - ${formattedDate} de ${session.heure_debut} à ${session.heure_fin}${session.lieu ? ` - ${session.lieu}` : ''}${session.intervenant ? ` - ${session.intervenant}` : ''}`
+  }
+
   const renderForm = () => (
     <div className={styles.form}>
       <div className="mb-6">
@@ -134,40 +247,46 @@ export const DesignForm = ({
       </div>
 
       <form className={formTemplate === 'classic' ? 'space-y-6' : 'space-y-4'}>
-        {/* Nom et Prénom */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${
-              formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-            }`} style={{ fontFamily }}>
-              Nom *
-            </label>
-            <input
-              type="text"
-              required
-              className={styles.input}
-              style={{ fontFamily }}
-              placeholder="Votre nom"
-            />
+        {/* Champs obligatoires : Nom et Prénom */}
+        {(showNom || showPrenom) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showNom && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Nom *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="Votre nom"
+                />
+              </div>
+            )}
+            {showPrenom && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Prénom *
+                </label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="Votre prénom"
+                />
+              </div>
+            )}
           </div>
-          <div>
-            <label className={`block text-sm font-medium mb-1 ${
-              formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-            }`} style={{ fontFamily }}>
-              Prénom *
-            </label>
-            <input
-              type="text"
-              required
-              className={styles.input}
-              style={{ fontFamily }}
-              placeholder="Votre prénom"
-            />
-          </div>
-        </div>
+        )}
 
-        {/* Email et Téléphone */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Email (obligatoire si activé) */}
+        {showEmail && (
           <div>
             <label className={`block text-sm font-medium mb-1 ${
               formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
@@ -182,36 +301,95 @@ export const DesignForm = ({
               placeholder="votre@email.com"
             />
           </div>
+        )}
+
+        {/* Champs optionnels en grille */}
+        {(showTelephone || showEntreprise) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showTelephone && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="+33 6 12 34 56 78"
+                />
+              </div>
+            )}
+            {showEntreprise && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Entreprise
+                </label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="Nom de votre entreprise"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Profession et Site Web */}
+        {(showProfession || showSiteWeb) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {showProfession && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Profession
+                </label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="Votre profession"
+                />
+              </div>
+            )}
+            {showSiteWeb && (
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${
+                  formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                }`} style={{ fontFamily }}>
+                  Site Web
+                </label>
+                <input
+                  type="url"
+                  className={styles.input}
+                  style={{ fontFamily }}
+                  placeholder="https://votre-site.com"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Date de naissance */}
+        {showDateNaissance && (
           <div>
             <label className={`block text-sm font-medium mb-1 ${
               formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
             }`} style={{ fontFamily }}>
-              Téléphone *
+              Date de naissance
             </label>
             <input
-              type="tel"
-              required
+              type="date"
               className={styles.input}
               style={{ fontFamily }}
-              placeholder="+33 6 12 34 56 78"
             />
           </div>
-        </div>
-
-        {/* Profession */}
-        <div>
-          <label className={`block text-sm font-medium mb-1 ${
-            formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-          }`} style={{ fontFamily }}>
-            Profession
-          </label>
-          <input
-            type="text"
-            className={styles.input}
-            style={{ fontFamily }}
-            placeholder="Votre profession"
-          />
-        </div>
+        )}
 
         {/* Sessions (si activé) */}
         {showSessions && (
@@ -222,67 +400,125 @@ export const DesignForm = ({
               Sessions souhaitées
             </label>
             <div className="space-y-2">
-              {['Session 1: 9h00 - 10h30', 'Session 2: 11h00 - 12h30', 'Session 3: 14h00 - 15h30'].map((session, index) => (
-                <label key={index} className="flex items-center">
+              {loadingSessions ? (
+                <div className={`text-sm ${formTemplate === 'elegant' ? 'text-gray-300' : 'text-gray-500'}`} style={{ fontFamily }}>
+                  Chargement des sessions...
+                </div>
+              ) : sessions.length > 0 ? (
+                sessions.map((session) => (
+                  <label key={session.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="mr-2"
+                      value={session.id}
+                    />
+                    <span className={formTemplate === 'elegant' ? 'text-gray-200' : ''} style={{ fontFamily }}>
+                      {formatSessionForDisplay(session)}
+                    </span>
+                  </label>
+                ))
+              ) : eventId ? (
+                <div className={`text-sm ${formTemplate === 'elegant' ? 'text-gray-300' : 'text-gray-500'}`} style={{ fontFamily }}>
+                  Aucune session disponible pour cet événement
+                </div>
+              ) : (
+                <div className={`text-sm ${formTemplate === 'elegant' ? 'text-gray-300' : 'text-gray-500'}`} style={{ fontFamily }}>
+                  Veuillez spécifier un ID d'événement pour afficher les sessions
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Réseaux sociaux configurables */}
+        {(showUrlLinkedin || showUrlFacebook || showUrlTwitter || showUrlInstagram) && (
+          <div>
+            <h4 className={`text-sm font-medium mb-3 ${
+              formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+            }`} style={{ fontFamily }}>
+              Réseaux sociaux
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {showUrlLinkedin && (
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                  }`} style={{ fontFamily }}>
+                    LinkedIn
+                  </label>
                   <input
-                    type="checkbox"
-                    className="mr-2"
+                    type="url"
+                    className={styles.input}
+                    style={{ fontFamily }}
+                    placeholder="https://linkedin.com/in/votre-profil"
                   />
-                  <span className={formTemplate === 'elegant' ? 'text-gray-200' : ''} style={{ fontFamily }}>
-                    {session}
-                  </span>
-                </label>
-              ))}
+                </div>
+              )}
+              {showUrlFacebook && (
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                  }`} style={{ fontFamily }}>
+                    Facebook
+                  </label>
+                  <input
+                    type="url"
+                    className={styles.input}
+                    style={{ fontFamily }}
+                    placeholder="https://facebook.com/votre-profil"
+                  />
+                </div>
+              )}
+              {showUrlTwitter && (
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                  }`} style={{ fontFamily }}>
+                    Twitter/X
+                  </label>
+                  <input
+                    type="url"
+                    className={styles.input}
+                    style={{ fontFamily }}
+                    placeholder="https://twitter.com/votre-compte"
+                  />
+                </div>
+              )}
+              {showUrlInstagram && (
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+                  }`} style={{ fontFamily }}>
+                    Instagram
+                  </label>
+                  <input
+                    type="url"
+                    className={styles.input}
+                    style={{ fontFamily }}
+                    placeholder="https://instagram.com/votre-compte"
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Réseaux sociaux (si activé) */}
-        {showSocialMedia && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${
-                formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-              }`} style={{ fontFamily }}>
-                LinkedIn
-              </label>
-              <input
-                type="url"
-                className={styles.input}
-                style={{ fontFamily }}
-                placeholder="https://linkedin.com/in/votre-profil"
-              />
-            </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${
-                formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-              }`} style={{ fontFamily }}>
-                Twitter/X
-              </label>
-              <input
-                type="url"
-                className={styles.input}
-                style={{ fontFamily }}
-                placeholder="@votre-compte"
-              />
-            </div>
+        {/* Message (optionnel et configurable) */}
+        {showMessage && (
+          <div>
+            <label className={`block text-sm font-medium mb-1 ${
+              formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
+            }`} style={{ fontFamily }}>
+              Message (optionnel)
+            </label>
+            <textarea
+              rows={3}
+              className={styles.input}
+              style={{ fontFamily }}
+              placeholder="Un message ou une question..."
+            />
           </div>
         )}
-
-        {/* Message */}
-        <div>
-          <label className={`block text-sm font-medium mb-1 ${
-            formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
-          }`} style={{ fontFamily }}>
-            Message (optionnel)
-          </label>
-          <textarea
-            rows={3}
-            className={styles.input}
-            style={{ fontFamily }}
-            placeholder="Un message ou une question..."
-          />
-        </div>
 
         {/* Case à cocher */}
         <div className="flex items-center">
@@ -315,10 +551,16 @@ export const DesignForm = ({
 
   return (
     <div
-      ref={(ref) => ref && connect(drag(ref))}
-      className="relative w-full my-4"
+      ref={(ref: HTMLDivElement | null) => {
+        if (ref) {
+          connect(drag(ref));
+        }
+      }}
+      className="relative my-4"
       style={{
         border: selected || hovered ? '2px solid #3B82F6' : '2px solid transparent',
+        width,
+        ...alignStyle,
       }}
     >
       {/* Selection Indicator */}
@@ -337,9 +579,13 @@ export const DesignForm = ({
 
 // Settings component
 export const DesignFormSettings = () => {
+  const [events, setEvents] = useState<Event[]>([])
+  const [loadingEvents, setLoadingEvents] = useState(false)
+
   const {
     actions: { setProp },
     id,
+    eventId,
     formTemplate,
     fontFamily,
     primaryColor,
@@ -348,10 +594,26 @@ export const DesignFormSettings = () => {
     title,
     description,
     submitButtonText,
+    showNom,
+    showPrenom,
+    showEmail,
+    showTelephone,
+    showEntreprise,
+    showProfession,
+    showSiteWeb,
+    showDateNaissance,
+    showUrlLinkedin,
+    showUrlFacebook,
+    showUrlTwitter,
+    showUrlInstagram,
+    showMessage,
     showSessions,
     showSocialMedia,
+    width,
+    horizontalAlign,
   } = useNode((node) => ({
     id: node.id,
+    eventId: node.data.props.eventId,
     formTemplate: node.data.props.formTemplate,
     fontFamily: node.data.props.fontFamily,
     primaryColor: node.data.props.primaryColor,
@@ -360,13 +622,58 @@ export const DesignFormSettings = () => {
     title: node.data.props.title,
     description: node.data.props.description,
     submitButtonText: node.data.props.submitButtonText,
+    showNom: node.data.props.showNom,
+    showPrenom: node.data.props.showPrenom,
+    showEmail: node.data.props.showEmail,
+    showTelephone: node.data.props.showTelephone,
+    showEntreprise: node.data.props.showEntreprise,
+    showProfession: node.data.props.showProfession,
+    showSiteWeb: node.data.props.showSiteWeb,
+    showDateNaissance: node.data.props.showDateNaissance,
+    showUrlLinkedin: node.data.props.showUrlLinkedin,
+    showUrlFacebook: node.data.props.showUrlFacebook,
+    showUrlTwitter: node.data.props.showUrlTwitter,
+    showUrlInstagram: node.data.props.showUrlInstagram,
+    showMessage: node.data.props.showMessage,
     showSessions: node.data.props.showSessions,
     showSocialMedia: node.data.props.showSocialMedia,
+    width: node.data.props.width,
+    horizontalAlign: node.data.props.horizontalAlign,
   }));
 
-  const { actions } = useNode((state) => ({
-    actions: state.actions,
-  }));
+
+
+  // Charger les événements depuis l'API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoadingEvents(true)
+      try {
+        const response = await fetch('/api/events')
+        if (response.ok) {
+          const data = await response.json()
+          setEvents(data.events || [])
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des événements:', error)
+      } finally {
+        setLoadingEvents(false)
+      }
+    }
+
+    fetchEvents()
+  }, [])
+
+  // Formater la date pour l'affichage
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -378,12 +685,47 @@ export const DesignFormSettings = () => {
         </p>
       </div>
 
+      {/* Event Configuration */}
+      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h4 className="text-sm font-semibold text-yellow-900 mb-2">📅 Configuration Événement</h4>
+        <div>
+          <label className="block text-sm font-medium text-yellow-700 mb-1">
+            Sélectionner l'événement
+          </label>
+          {loadingEvents ? (
+            <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm text-yellow-600">
+              Chargement des événements...
+            </div>
+          ) : events.length > 0 ? (
+            <select
+              value={eventId || ''}
+              onChange={(e) => setProp((props: DesignFormProps) => (props.eventId = e.target.value))}
+              className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm"
+            >
+              <option value="">Sélectionner un événement...</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.nom} - {formatDate(event.date_debut)}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm text-yellow-600">
+              Aucun événement trouvé
+            </div>
+          )}
+          <p className="text-xs text-yellow-600 mt-1">
+            Sélectionnez l'événement pour charger les sessions réelles depuis la base de données.
+          </p>
+        </div>
+      </div>
+
       {/* Template Selection */}
       <div>
         <h4 className="text-sm font-semibold text-gray-900 mb-3">Template</h4>
         <select
           value={formTemplate || 'modern'}
-          onChange={(e) => setProp((props: DesignFormProps) => (props.formTemplate = e.target.value))}
+          onChange={(e) => setProp((props: DesignFormProps) => (props.formTemplate = e.target.value as DesignFormProps['formTemplate']))}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
         >
           <option value="modern">Moderne</option>
@@ -504,34 +846,273 @@ export const DesignFormSettings = () => {
         </div>
       </div>
 
-      {/* Display Options */}
+      {/* Width and Alignment */}
       <div className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Options d'affichage</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Largeur et Alignement</h4>
 
-        <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showSessions || false}
-              onChange={(e) => setProp((props: DesignFormProps) => (props.showSessions = e.target.checked))}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Afficher les sessions</span>
-          </label>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Largeur du formulaire
+            </label>
+            <div className="space-y-2">
+              <select
+                value={width || '100%'}
+                onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+              </select>
+              <input
+                type="text"
+                value={width || '100%'}
+                onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="100%, 500px, 20rem, etc."
+              />
+              <p className="text-xs text-gray-500">
+                Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
+              </p>
+            </div>
+          </div>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showSocialMedia || false}
-              onChange={(e) => setProp((props: DesignFormProps) => (props.showSocialMedia = e.target.checked))}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Afficher les réseaux sociaux</span>
-          </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alignement horizontal du formulaire
+            </label>
+            <div className="space-y-2">
+              <select
+                value={horizontalAlign || 'left'}
+                onChange={(e) => setProp((props: DesignFormProps) => (props.horizontalAlign = e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="left">Gauche</option>
+                <option value="center">Centre</option>
+                <option value="right">Droite</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'left'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'left'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">⬅️</span>
+                  Gauche
+                </button>
+                <button
+                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'center'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'center'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">↔️</span>
+                  Centre
+                </button>
+                <button
+                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'right'))}
+                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    horizontalAlign === 'right'
+                      ? 'bg-blue-100 text-blue-700 border-blue-300'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="block">➡️</span>
+                  Droite
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Permet de centrer le formulaire sur la page
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Champs du formulaire */}
+      <div className="pt-4 border-t border-gray-200">
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">Champs du formulaire</h4>
+        
+        <div className="space-y-4">
+          {/* Champs obligatoires */}
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <p className="text-xs font-medium text-gray-600 mb-2">Champs obligatoires :</p>
+            
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showNom || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showNom = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Nom *</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showPrenom || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showPrenom = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Prénom *</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showEmail || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showEmail = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Email *</span>
+              </label>
+            </div>
           </div>
+
+          {/* Champs optionnels */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">Informations complémentaires :</p>
+            
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showTelephone || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showTelephone = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Téléphone</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showEntreprise || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showEntreprise = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Entreprise</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showProfession || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showProfession = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Profession</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showSiteWeb || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showSiteWeb = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Site Web</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showDateNaissance || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showDateNaissance = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Date de naissance</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showMessage || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showMessage = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Message (commentaire)</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Réseaux sociaux */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">Réseaux sociaux :</p>
+            
+            <div className="space-y-2 ml-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showUrlLinkedin || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showUrlLinkedin = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">LinkedIn</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showUrlFacebook || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showUrlFacebook = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Facebook</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showUrlTwitter || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showUrlTwitter = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Twitter/X</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showUrlInstagram || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showUrlInstagram = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Instagram</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Sessions */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">Fonctionnalités spéciales :</p>
+            
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showSessions || false}
+                  onChange={(e) => setProp((props: DesignFormProps) => (props.showSessions = e.target.checked))}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Sélection de sessions</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -547,8 +1128,26 @@ DesignForm.craft = {
     title: "Formulaire d'inscription",
     description: "Remplissez ce formulaire pour vous inscrire à l'événement",
     submitButtonText: "S'inscrire à l'événement",
+    // Champs obligatoires (par défaut activés)
+    showNom: true,
+    showPrenom: true,
+    showEmail: true,
+    // Champs optionnels (par défaut quelques-uns activés)
+    showTelephone: true,
+    showEntreprise: false,
+    showProfession: true,
+    showSiteWeb: false,
+    showDateNaissance: false,
+    showUrlLinkedin: false,
+    showUrlFacebook: false,
+    showUrlTwitter: false,
+    showUrlInstagram: false,
+    showMessage: true,
+    // Options d'affichage existantes
     showSessions: true,
-    showSocialMedia: true,
+    showSocialMedia: false,
+    width: '100%',
+    horizontalAlign: 'left',
   },
   related: {
     settings: DesignFormSettings,

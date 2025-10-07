@@ -15,6 +15,8 @@ export interface SimpleTextProps {
   textDecoration?: string;
   showBorder?: boolean;
   padding?: string;
+  width?: string;
+  horizontalAlign?: string;
 }
 
 export const SimpleText = ({
@@ -28,6 +30,8 @@ export const SimpleText = ({
   textDecoration = 'none',
   showBorder = true,
   padding = '16px',
+  width = '100%',
+  horizontalAlign = 'left',
 }: SimpleTextProps) => {
   const { isEditing } = useBuilderMode();
   const {
@@ -41,6 +45,24 @@ export const SimpleText = ({
     actions: state.actions,
   }));
 
+  // Debug log pour vérifier les valeurs
+  console.log('SimpleText - width value:', width, 'horizontalAlign:', horizontalAlign);
+
+  // Fonction pour obtenir le style d'alignement horizontal
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
+      case 'right':
+        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
+      case 'left':
+      default:
+        return { marginLeft: '0', marginRight: '0', display: 'inline-block' };
+    }
+  };
+
+  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+
   return (
     <div
       ref={isEditing ? (ref) => ref && connect(drag(ref)) : undefined}
@@ -49,6 +71,9 @@ export const SimpleText = ({
         padding: '4px',
         borderRadius: '8px',
         margin: '8px 0',
+        width,
+        minWidth: '50px',
+        ...alignStyle,
       }}
     >
       {/* Selection Indicator */}
@@ -80,6 +105,7 @@ export const SimpleText = ({
           });
         }}
         style={{
+          width: '100%',
           padding,
           backgroundColor,
           border: showBorder ? '2px solid #d1d5db' : 'none',
@@ -93,6 +119,7 @@ export const SimpleText = ({
           outline: isEditing && selected ? '2px solid #3B82F6' : 'none',
           cursor: isEditing && selected ? 'text' : 'default',
           minHeight: '24px',
+          boxSizing: 'border-box',
         }}
       >
         {text}
@@ -115,6 +142,8 @@ export const SimpleTextSettings = () => {
     textDecoration,
     showBorder,
     padding,
+    width,
+    horizontalAlign,
   } = useNode((node) => ({
     text: node.data.props.text,
     fontSize: node.data.props.fontSize,
@@ -126,6 +155,8 @@ export const SimpleTextSettings = () => {
     textDecoration: node.data.props.textDecoration,
     showBorder: node.data.props.showBorder,
     padding: node.data.props.padding,
+    width: node.data.props.width,
+    horizontalAlign: node.data.props.horizontalAlign,
   }));
 
   return (
@@ -191,6 +222,92 @@ export const SimpleTextSettings = () => {
             onChange={(e) => setProp((props: SimpleTextProps) => (props.backgroundColor = e.target.value))}
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
           />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Largeur du bloc
+        </label>
+        <div className="space-y-2">
+          <select
+            value={width || '100%'}
+            onChange={(e) => setProp((props: SimpleTextProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="100%">100% (pleine largeur)</option>
+            <option value="75%">75%</option>
+            <option value="66.66%">66.66% (2/3)</option>
+            <option value="50%">50% (moitié)</option>
+            <option value="33.33%">33.33% (1/3)</option>
+            <option value="25%">25%</option>
+            <option value="auto">Auto (contenu)</option>
+          </select>
+          <input
+            type="text"
+            value={width || '100%'}
+            onChange={(e) => setProp((props: SimpleTextProps) => (props.width = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            placeholder="100%, 500px, 20rem, etc."
+          />
+          <p className="text-xs text-gray-500">
+            Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Alignement horizontal du bloc
+        </label>
+        <div className="space-y-2">
+          <select
+            value={horizontalAlign || 'left'}
+            onChange={(e) => setProp((props: SimpleTextProps) => (props.horizontalAlign = e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          >
+            <option value="left">Gauche</option>
+            <option value="center">Centre</option>
+            <option value="right">Droite</option>
+          </select>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => (props.horizontalAlign = 'left'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'left'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">⬅️</span>
+              Gauche
+            </button>
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => (props.horizontalAlign = 'center'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'center'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">↔️</span>
+              Centre
+            </button>
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => (props.horizontalAlign = 'right'))}
+              className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                horizontalAlign === 'right'
+                  ? 'bg-blue-100 text-blue-700 border-blue-300'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <span className="block">➡️</span>
+              Droite
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Permet de centrer le bloc entier sur la page (différent de l'alignement du texte à l'intérieur)
+          </p>
         </div>
       </div>
 
@@ -324,6 +441,8 @@ SimpleText.craft = {
     textDecoration: 'none',
     showBorder: true,
     padding: '16px',
+    width: '100%',
+    horizontalAlign: 'left',
   },
   related: {
     settings: SimpleTextSettings,
