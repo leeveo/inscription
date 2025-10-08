@@ -22,7 +22,7 @@ export default function PagesBuilderHub() {
       setLoading(true);
       console.log('🔍 PagesBuilderHub - Fetching all pages...');
 
-      const { data, error } = await supabaseBrowser
+      const { data, error } = await supabaseBrowser()
         .from('builder_pages')
         .select(`
           *,
@@ -60,7 +60,7 @@ export default function PagesBuilderHub() {
       console.log('🆕 PagesBuilderHub - Creating new page:', pageType);
 
       // Créer un nouveau site sans événement assigné
-      const { data: newSite, error: siteError } = await supabaseBrowser()
+      const { data: newSite, error: siteError } = await (supabaseBrowser() as any)
         .from('builder_sites')
         .insert({
           name: `Site - ${new Date().toLocaleDateString('fr-FR')}`,
@@ -75,13 +75,13 @@ export default function PagesBuilderHub() {
         throw siteError;
       }
 
-      console.log('✅ PagesBuilderHub - Site created:', newSite.id);
+      console.log('✅ PagesBuilderHub - Site created:', newSite?.id);
 
       // Créer une nouvelle page
-      const { data: newPage, error: pageError } = await supabaseBrowser()
+      const { data: newPage, error: pageError } = await (supabaseBrowser() as any)
         .from('builder_pages')
         .insert({
-          site_id: newSite.id,
+          site_id: newSite?.id,
           name: `${pageType === 'landing_page' ? 'Landing page' : 'Formulaire'} - ${new Date().toLocaleDateString('fr-FR')}`,
           slug: 'home',
           tree: { rootNodeId: '', nodes: {} },
@@ -136,7 +136,7 @@ export default function PagesBuilderHub() {
 
   const filteredPages = pages.filter(page => {
     const matchesSearch = page.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === 'all' || page.page_type === filterType;
+    const matchesType = filterType === 'all' || (page as any).page_type === filterType;
     const matchesStatus = filterStatus === 'all' || page.status === filterStatus;
     return matchesSearch && matchesType && matchesStatus;
   });
@@ -145,10 +145,10 @@ export default function PagesBuilderHub() {
     console.log('🏷️ Getting event name for page:', {
       pageId: page.id,
       pageName: page.name,
-      event_id: page.builder_sites?.event_id,
-      event_name: page.builder_sites?.event_name
+      event_id: (page as any).builder_sites?.event_id,
+      event_name: (page as any).builder_sites?.event_name
     });
-    return page.builder_sites?.event_name || 'Non assigné';
+    return (page as any).builder_sites?.event_name || 'Non assigné';
   };
 
   if (loading) {
@@ -304,7 +304,7 @@ export default function PagesBuilderHub() {
                           {page.name || 'Page sans titre'}
                         </h3>
                         <p className="text-xs text-gray-500 mt-1">
-                          {page.page_type === 'landing_page' ? 'Landing Page' : 'Formulaire'}
+                          {(page as any).page_type === 'landing_page' ? 'Landing Page' : 'Formulaire'}
                         </p>
                       </div>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -390,11 +390,11 @@ export default function PagesBuilderHub() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          page.page_type === 'landing_page'
+                          (page as any).page_type === 'landing_page'
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-green-100 text-green-700'
                         }`}>
-                          {page.page_type === 'landing_page' ? 'Landing' : 'Formulaire'}
+                          {(page as any).page_type === 'landing_page' ? 'Landing' : 'Formulaire'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
