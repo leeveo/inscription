@@ -95,18 +95,40 @@ export default function CheckInClient({ eventId, participantId }: CheckInClientP
       setCheckingIn(true)
       const supabase = supabaseBrowser()
       
-      const { error } = await supabase
-        .from('inscription_participants')
-        .update({
-          checked_in: true,
-          checked_in_at: new Date().toISOString()  // Utilisation du nouveau champ
+      // D'abord, récupérer une session pour cet événement
+      const { data: sessions, error: sessionError } = await (supabase as any)
+        .from('inscription_sessions')
+        .select('id')
+        .eq('evenement_id', event.id)
+        .limit(1)
+      
+      if (sessionError) throw sessionError
+      if (!sessions || sessions.length === 0) {
+        throw new Error('Aucune session trouvée pour cet événement')
+      }
+      
+      const sessionId = sessions[0].id
+      
+      // Générer un token QR unique pour ce check-in
+      const qrToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      
+      // Insérer dans inscription_checkins
+      const { error } = await (supabase as any)
+        .from('inscription_checkins')
+        .insert({
+          participant_id: participant.id,
+          evenement_id: event.id,
+          session_id: sessionId,
+          checked_by: 'Admin', // Vous pouvez ajouter l'utilisateur authentifié ici
+          qr_token: qrToken,
+          device_info: { userAgent: navigator.userAgent },
+          notes: 'Check-in via interface admin'
         })
-        .eq('id', participant.id)
       
       if (error) throw error
       
       setSuccess(true)
-      // Update local state
+      // Update local state - marquer comme check-in
       setParticipant(prev => prev ? {
         ...prev, 
         checked_in: true, 
