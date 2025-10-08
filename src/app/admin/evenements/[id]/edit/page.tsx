@@ -626,7 +626,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     try {
       const supabase = supabaseBrowser();
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('inscription_participants')
         .insert({
           evenement_id: eventId,
