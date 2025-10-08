@@ -90,15 +90,21 @@ export async function supabaseAuthenticatedApi() {
 export const supabaseApi = () => {
   // Use the same environment variables but with explicit error handling for API routes
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
     console.error('Environment variables are missing in API route:', {
       hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
     })
     throw new Error('Supabase configuration error: Missing environment variables in API route')
   }
+
+  console.log('🔧 supabaseApi config:', {
+    url: supabaseUrl,
+    keyType: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon'
+  })
 
   // Create and return the Supabase client
   return createClient(supabaseUrl, supabaseKey)

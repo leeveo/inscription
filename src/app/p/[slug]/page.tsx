@@ -1,5 +1,6 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import BuilderRenderer from '@/components/builder/BuilderRenderer'
 import { Metadata } from 'next'
 
@@ -71,7 +72,6 @@ export default async function PublicBuilderPage({ params }: PublicPageProps) {
         .from('builder_domains')
         .select('site_id')
         .eq('host', domain)
-        .eq('is_active', true)
         .single()
 
       if (domainRecord) {
