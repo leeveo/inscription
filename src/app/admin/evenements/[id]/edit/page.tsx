@@ -2219,6 +2219,35 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       {/* Page Builder Tab */}
       {activeTab === 'page-builder' && (
         <div className="space-y-6">
+          {/* Domain Management - Only show if a page is selected */}
+          {builderPageId && (
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="p-6">
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Options de Publication</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Configurez comment votre page sera accessible publiquement. Vous pouvez utiliser notre adresse SaaS gratuite ou configurer votre propre domaine personnalisé.
+                  </p>
+                </div>
+
+                <DomainManager
+                  pageId={builderPageId}
+                  currentPage={builderPageData ? {
+                    id: builderPageData.id,
+                    slug: builderPageData.slug || 'temp-slug',
+                    status: builderPageData.status || 'draft',
+                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/${builderPageData.slug || 'temp-slug'}`
+                  } : {
+                    id: builderPageId,
+                    slug: 'temp-slug',
+                    status: 'draft',
+                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/temp-slug`
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Page Selection */}
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             <div className="p-6">
@@ -2240,35 +2269,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               />
             </div>
           </div>
-
-          {/* Domain Management - Only show if a page is selected */}
-          {builderPageId && (
-            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="p-6">
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Options de Publication</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Configurez comment votre page sera accessible publiquement. Vous pouvez utiliser notre adresse SaaS gratuite ou configurer votre propre domaine personnalisé.
-                  </p>
-                </div>
-
-                <DomainManager
-                  pageId={builderPageId}
-                  currentPage={builderPageData ? {
-                    id: builderPageData.id,
-                    slug: builderPageData.slug || 'temp-slug',
-                    status: builderPageData.status || 'draft',
-                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/p/${builderPageData.slug || 'temp-slug'}`
-                  } : {
-                    id: builderPageId,
-                    slug: 'temp-slug',
-                    status: 'draft',
-                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/p/temp-slug`
-                  }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       )}
 

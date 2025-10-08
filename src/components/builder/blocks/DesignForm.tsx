@@ -2,6 +2,88 @@
 
 import React, { useState, useEffect } from 'react'
 import { useNode } from '@craftjs/core'
+import { supabaseBrowser } from '@/lib/supabase/client'
+
+// Composant JaugeSession pour afficher la progression
+const JaugeSession = ({
+  participantsInscrits,
+  maxParticipants,
+  pourcentageRemplissage,
+  isComplet
+}: {
+  participantsInscrits: number
+  maxParticipants: number | null
+  pourcentageRemplissage: number
+  isComplet: boolean
+}) => {
+  if (!maxParticipants) {
+    return (
+      <div className="flex items-center space-x-2 text-sm text-gray-500">
+        <span>🎫</span>
+        <span>{participantsInscrits} participant(s)</span>
+        <span className="text-xs">• Places illimitées</span>
+      </div>
+    )
+  }
+
+  const getJaugeColor = () => {
+    if (isComplet) return 'bg-red-500'
+    if (pourcentageRemplissage >= 80) return 'bg-orange-500'
+    if (pourcentageRemplissage >= 60) return 'bg-yellow-500'
+    return 'bg-green-500'
+  }
+
+  const getJaugeTextColor = () => {
+    if (isComplet) return 'text-red-600'
+    if (pourcentageRemplissage >= 80) return 'text-orange-600'
+    if (pourcentageRemplissage >= 60) return 'text-yellow-600'
+    return 'text-green-600'
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Barre de progression */}
+      <div className="flex items-center space-x-3">
+        <div className="flex-1">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-medium text-gray-700">
+              {participantsInscrits} / {maxParticipants}
+            </span>
+            <span className={`text-xs font-medium ${getJaugeTextColor()}`}>
+              {pourcentageRemplissage}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all duration-300 ${getJaugeColor()}`}
+              style={{ width: `${Math.min(pourcentageRemplissage, 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Messages d'état */}
+      {isComplet && (
+        <div className="flex items-center space-x-2 text-sm text-red-600 font-medium">
+          <span>🚫</span>
+          <span>Session complète</span>
+        </div>
+      )}
+      {pourcentageRemplissage >= 80 && !isComplet && (
+        <div className="flex items-center space-x-2 text-sm text-orange-600">
+          <span>⚠️</span>
+          <span>Plus que {maxParticipants - participantsInscrits} places disponibles</span>
+        </div>
+      )}
+      {pourcentageRemplissage < 80 && (
+        <div className="flex items-center space-x-2 text-sm text-green-600">
+          <span>✅</span>
+          <span>{maxParticipants - participantsInscrits} places disponibles</span>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface Session {
   id: number
@@ -13,7 +95,12 @@ interface Session {
   intervenant?: string
   lieu?: string
   type?: string
-  max_participants?: number
+  max_participants?: number | null
+  participants_inscrits?: number
+  places_restantes?: number | null
+  pourcentage_remplissage?: number
+  is_complet?: boolean
+  has_capacity?: boolean
 }
 
 interface Event {
@@ -94,6 +181,38 @@ export const DesignForm = ({
   const [sessions, setSessions] = useState<Session[]>([])
   const [loadingSessions, setLoadingSessions] = useState(false)
 
+  // États pour la gestion du formulaire
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [submitMessage, setSubmitMessage] = useState('')
+  const [formData, setFormData] = useState({
+    nom: '',
+    prenom: '',
+    email: '',
+    telephone: '',
+    entreprise: '',
+    profession: '',
+    siteWeb: '',
+    dateNaissance: '',
+    urlLinkedin: '',
+    urlFacebook: '',
+    urlTwitter: '',
+    urlInstagram: '',
+    message: '',
+    consent: false,
+    selectedSessions: [] as number[]
+  })
+
+  // Log initialisation du composant
+  useEffect(() => {
+    console.log('🎨 DesignForm initialisé avec les props:', {
+      eventId,
+      formTemplate,
+      showSessions,
+      showSocialMedia
+    })
+  }, [])
+
   const {
     connectors: { connect, drag },
     selected,
@@ -103,20 +222,374 @@ export const DesignForm = ({
     hovered: state.events.hovered,
   }));
 
-  // Charger les sessions depuis l'API
+  // Handlers pour les changements du formulaire
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }))
+  }
+
+  const handleSessionChange = (sessionId: number, checked: boolean) => {
+    console.log(`🔄 Session ${sessionId} ${checked ? 'ajoutée' : 'retirée'} des sélections`)
+    setFormData(prev => ({
+      ...prev,
+      selectedSessions: checked
+        ? [...prev.selectedSessions, sessionId]
+        : prev.selectedSessions.filter(id => id !== sessionId)
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    console.log('🚀 Début de la soumission du DesignForm')
+    console.log('📋 Données du formulaire:', formData)
+    console.log('🎯 Événement ID:', eventId)
+
+    if (!eventId) {
+      console.log('❌ Aucun événement ID fourni')
+      setSubmitStatus('error')
+      setSubmitMessage('Configuration de l\'événement manquante')
+      return
+    }
+
+    // Validation basique
+    if ((showNom && !formData.nom) || (showPrenom && !formData.prenom) || (showEmail && !formData.email)) {
+      console.log('❌ Champs obligatoires manquants')
+      setSubmitStatus('error')
+      setSubmitMessage('Veuillez remplir tous les champs obligatoires')
+      return
+    }
+
+    // Validation du téléphone (obligatoire dans la base de données)
+    if (!formData.telephone) {
+      console.log('❌ Le téléphone est obligatoire')
+      setSubmitStatus('error')
+      setSubmitMessage('Le numéro de téléphone est obligatoire')
+      return
+    }
+
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+
+    try {
+      const supabase = supabaseBrowser()
+      console.log('🔌 Client Supabase initialisé')
+
+      // Vérifier si un participant existe déjà avec cet email pour cet événement
+      const { data: existingParticipant, error: participantCheckError } = await supabase
+        .from('inscription_participants')
+        .select('*')
+        .eq('evenement_id', eventId)
+        .eq('email', formData.email.trim())
+        .single()
+
+      let newParticipant
+
+      if (participantCheckError && participantCheckError.code === 'PGRST116') {
+        // Aucun participant existant, en créer un nouveau
+        console.log('👤 Aucun participant existant, création d\'un nouveau participant')
+
+        const participantData = {
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          telephone: formData.telephone.trim() || 'Non spécifié',
+          profession: formData.profession || null,
+          site_web: formData.siteWeb || null,
+          date_naissance: formData.dateNaissance || null,
+          url_linkedin: formData.urlLinkedin || null,
+          url_facebook: formData.urlFacebook || null,
+          url_twitter: formData.urlTwitter || null,
+          url_instagram: formData.urlInstagram || null,
+          evenement_id: eventId
+        }
+
+        console.log('👤 Données du participant à insérer:', participantData)
+
+        const { data: createdParticipant, error: participantError } = await supabase
+          .from('inscription_participants')
+          .insert(participantData)
+          .select()
+          .single()
+
+        if (participantError) {
+          console.error('❌ Erreur lors de la création du participant:', participantError)
+          throw participantError
+        }
+
+        newParticipant = createdParticipant
+        console.log('✅ Participant créé avec succès:', newParticipant)
+      } else if (existingParticipant) {
+        // Un participant existe déjà, l'utiliser
+        newParticipant = existingParticipant
+        console.log('✅ Participant existant réutilisé:', newParticipant)
+
+        // Mettre à jour les informations si elles sont différentes
+        const participantData = {
+          nom: formData.nom,
+          prenom: formData.prenom,
+          telephone: formData.telephone.trim() || 'Non spécifié',
+          profession: formData.profession || null,
+          site_web: formData.siteWeb || null,
+          date_naissance: formData.dateNaissance || null,
+          url_linkedin: formData.urlLinkedin || null,
+          url_facebook: formData.urlFacebook || null,
+          url_twitter: formData.urlTwitter || null,
+          url_instagram: formData.urlInstagram || null,
+        }
+
+        const { error: updateError } = await supabase
+          .from('inscription_participants')
+          .update(participantData)
+          .eq('id', existingParticipant.id)
+
+        if (updateError) {
+          console.error('❌ Erreur lors de la mise à jour du participant:', updateError)
+        } else {
+          console.log('✅ Participant mis à jour avec succès')
+        }
+      } else if (participantCheckError) {
+        console.error('❌ Erreur lors de la vérification du participant:', participantCheckError)
+        throw participantCheckError
+      }
+
+      // Vérifier si un token existe déjà pour ce participant et cet événement
+      const { data: existingToken, error: tokenCheckError } = await supabase
+        .from('inscription_participant_qr_tokens')
+        .select('*')
+        .eq('participant_id', newParticipant.id)
+        .eq('evenement_id', eventId)
+        .eq('is_active', true)
+        .single()
+
+      let token = ''
+
+      if (tokenCheckError && tokenCheckError.code === 'PGRST116') {
+        // Aucun token trouvé, en créer un nouveau
+        token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+        console.log('🎟️ Token QR généré:', token)
+
+        const { error: tokenError } = await supabase
+          .from('inscription_participant_qr_tokens')
+          .insert({
+            participant_id: newParticipant.id,
+            evenement_id: eventId,
+            qr_token: token,
+            ticket_url: `${window.location.origin}/ticket/${newParticipant.id}`,
+            is_active: true
+          })
+
+        if (tokenError) {
+          console.error('❌ Erreur lors de la création du token QR:', tokenError)
+          throw tokenError
+        }
+
+        console.log('✅ Token QR créé avec succès')
+      } else if (existingToken) {
+        // Un token existe déjà, l'utiliser
+        token = existingToken.qr_token
+        console.log('🎟️ Token QR existant réutilisé:', token)
+      } else if (tokenCheckError) {
+        console.error('❌ Erreur lors de la vérification du token:', tokenCheckError)
+        throw tokenCheckError
+      }
+
+      // Inscrire aux sessions si sélectionnées
+      if (formData.selectedSessions.length > 0) {
+        console.log('📚 Sessions sélectionnées:', formData.selectedSessions)
+
+        // Vérifier que les sessions sélectionnées ont encore de la place
+        const sessionsToEnroll = formData.selectedSessions.filter(sessionId => {
+          const session = sessions.find(s => s.id === sessionId)
+          return session && !session.is_complet && session.has_capacity
+        })
+
+        if (sessionsToEnroll.length === 0) {
+          console.log('⚠️ Aucune des sessions sélectionnées n\'a de place disponible')
+          setSubmitStatus('error')
+          setSubmitMessage('Les sessions sélectionnées sont complètes. Veuillez choisir d\'autres sessions.')
+          return
+        }
+
+        if (sessionsToEnroll.length < formData.selectedSessions.length) {
+          const fullSessions = formData.selectedSessions.filter(sessionId => {
+            const session = sessions.find(s => s.id === sessionId)
+            return session && (session.is_complet || !session.has_capacity)
+          })
+          console.log('⚠️ Sessions complètes ignorées:', fullSessions)
+        }
+
+        // Vérifier les inscriptions existantes pour éviter les doublons
+        const { data: existingEnrollments, error: enrollmentCheckError } = await supabase
+          .from('inscription_session_participants')
+          .select('session_id')
+          .eq('participant_id', newParticipant.id)
+          .in('session_id', sessionsToEnroll)
+
+        if (enrollmentCheckError) {
+          console.error('❌ Erreur lors de la vérification des inscriptions:', enrollmentCheckError)
+        }
+
+        const existingSessionIds = existingEnrollments?.map(e => e.session_id) || []
+        const newSessionIds = sessionsToEnroll.filter(sessionId => !existingSessionIds.includes(sessionId))
+
+        if (newSessionIds.length > 0) {
+          const sessionEnrollments = newSessionIds.map(sessionId => ({
+            session_id: sessionId,
+            participant_id: newParticipant.id
+          }))
+
+          console.log('📝 Nouvelles inscriptions aux sessions à créer:', sessionEnrollments)
+
+          const { error: sessionError } = await supabase
+            .from('inscription_session_participants')
+            .insert(sessionEnrollments)
+
+          if (sessionError) {
+            console.error('❌ Erreur lors de l\'inscription aux sessions:', sessionError)
+            throw sessionError
+          }
+
+          console.log('✅ Nouvelles inscriptions aux sessions créées avec succès')
+        } else {
+          console.log('ℹ️ Toutes les sessions disponibles sont déjà inscrites')
+        }
+      } else {
+        console.log('ℹ️ Aucune session sélectionnée')
+      }
+
+      console.log('🎉 Soumission DesignForm terminée avec succès!')
+      setSubmitStatus('success')
+
+      // Message différent selon si c'est un nouveau participant ou une mise à jour
+      if (participantCheckError && participantCheckError.code === 'PGRST116') {
+        setSubmitMessage('Inscription réussie ! Vous recevrez un email de confirmation.')
+      } else {
+        setSubmitMessage('Vos informations ont été mises à jour avec succès !')
+      }
+
+      // Réinitialiser le formulaire
+      setFormData({
+        nom: '',
+        prenom: '',
+        email: '',
+        telephone: '',
+        entreprise: '',
+        profession: '',
+        siteWeb: '',
+        dateNaissance: '',
+        urlLinkedin: '',
+        urlFacebook: '',
+        urlTwitter: '',
+        urlInstagram: '',
+        message: '',
+        consent: false,
+        selectedSessions: []
+      })
+
+    } catch (error) {
+      console.error('💥 Erreur lors de la soumission DesignForm:', error)
+      setSubmitStatus('error')
+      setSubmitMessage(`Une erreur est survenue: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Charger les sessions depuis l'API avec les stats de capacité
   useEffect(() => {
     const fetchSessions = async () => {
       if (!eventId || !showSessions) return
 
       setLoadingSessions(true)
       try {
-        const response = await fetch(`/api/sessions?eventId=${eventId}`)
-        if (response.ok) {
-          const data = await response.json()
-          setSessions(data.sessions || [])
+        console.log(`📚 Chargement des sessions avec stats pour l'événement ${eventId}...`)
+        const supabase = supabaseBrowser()
+
+        // D'abord récupérer les sessions de base
+        const { data: basicSessions, error: basicError } = await supabase
+          .from('inscription_sessions')
+          .select('*')
+          .eq('evenement_id', eventId)
+          .order('date', { ascending: true })
+          .order('heure_debut', { ascending: true })
+
+        if (basicError) {
+          console.error('❌ Erreur lors de la requête des sessions:', basicError)
+          throw basicError
         }
+
+        // Calculer les statistiques de participants pour chaque session
+        const sessionIds = basicSessions?.map(s => s.id) || []
+
+        if (sessionIds.length === 0) {
+          console.log('ℹ️ Aucune session trouvée pour cet événement')
+          setSessions([])
+          return
+        }
+
+        console.log('📊 Session IDs à analyser:', sessionIds)
+
+        // Récupérer tous les participants aux sessions pour cet événement
+        const { data: allSessionParticipants, error: participantsError } = await supabase
+          .from('inscription_session_participants')
+          .select('session_id, participant_id')
+          .in('session_id', sessionIds)
+
+        if (participantsError) {
+          console.error('❌ Erreur lors de la récupération des participants:', participantsError)
+        } else {
+          console.log('📈 Participants aux sessions récupérés:', allSessionParticipants)
+        }
+
+        // Compter les participants par session côté client
+        const participantCountMap = new Map()
+        sessionIds.forEach(sessionId => {
+          const count = allSessionParticipants?.filter(p => p.session_id === sessionId).length || 0
+          participantCountMap.set(sessionId, count)
+        })
+
+        console.log('📊 Comptage participants par session:', Object.fromEntries(participantCountMap))
+
+        // Enrichir les sessions avec les statistiques calculées
+        const enrichedSessions = basicSessions?.map(session => {
+          const participantsInscrits = participantCountMap.get(session.id) || 0
+          const maxParticipants = session.max_participants
+
+          // Calculs
+          const placesRestantes = maxParticipants ? Math.max(0, maxParticipants - participantsInscrits) : null
+          const pourcentageRemplissage = maxParticipants ? Math.round((participantsInscrits / maxParticipants) * 100) : 0
+          const isComplet = maxParticipants ? participantsInscrits >= maxParticipants : false
+          const hasCapacity = !isComplet
+
+          console.log(`📊 Session ${session.id} (${session.titre}): ${participantsInscrits}/${maxParticipants || '∞'} places - ${pourcentageRemplissage}% rempli - ${isComplet ? '❌ COMPLÈTE' : '✅ DISPONIBLE'}`)
+
+          return {
+            id: session.id,
+            titre: session.titre,
+            description: session.description,
+            date: session.date,
+            heure_debut: session.heure_debut,
+            heure_fin: session.heure_fin,
+            intervenant: session.intervenant,
+            lieu: session.lieu,
+            type: session.type,
+            max_participants: maxParticipants,
+            participants_inscrits: participantsInscrits,
+            places_restantes: placesRestantes,
+            pourcentage_remplissage: pourcentageRemplissage,
+            is_complet: isComplet,
+            has_capacity: hasCapacity
+          }
+        }) || []
+
+        console.log(`✅ ${enrichedSessions.length} sessions enrichies avec stats calculées:`, enrichedSessions)
+        setSessions(enrichedSessions)
       } catch (error) {
-        console.error('Erreur lors du chargement des sessions:', error)
+        console.error('💥 Erreur lors du chargement des sessions:', error)
       } finally {
         setLoadingSessions(false)
       }
@@ -246,7 +719,7 @@ export const DesignForm = ({
         )}
       </div>
 
-      <form className={formTemplate === 'classic' ? 'space-y-6' : 'space-y-4'}>
+      <form onSubmit={handleSubmit} className={formTemplate === 'classic' ? 'space-y-6' : 'space-y-4'}>
         {/* Champs obligatoires : Nom et Prénom */}
         {(showNom || showPrenom) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -259,6 +732,9 @@ export const DesignForm = ({
                 </label>
                 <input
                   type="text"
+                  name="nom"
+                  value={formData.nom}
+                  onChange={handleInputChange}
                   required
                   className={styles.input}
                   style={{ fontFamily }}
@@ -275,6 +751,9 @@ export const DesignForm = ({
                 </label>
                 <input
                   type="text"
+                  name="prenom"
+                  value={formData.prenom}
+                  onChange={handleInputChange}
                   required
                   className={styles.input}
                   style={{ fontFamily }}
@@ -295,6 +774,9 @@ export const DesignForm = ({
             </label>
             <input
               type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               required
               className={styles.input}
               style={{ fontFamily }}
@@ -311,10 +793,14 @@ export const DesignForm = ({
                 <label className={`block text-sm font-medium mb-1 ${
                   formTemplate === 'elegant' ? 'text-gray-200' : 'text-gray-700'
                 }`} style={{ fontFamily }}>
-                  Téléphone
+                  Téléphone *
                 </label>
                 <input
                   type="tel"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleInputChange}
+                  required
                   className={styles.input}
                   style={{ fontFamily }}
                   placeholder="+33 6 12 34 56 78"
@@ -330,6 +816,9 @@ export const DesignForm = ({
                 </label>
                 <input
                   type="text"
+                  name="entreprise"
+                  value={formData.entreprise}
+                  onChange={handleInputChange}
                   className={styles.input}
                   style={{ fontFamily }}
                   placeholder="Nom de votre entreprise"
@@ -351,6 +840,9 @@ export const DesignForm = ({
                 </label>
                 <input
                   type="text"
+                  name="profession"
+                  value={formData.profession}
+                  onChange={handleInputChange}
                   className={styles.input}
                   style={{ fontFamily }}
                   placeholder="Votre profession"
@@ -366,6 +858,9 @@ export const DesignForm = ({
                 </label>
                 <input
                   type="url"
+                  name="siteWeb"
+                  value={formData.siteWeb}
+                  onChange={handleInputChange}
                   className={styles.input}
                   style={{ fontFamily }}
                   placeholder="https://votre-site.com"
@@ -385,6 +880,9 @@ export const DesignForm = ({
             </label>
             <input
               type="date"
+              name="dateNaissance"
+              value={formData.dateNaissance}
+              onChange={handleInputChange}
               className={styles.input}
               style={{ fontFamily }}
             />
@@ -405,18 +903,46 @@ export const DesignForm = ({
                   Chargement des sessions...
                 </div>
               ) : sessions.length > 0 ? (
-                sessions.map((session) => (
-                  <label key={session.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="mr-2"
-                      value={session.id}
-                    />
-                    <span className={formTemplate === 'elegant' ? 'text-gray-200' : ''} style={{ fontFamily }}>
-                      {formatSessionForDisplay(session)}
-                    </span>
-                  </label>
-                ))
+                sessions.map((session) => {
+                  const isDisabled = session.is_complet || !session.has_capacity
+                  return (
+                    <div key={session.id} className={`border rounded-lg p-3 space-y-2 ${
+                      isDisabled ? 'border-gray-300 bg-gray-50 opacity-60' : 'border-gray-200 bg-white'
+                    }`}>
+                      <label className={`flex items-start ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                        <input
+                          type="checkbox"
+                          className="mr-2 mt-1"
+                          checked={formData.selectedSessions.includes(session.id)}
+                          onChange={(e) => handleSessionChange(session.id, e.target.checked)}
+                          disabled={isDisabled}
+                        />
+                        <div className="flex-1">
+                          <span className={`${formTemplate === 'elegant' ? 'text-gray-200' : ''} ${
+                            isDisabled ? 'text-gray-500' : ''
+                          }`} style={{ fontFamily }}>
+                            {formatSessionForDisplay(session)}
+                          </span>
+
+                          {/* Jauge de remplissage */}
+                          <JaugeSession
+                            participantsInscrits={session.participants_inscrits || 0}
+                            maxParticipants={session.max_participants}
+                            pourcentageRemplissage={session.pourcentage_remplissage || 0}
+                            isComplet={session.is_complet || false}
+                          />
+                        </div>
+                      </label>
+
+                      {/* Indicateur visuel pour les sessions complètes */}
+                      {isDisabled && (
+                        <div className="text-xs text-red-600 font-medium text-center bg-red-50 rounded py-1">
+                          {session.is_complet ? '⛔ Session complète - Plus de places disponibles' : '❌ Session non disponible'}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
               ) : eventId ? (
                 <div className={`text-sm ${formTemplate === 'elegant' ? 'text-gray-300' : 'text-gray-500'}`} style={{ fontFamily }}>
                   Aucune session disponible pour cet événement
@@ -448,6 +974,9 @@ export const DesignForm = ({
                   </label>
                   <input
                     type="url"
+                    name="urlLinkedin"
+                    value={formData.urlLinkedin}
+                    onChange={handleInputChange}
                     className={styles.input}
                     style={{ fontFamily }}
                     placeholder="https://linkedin.com/in/votre-profil"
@@ -463,6 +992,9 @@ export const DesignForm = ({
                   </label>
                   <input
                     type="url"
+                    name="urlFacebook"
+                    value={formData.urlFacebook}
+                    onChange={handleInputChange}
                     className={styles.input}
                     style={{ fontFamily }}
                     placeholder="https://facebook.com/votre-profil"
@@ -478,6 +1010,9 @@ export const DesignForm = ({
                   </label>
                   <input
                     type="url"
+                    name="urlTwitter"
+                    value={formData.urlTwitter}
+                    onChange={handleInputChange}
                     className={styles.input}
                     style={{ fontFamily }}
                     placeholder="https://twitter.com/votre-compte"
@@ -493,6 +1028,9 @@ export const DesignForm = ({
                   </label>
                   <input
                     type="url"
+                    name="urlInstagram"
+                    value={formData.urlInstagram}
+                    onChange={handleInputChange}
                     className={styles.input}
                     style={{ fontFamily }}
                     placeholder="https://instagram.com/votre-compte"
@@ -512,6 +1050,9 @@ export const DesignForm = ({
               Message (optionnel)
             </label>
             <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleInputChange}
               rows={3}
               className={styles.input}
               style={{ fontFamily }}
@@ -520,10 +1061,24 @@ export const DesignForm = ({
           </div>
         )}
 
+        {/* Messages de statut */}
+        {submitStatus !== 'idle' && (
+          <div className={`p-4 rounded-lg ${
+            submitStatus === 'success'
+              ? 'bg-green-100 border border-green-400 text-green-700'
+              : 'bg-red-100 border border-red-400 text-red-700'
+          }`}>
+            <p>{submitMessage}</p>
+          </div>
+        )}
+
         {/* Case à cocher */}
         <div className="flex items-center">
           <input
             type="checkbox"
+            name="consent"
+            checked={formData.consent}
+            onChange={handleInputChange}
             id="consent"
             className="mr-2"
             required
@@ -539,10 +1094,11 @@ export const DesignForm = ({
         <div className="pt-4">
           <button
             type="submit"
-            className={styles.button}
+            disabled={isSubmitting}
+            className={`${styles.button} ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
             style={{ fontFamily }}
           >
-            {submitButtonText}
+            {isSubmitting ? 'Inscription en cours...' : submitButtonText}
           </button>
         </div>
       </form>
