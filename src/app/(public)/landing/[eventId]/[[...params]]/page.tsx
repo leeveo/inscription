@@ -19,6 +19,7 @@ interface PageProps {
     template?: string
     preview?: string
     colors?: string
+    formBuilder?: string
   }>
 }
 
@@ -64,6 +65,24 @@ async function getLandingPageConfig(eventId: string) {
   }
 }
 
+
+async function getRegistrationFormBuilder(builderId: string) {
+  const supabase = await supabaseServer()
+  
+  const { data: formBuilder, error } = await supabase
+    .from('registration_form_builders')
+    .select('*')
+    .eq('id', builderId)
+    .eq('status', 'published')
+    .single()
+
+  if (error || !formBuilder) {
+    console.error('Erreur lors de la récupération du form builder:', error)
+    return null
+  }
+
+  return formBuilder
+}
 
 async function getParticipantData(token: string, eventId: string) {
   try {
