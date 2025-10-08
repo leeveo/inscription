@@ -256,7 +256,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         console.log('📄 Loaded builder pages:', data);
         console.log('📄 Total pages found:', data?.length || 0);
         if (data) {
-          data.forEach(page => {
+          (data as any[]).forEach((page: any) => {
             console.log(`📄 Page: ${page.name || 'Sans titre'} - Status: ${page.status} - Updated: ${page.updated_at}`);
           });
         }
