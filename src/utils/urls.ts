@@ -23,7 +23,7 @@ export function getAppBaseUrl(): string {
   }
 
   // Fallback côté serveur
-  return 'https://waibooth.app'; // Remplacez par votre domaine de production
+  return 'https://admin.waivent.app'; // Remplacez par votre domaine de production
 }
 
 /**
