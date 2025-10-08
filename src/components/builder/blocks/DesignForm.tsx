@@ -462,12 +462,46 @@ export const DesignForm = ({
       }
 
       console.log('🎉 Soumission DesignForm terminée avec succès!')
-      setSubmitStatus('success')
 
-      // Message différent selon si c'est un nouveau participant ou une mise à jour
+      // Envoyer un email de confirmation si c'est un nouveau participant
       if (participantCheckError && participantCheckError.code === 'PGRST116') {
-        setSubmitMessage('Inscription réussie ! Vous recevrez un email de confirmation.')
+        console.log('📧 Envoi de l\'email de confirmation...')
+
+        try {
+          const emailResponse = await fetch('/api/send-inscription-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              eventId: eventId,
+              participantData: {
+                nom: formData.nom,
+                prenom: formData.prenom,
+                email: formData.email,
+                telephone: formData.telephone,
+                profession: formData.profession
+              }
+            })
+          });
+
+          if (emailResponse.ok) {
+            console.log('✅ Email de confirmation envoyé avec succès')
+            setSubmitStatus('success')
+            setSubmitMessage('Inscription réussie ! Vous recevrez un email de confirmation.')
+          } else {
+            const emailError = await emailResponse.json();
+            console.error('❌ Erreur lors de l\'envoi de l\'email:', emailError)
+            setSubmitStatus('success')
+            setSubmitMessage('Inscription réussie ! (Un problème technique a empêché l\'envoi de l\'email de confirmation)')
+          }
+        } catch (emailError) {
+          console.error('❌ Erreur lors de l\'envoi de l\'email:', emailError)
+          setSubmitStatus('success')
+          setSubmitMessage('Inscription réussie ! (Un problème technique a empêché l\'envoi de l\'email de confirmation)')
+        }
       } else {
+        setSubmitStatus('success')
         setSubmitMessage('Vos informations ont été mises à jour avec succès !')
       }
 

@@ -48,6 +48,7 @@ type Evenement = {
   statut?: string
   type_evenement?: string
   code_acces?: string
+  email_envoi?: string
   builder_page_id?: string | null
 }
 
@@ -111,6 +112,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [organisateur, setOrganisateur] = useState('');
   const [emailContact, setEmailContact] = useState('');
   const [telephoneContact, setTelephoneContact] = useState('');
+  const [emailEnvoi, setEmailEnvoi] = useState('');
   const [typeEvenement, setTypeEvenement] = useState('');
   const [statut, setStatut] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
@@ -207,6 +209,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setOrganisateur(event.organisateur || '');
           setEmailContact(event.email_contact || '');
           setTelephoneContact(event.telephone_contact || '');
+          setEmailEnvoi(event.email_envoi || '');
           setTypeEvenement(event.type_evenement || '');
           setStatut(event.statut || '');
           setLogoUrl(event.logo_url || ''); // Load existing logo
@@ -547,6 +550,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         organisateur,
         email_contact: emailContact,
         telephone_contact: telephoneContact,
+        email_envoi: emailEnvoi || null,
         type_evenement: typeEvenement,
         statut,
         logo_url: logoUrl || null,
@@ -1341,6 +1345,24 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   onChange={(e) => setTelephoneContact(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Email d'envoi (Brevo) */}
+              <div>
+                <label htmlFor="emailEnvoi" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email d'envoi (Brevo)
+                </label>
+                <input
+                  type="email"
+                  id="emailEnvoi"
+                  value={emailEnvoi}
+                  onChange={(e) => setEmailEnvoi(e.target.value)}
+                  placeholder="email@domaine.com (doit être vérifié dans Brevo)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Adresse email utilisée pour l'envoi des emails d'inscription (doit être vérifiée dans votre compte Brevo)
+                </p>
               </div>
 
               {/* Statut */}

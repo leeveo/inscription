@@ -58,3 +58,25 @@ export interface LandingPageConfigDB {
   created_at: string
   updated_at: string
 }
+
+// Type pour les événements
+export interface Event {
+  id: string;
+  nom: string;
+  description?: string;
+  lieu: string;
+  date_debut: string;
+  date_fin?: string;
+  prix?: number;
+  places_disponibles?: number;
+  organisateur?: string;
+  email_contact?: string;
+  telephone_contact?: string;
+  logo_url?: string;
+  statut: 'brouillon' | 'publié' | 'archivé';
+  type_evenement?: string;
+  code_acces?: string;
+  email_envoi?: string; // Nouveau champ pour l'email d'envoi personnalisé
+  created_at?: string;
+  updated_at?: string;
+}
