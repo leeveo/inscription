@@ -79,7 +79,7 @@ export default function CreateEventPage() {
         capacite: data.capacite === '' ? null : data.capacite
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('inscription_evenements')
         .insert(formattedData)
 
