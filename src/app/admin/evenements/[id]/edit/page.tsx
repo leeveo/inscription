@@ -430,7 +430,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         
         if (hasCheckedInColumn) {
           // Filter only checked-in participants
-          const checkedInData = data.filter(p => p.checked_in === true) || [];
+          const checkedInData = (data as any[]).filter((p: any) => p.checked_in === true) || [];
           setCheckedInParticipants(checkedInData as Participant[] || []);
         } else {
           // If checked_in column doesn't exist, show empty array
