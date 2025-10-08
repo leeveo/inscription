@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAuthenticatedApi } from '@/lib/supabase/server';
+import { generateSaaSUrl, getAppBaseUrl } from '@/utils/urls';
 
 interface RouteParams {
   params: Promise<{
@@ -70,7 +71,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         id: pageId,
         slug: page.slug,
         status: page.status,
-        saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/p/${page.slug}`
+        saasUrl: generateSaaSUrl(page.slug)
       }
     });
   } catch (error) {
@@ -184,7 +185,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
 // Helper function to get DNS verification info
 function getDNSVerificationInfo(type: string, host: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'localhost:3001';
+  const baseUrl = getAppBaseUrl();
 
   if (type === 'subdomain') {
     return {
@@ -194,12 +195,27 @@ function getDNSVerificationInfo(type: string, host: string) {
       description: `Créez un enregistrement CNAME qui pointe "${host}" vers "${baseUrl}"`
     };
   } else {
-    return {
-      type: 'A',
-      name: host,
-      value: 'VOTRE_IP_SERVEUR', // À configurer avec l'IP réelle du serveur
-      description: `Créez un enregistrement A qui pointe "${host}" vers l'IP de votre serveur`
-    };
+    // Pour Vercel, utiliser leur DNS spécial
+    const isVercel = process.env.VERCEL === '1';
+
+    if (isVercel) {
+      return {
+        type: 'CNAME',
+        name: host,
+        value: 'cname.vercel-dns.com',
+        description: `Créez un enregistrement CNAME qui pointe "${host}" vers "cname.vercel-dns.com" (Vercel DNS)`
+      };
+    } else {
+      // Pour les autres hébergeurs, utiliser CNAME vers le domaine principal
+      const mainDomain = new URL(getAppBaseUrl()).hostname;
+
+      return {
+        type: 'CNAME',
+        name: host,
+        value: mainDomain,
+        description: `Créez un enregistrement CNAME qui pointe "${host}" vers "${mainDomain}"`
+      };
+    }
   }
 }
 
