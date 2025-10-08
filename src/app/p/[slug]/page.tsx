@@ -48,16 +48,63 @@ export default async function PublicBuilderPage({ params }: PublicPageProps) {
   const { slug } = await params
   const supabase = await supabaseServer()
 
-  // Récupérer la page par son slug
-  // D'abord essayer de trouver une page publiée avec ce slug
-  let { data: page, error } = await supabase
-    .from('builder_pages')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'published') // Seulement les pages publiées
-    .order('published_at', { ascending: false }) // Prendre la plus récente
-    .limit(1)
-    .single()
+  // Récupérer les headers pour détecter si c'est une requête proxy
+  const requestHeaders = headers()
+  const forwardedHost = requestHeaders.get('x-forwarded-host')
+  const originalHost = requestHeaders.get('x-original-host')
+  const isProxyRequest = !!(forwardedHost || originalHost)
+
+  console.log(`🌐 Page request: slug=${slug}, isProxy=${isProxyRequest}, host=${forwardedHost || originalHost || 'direct'}`)
+
+  let page = null
+  let error = null
+
+  // Si c'est une requête proxy, essayer de trouver la page par domaine
+  if (isProxyRequest) {
+    const domain = (forwardedHost || originalHost)?.replace(/^www\./, '')
+
+    if (domain) {
+      console.log(`🔍 Looking for page by domain: ${domain}`)
+
+      // Chercher le domaine dans builder_domains
+      const { data: domainRecord } = await supabase
+        .from('builder_domains')
+        .select('site_id')
+        .eq('host', domain)
+        .eq('is_active', true)
+        .single()
+
+      if (domainRecord) {
+        // Chercher la page publiée pour ce site
+        const { data: domainPage, error: domainError } = await supabase
+          .from('builder_pages')
+          .select('*')
+          .eq('site_id', domainRecord.site_id)
+          .eq('status', 'published')
+          .single()
+
+        if (!domainError && domainPage) {
+          page = domainPage
+          console.log(`✅ Found page by domain: ${domain} -> ${page.name} (${page.slug})`)
+        }
+      }
+    }
+  }
+
+  // Si aucune page trouvée par domaine, essayer par slug (méthode normale)
+  if (!page) {
+    const { data: slugPage, error: slugError } = await supabase
+      .from('builder_pages')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    page = slugPage
+    error = slugError
+  }
 
   // Si aucune page trouvée, retourner 404
   if (error || !page) {
