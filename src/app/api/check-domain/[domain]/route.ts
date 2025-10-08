@@ -30,7 +30,6 @@ export async function GET(request: Request, { params }: RouteParams) {
       .from('builder_domains')
       .select('*')
       .eq('host', cleanDomain)
-      .eq('is_active', true)
       .single();
 
     if (domainError || !domainRecord) {
