@@ -93,59 +93,64 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 }
 
-// Real DNS verification using DNS lookup
+// Vercel-compatible DNS verification using external DNS service
 async function performDNSVerification(host: string, type: string) {
   try {
     console.log(`🔍 Vérification DNS pour ${host} (type: ${type})`);
 
-    // Check if we're in development environment
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    // Use external DNS service (Google DNS over HTTPS)
+    const dnsResponse = await fetch(`https://dns.google/resolve?name=${host}&type=A`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/dns-json',
+      },
+    });
 
-    if (isDevelopment) {
-      console.log('⚠️ Mode développement détecté, utilisation de la simulation DNS');
-      return simulateDNSVerificationForDev(host, type);
+    if (!dnsResponse.ok) {
+      throw new Error(`DNS service error: ${dnsResponse.status}`);
     }
 
-    // Use Node.js dns module for actual DNS lookup in production
-    const { promises: dns } = await import('dns');
+    const dnsData = await dnsResponse.json();
+    console.log('📋 Réponse DNS:', JSON.stringify(dnsData, null, 2));
 
-    let dnsRecord;
+    let dnsRecord = null;
     let dnsVerified = false;
     let expectedValue;
 
     if (type === 'subdomain') {
       expectedValue = new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://admin.waivent.app').hostname;
 
-      try {
-        // Try to resolve CNAME record
-        const result = await dns.resolveCname(host);
-        dnsRecord = { type: 'CNAME', name: host, value: result[0] };
-        dnsVerified = result[0] === expectedValue || result[0].includes(expectedValue);
-        console.log(`✅ CNAME trouvé: ${result[0]} (attendu: ${expectedValue})`);
-      } catch (cnameError) {
-        console.log(`❌ CNAME non trouvé, essai avec A record...`);
+      // For subdomains, check if it resolves to something
+      if (dnsData.Answer && dnsData.Answer.length > 0) {
+        const answer = dnsData.Answer[0];
+        dnsRecord = {
+          type: answer.type === 5 ? 'CNAME' : 'A',
+          name: answer.name,
+          value: answer.data
+        };
 
-        // Try A record as fallback
-        try {
-          const result = await dns.resolve4(host);
-          dnsRecord = { type: 'A', name: host, value: result[0] };
-          dnsVerified = false; // Should be CNAME, not A
-          console.log(`⚠️ A record trouvé au lieu de CNAME: ${result[0]}`);
-        } catch (aError) {
-          console.log(`❌ Aucun enregistrement trouvé pour ${host}`);
-        }
+        // For subdomains, we expect CNAME to point to our domain
+        dnsVerified = answer.type === 5 && answer.data.includes(expectedValue);
+        console.log(`✅ Enregistrement trouvé: ${answer.type} ${answer.data} (attendu: CNAME ${expectedValue})`);
+      } else {
+        console.log(`❌ Aucun enregistrement trouvé pour ${host}`);
       }
     } else {
       // For custom domains, expect A record pointing to Vercel
       expectedValue = '76.76.21.21'; // Vercel IP
 
-      try {
-        const result = await dns.resolve4(host);
-        dnsRecord = { type: 'A', name: host, value: result[0] };
-        dnsVerified = result[0] === expectedValue;
-        console.log(`✅ A record trouvé: ${result[0]} (attendu: ${expectedValue})`);
-      } catch (error) {
-        console.log(`❌ A record non trouvé pour ${host}`);
+      if (dnsData.Answer && dnsData.Answer.length > 0) {
+        const answer = dnsData.Answer[0];
+        dnsRecord = {
+          type: 'A',
+          name: answer.name,
+          value: answer.data
+        };
+
+        dnsVerified = answer.type === 1 && answer.data === expectedValue;
+        console.log(`✅ A record trouvé: ${answer.data} (attendu: ${expectedValue})`);
+      } else {
+        console.log(`❌ Aucun enregistrement trouvé pour ${host}`);
       }
     }
 
@@ -156,18 +161,20 @@ async function performDNSVerification(host: string, type: string) {
       message: dnsVerified
         ? 'DNS configuration is correct'
         : `DNS record not found or incorrect. Expected: ${expectedValue}`,
-      checkedAt: new Date().toISOString()
+      checkedAt: new Date().toISOString(),
+      dnsData: dnsData // Include full DNS response for debugging
     };
 
   } catch (error) {
     console.error('Erreur lors de la vérification DNS:', error);
-    console.error('Stack trace:', error.stack);
 
     return {
       dnsVerified: false,
       dnsRecord: null,
+      expectedValue: type === 'subdomain' ? 'admin.waivent.app' : '76.76.21.21',
       message: `DNS verification failed: ${error.message}`,
-      checkedAt: new Date().toISOString()
+      checkedAt: new Date().toISOString(),
+      error: error.message
     };
   }
 }
