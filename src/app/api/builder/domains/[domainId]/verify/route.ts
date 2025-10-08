@@ -30,13 +30,9 @@ export async function POST(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Always use fallback for now to avoid errors
-    console.log(`🔧 Using fallback verification for ${domain.host}`);
-    const verificationResult = fallbackDNSVerification(
-      domain.host,
-      domain.type,
-      'Using fallback mode for stability'
-    );
+    // Perform real DNS verification
+    console.log(`🔧 Performing DNS verification for ${domain.host}`);
+    const verificationResult = await performDNSVerification(domain.host, domain.type);
 
     // Update domain status based on verification result
     const { data: updatedDomain, error: updateError } = await supabase
@@ -135,8 +131,8 @@ async function performDNSVerification(host: string, type: string) {
         console.log(`❌ Aucun enregistrement trouvé pour ${host}`);
       }
     } else {
-      // For custom domains, expect A record pointing to Vercel
-      expectedValue = '76.76.21.21'; // Vercel IP
+      // For custom domains, expect A record pointing to Vercel Proxy
+      expectedValue = '216.150.1.1'; // Vercel Proxy IP (updated)
 
       if (dnsData.Answer && dnsData.Answer.length > 0) {
         const answer = dnsData.Answer[0];
@@ -184,7 +180,7 @@ function fallbackDNSVerification(host: string, type: string, reason: string) {
 
   const expectedValue = type === 'subdomain'
     ? 'admin.waivent.app'
-    : '76.76.21.21';
+    : '216.150.1.1';
 
   return {
     dnsVerified: false,
