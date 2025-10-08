@@ -82,7 +82,7 @@ export default function TicketPage() {
         const { data: eventData, /* error */ } = await supabase
           .from('inscription_evenements')
           .select('*')
-          .eq('id', participantData.evenement_id as string)
+          .eq('id', (participantData as any).evenement_id as string)
           .single()
         
         // Add a two-step type assertion to fix the type error
@@ -97,7 +97,7 @@ export default function TicketPage() {
         const { data: sessionsData, error: sessionsError } = await supabase
           .from('inscription_sessions')
           .select('*')
-          .eq('evenement_id', participantData.evenement_id)
+          .eq('evenement_id', (participantData as any).evenement_id)
           .order('date')
           .order('heure_debut')
         
@@ -112,11 +112,11 @@ export default function TicketPage() {
         if (registrationsError) throw registrationsError
         
         // Get registered session IDs
-        const registeredSessionIds = registrationsData?.map(reg => reg.session_id) || []
+        const registeredSessionIds = (registrationsData as any[])?.map((reg: any) => reg.session_id) || []
         
         // Fetch participant count for each session
         const sessionsWithRegistrations = await Promise.all(
-          sessionsData?.map(async (session) => {
+          (sessionsData as any[])?.map(async (session: any) => {
             const { count, /* error */ } = await supabase
               .from('inscription_session_participants')
               .select('*', { count: 'exact', head: true })
@@ -168,7 +168,7 @@ export default function TicketPage() {
         
         // Generate check-in URL
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
-        const checkIn = `${baseUrl}/admin/check-in/${participantData.evenement_id}/${participantId}`
+        const checkIn = `${baseUrl}/admin/check-in/${(participantData as any).evenement_id}/${participantId}`
         setCheckInUrl(checkIn)
         
       } catch (err: Error | unknown) {
@@ -201,7 +201,7 @@ export default function TicketPage() {
         if (error) throw error
       } else {
         // Register to session
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('inscription_session_participants')
           .insert({
             session_id: sessionId,

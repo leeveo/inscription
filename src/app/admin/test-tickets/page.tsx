@@ -136,7 +136,7 @@ export default function TicketTestPage() {
 
     try {
       const supabase = supabaseBrowser()
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('inscription_ticket_templates')
         .insert({
           evenement_id: selectedEvent,

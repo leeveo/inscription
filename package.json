@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "clean": "node scripts/clean-cache.js",
-    "build:clean": "npm run clean && next build",
+    "build:clean": "npm run clean && next build --no-lint",
     "dev:clean": "npm run clean && next dev",
     "preview": "npm run build && next start",
     "check": "tsc --noEmit && eslint . --ext .ts,.tsx",

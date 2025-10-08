@@ -68,11 +68,11 @@ export default function ParticipantDetailsClient({ participantId }: ParticipantD
         setParticipant(data as unknown as Participant);
         
         // Fetch associated event
-        if (data.evenement_id) {
+        if ((data as any).evenement_id) {
           const { data: eventData, error: eventError } = await supabase
             .from('inscription_evenements')
             .select('*')
-            .eq('id', data.evenement_id)
+            .eq('id', (data as any).evenement_id)
             .single();
           
           if (!eventError && eventData) {

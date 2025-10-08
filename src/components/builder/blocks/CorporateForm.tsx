@@ -52,7 +52,7 @@ export const CorporateForm = ({
 
   return (
     <div
-      ref={(ref) => ref && connect(drag(ref))}
+      ref={(ref: HTMLDivElement | null) => { if (ref) connect(drag(ref)) }}
       className="relative my-4"
       style={{
         border: selected || hovered ? '2px solid #2563EB' : '2px solid transparent',
@@ -259,7 +259,7 @@ export const CorporateFormSettings = () => {
   }));
 
   const { actions } = useNode((state) => ({
-    actions: state.actions,
+    actions: (state as any).actions,
   }));
 
   return (

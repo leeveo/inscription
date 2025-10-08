@@ -118,7 +118,6 @@ export async function POST(request: Request) {
     // Envoyer l'email via Brevo
     const brevoResponse = await sendEmailViaBrevo({
       senderEmail,
-      senderName,
       recipientEmail: participantData.email,
       subject,
       htmlContent,

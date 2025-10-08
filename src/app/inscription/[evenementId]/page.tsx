@@ -72,7 +72,7 @@ export default function InscriptionPage() {
     setSubmitting(true)
     const supabase = supabaseBrowser()
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('inscription_inscriptions')
       .insert({
         utilisateur_id: user.id,

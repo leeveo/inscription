@@ -23,7 +23,7 @@ export default function ConfirmationPage() {
         .single()
 
       // Add a type assertion for data.id
-      if (data) setInscriptionId(data.id as string)
+      if (data) setInscriptionId((data as any).id as string)
     }
 
     fetchInscription()

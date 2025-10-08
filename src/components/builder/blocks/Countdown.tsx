@@ -66,7 +66,7 @@ export const Countdown = ({
 
   return (
     <div
-      ref={(ref) => ref && connect(drag(ref))}
+      ref={(ref: HTMLDivElement | null) => { if (ref) connect(drag(ref)) }}
       className="relative w-full py-12 px-8 bg-gradient-to-br from-blue-50 to-indigo-100"
       style={{
         border: selected || hovered ? '2px solid #3B82F6' : '2px solid transparent',

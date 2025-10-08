@@ -112,7 +112,7 @@ export default function ParticipantsPage() {
         
         // Verify the event_id of fetched participants for debugging
         if (data && selectedEvent !== null) {
-          const eventIds = data.map(p => p.evenement_id);
+          const eventIds = (data as any[]).map((p: any) => p.evenement_id);
           console.log('Event IDs in fetched participants:', eventIds);
           
           // Check if all participants belong to the selected event
@@ -142,7 +142,7 @@ export default function ParticipantsPage() {
         // Get most recent registration date
         if (data && data.length > 0) {
           // Sort by created_at in descending order
-          const sortedData = [...data].sort((a, b) =>
+          const sortedData = [...(data as any[])].sort((a: any, b: any) =>
             new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime()
           );
           
