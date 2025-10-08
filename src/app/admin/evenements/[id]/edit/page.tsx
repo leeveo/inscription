@@ -559,7 +559,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       
       console.log('Update data being sent:', updateData);
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('inscription_evenements')
         .update(updateData)
         .eq('id', eventId);
