@@ -145,11 +145,13 @@ export async function POST(request: Request) {
     // Créer le contenu de l'email
     const subject = template?.subject
       ? replaceTemplateVariables(template.subject, event, participantData)
-      : `Confirmation d'inscription - ${event.nom}`;
+      : event.objet_email_inscription && event.objet_email_inscription.trim()
+        ? replaceTemplateVariables(event.objet_email_inscription, event, participantData)
+        : `Confirmation d'inscription - ${event.nom}`;
 
     const htmlContent = template?.html_content
       ? replaceTemplateVariables(template.html_content, event, participantData)
-      : generateDefaultEmailContent(event, participantData);
+      : await generateDefaultEmailContent(event, participantData);
 
     // Envoyer l'email via Brevo
     const brevoResponse = await sendEmailViaBrevo({
@@ -204,7 +206,7 @@ function replaceTemplateVariables(
     .replace(/{{registration_date}}/g, new Date().toLocaleDateString('fr-FR'));
 }
 
-function generateDefaultEmailContent(event: any, participant: { nom: string; prenom: string; email: string }): string {
+async function generateDefaultEmailContent(event: any, participant: { nom: string; prenom: string; email: string }): Promise<string> {
   const eventDate = new Date(event.date_debut).toLocaleDateString('fr-FR', {
     weekday: 'long',
     year: 'numeric',
@@ -212,6 +214,13 @@ function generateDefaultEmailContent(event: any, participant: { nom: string; pre
     day: 'numeric'
   });
 
+  // Utiliser la couleur personnalisée ou la couleur par défaut
+  const headerColor = event.couleur_header_email || '#667eea';
+  
+  // Récupérer les sessions du participant
+  const sessions = await getParticipantSessions(participant.email, event.id);
+  const sessionsHtml = generateSessionsHtml(sessions);
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -222,17 +231,22 @@ function generateDefaultEmailContent(event: any, participant: { nom: string; pre
         <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+            .header { background: ${headerColor}; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
             .content { padding: 30px; background: #f9f9f9; }
             .event-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
             .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-            .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .button { display: inline-block; padding: 12px 24px; background: ${headerColor}; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .logo { max-width: 150px; height: auto; margin-bottom: 20px; }
+            .session-item { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 6px; border-left: 4px solid ${headerColor}; }
+            .session-title { font-weight: bold; color: #333; margin-bottom: 8px; }
+            .session-info { color: #666; font-size: 14px; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
                 <h1>Confirmation d'inscription</h1>
+                ${event.logo_url ? `<img src="${event.logo_url}" alt="Logo ${event.nom}" class="logo" />` : ''}
                 <p>Merci ${participant.prenom} ${participant.nom} !</p>
             </div>
 
@@ -254,6 +268,8 @@ function generateDefaultEmailContent(event: any, participant: { nom: string; pre
                     <p><strong>Email:</strong> ${participant.email}</p>
                 </div>
 
+                ${sessionsHtml}
+
                 <p style="text-align: center;">
                     Nous vous recontacterons prochainement avec plus d'informations.
                 </p>
@@ -266,6 +282,111 @@ function generateDefaultEmailContent(event: any, participant: { nom: string; pre
         </div>
     </body>
     </html>
+  `;
+}
+
+// Fonction pour récupérer les sessions auxquelles un participant s'est inscrit
+async function getParticipantSessions(participantEmail: string, eventId: string): Promise<any[]> {
+  try {
+    const supabase = supabaseApi();
+    
+    // Récupérer le participant par email et eventId
+    const { data: participant, error: participantError } = await supabase
+      .from('inscription_participants')
+      .select('id')
+      .eq('email', participantEmail)
+      .eq('evenement_id', eventId)
+      .single();
+
+    if (participantError || !participant) {
+      console.log('Participant non trouvé pour les sessions');
+      return [];
+    }
+
+    // Récupérer les sessions auxquelles le participant s'est inscrit
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('inscription_session_participants')
+      .select(`
+        inscription_sessions (
+          id,
+          titre,
+          description,
+          date,
+          heure_debut,
+          heure_fin,
+          lieu,
+          intervenant,
+          type
+        )
+      `)
+      .eq('participant_id', participant.id);
+
+    if (sessionsError) {
+      console.error('Erreur lors de la récupération des sessions:', sessionsError);
+      return [];
+    }
+
+    return sessions?.map(s => s.inscription_sessions).filter(Boolean) || [];
+  } catch (error) {
+    console.error('Erreur dans getParticipantSessions:', error);
+    return [];
+  }
+}
+
+// Fonction pour générer le HTML des sessions
+function generateSessionsHtml(sessions: any[]): string {
+  if (!sessions || sessions.length === 0) {
+    return `
+      <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+          🎯 Vos sessions sélectionnées
+        </h2>
+        <p style="color: #6b7280; margin: 0; font-style: italic;">
+          Aucune session spécifique sélectionnée. Vous aurez accès à l'ensemble du programme.
+        </p>
+      </div>
+    `;
+  }
+
+  const sessionsHtml = sessions.map((session, index) => {
+    const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+    const borderColor = colors[index % colors.length];
+    
+    const sessionDate = session.date ? new Date(session.date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    }) : 'Date à définir';
+
+    return `
+      <div style="border-left: 4px solid ${borderColor}; padding-left: 15px; margin-bottom: 20px;">
+        <h3 style="color: #1f2937; margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">
+          ${session.titre || 'Session sans titre'}
+        </h3>
+        <p style="color: #6b7280; margin: 0 0 5px 0; font-size: 14px;">
+          <span style="margin-right: 15px;">
+            🕒 ${sessionDate} - ${session.heure_debut || ''}${session.heure_fin ? ` à ${session.heure_fin}` : ''}
+          </span>
+          ${session.lieu ? `<span>📍 ${session.lieu}</span>` : ''}
+        </p>
+        ${session.intervenant ? `<p style="color: #6b7280; margin: 0 0 5px 0; font-size: 14px;"><strong>Intervenant:</strong> ${session.intervenant}</p>` : ''}
+        ${session.description ? `<p style="color: #6b7280; margin: 0; font-size: 14px;">${session.description}</p>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+        🎯 Vos sessions sélectionnées
+      </h2>
+      ${sessionsHtml}
+      <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-top: 15px;">
+        <p style="color: #1e40af; margin: 0; font-size: 14px;">
+          <strong>Rappel important :</strong> Présentez-vous 10 minutes avant le début de chaque session.
+        </p>
+      </div>
+    </div>
   `;
 }
 

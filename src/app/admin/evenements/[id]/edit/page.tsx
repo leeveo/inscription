@@ -49,6 +49,8 @@ type Evenement = {
   type_evenement?: string
   code_acces?: string
   email_envoi?: string
+  couleur_header_email?: string
+  objet_email_inscription?: string
   builder_page_id?: string | null
 }
 
@@ -117,6 +119,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [statut, setStatut] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [codeAcces, setCodeAcces] = useState('');
+  const [couleurHeaderEmail, setCouleurHeaderEmail] = useState('#667eea');
+  const [objetEmailInscription, setObjetEmailInscription] = useState('');
   const [builderPageId, setBuilderPageId] = useState<string | null>(null);
   const [builderPages, setBuilderPages] = useState<any[]>([]);
   const [isLoadingBuilderPages, setIsLoadingBuilderPages] = useState(false);
@@ -189,11 +193,27 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         setIsLoading(true);
         const supabase = supabaseBrowser();
         
-        const { data, error } = await supabase
-          .from('inscription_evenements')
-          .select('*, code_acces, builder_page_id')
-          .eq('id', eventId)
-          .single();
+        // Essayer d'abord avec les nouveaux champs, fallback si ils n'existent pas
+        let data, error;
+        try {
+          const result = await supabase
+            .from('inscription_evenements')
+            .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription')
+            .eq('id', eventId)
+            .single();
+          data = result.data;
+          error = result.error;
+        } catch (err) {
+          // Fallback si les nouvelles colonnes n'existent pas encore
+          console.warn('Nouveaux champs non disponibles, utilisation du fallback');
+          const result = await supabase
+            .from('inscription_evenements')
+            .select('*, code_acces, builder_page_id')
+            .eq('id', eventId)
+            .single();
+          data = result.data;
+          error = result.error;
+        }
           
         if (error) throw error;
         
@@ -214,6 +234,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setStatut(event.statut || '');
           setLogoUrl(event.logo_url || ''); // Load existing logo
           setCodeAcces(event.code_acces || ''); // Load existing access code
+          setCouleurHeaderEmail(event.couleur_header_email || '#667eea'); // Load header color
+          setObjetEmailInscription(event.objet_email_inscription || ''); // Load email subject
           setBuilderPageId(event.builder_page_id || null); // Load builder page ID
                   }
 
@@ -539,7 +561,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       setIsSaving(true);
       const supabase = supabaseBrowser();
       
-      const updateData = {
+      const baseUpdateData = {
         nom,
         description,
         lieu,
@@ -555,6 +577,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         statut,
         logo_url: logoUrl || null,
         code_acces: codeAcces || null,
+      };
+
+      // Essayer d'inclure les nouveaux champs s'ils existent
+      const updateData: any = {
+        ...baseUpdateData,
+        couleur_header_email: couleurHeaderEmail || '#667eea',
+        objet_email_inscription: objetEmailInscription || '',
       };
       
       console.log('Update data being sent:', updateData);
@@ -1384,8 +1413,267 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 </select>
               </div>
 
+              {/* Section Personnalisation Email */}
+              <div className="md:col-span-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+                  🎨 Personnalisation des emails d'inscription
+                </h3>
+              </div>
+
+              {/* Couleur du header */}
+              <div>
+                <label htmlFor="couleurHeaderEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  Couleur du header
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    id="couleurHeaderEmail"
+                    value={couleurHeaderEmail}
+                    onChange={(e) => setCouleurHeaderEmail(e.target.value)}
+                    className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={couleurHeaderEmail}
+                    onChange={(e) => {
+                      // Valider le format hex
+                      if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                        setCouleurHeaderEmail(e.target.value);
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                    placeholder="#667eea"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Couleur de fond du header des emails de confirmation d'inscription
+                </p>
+                <div className="mt-2 p-3 rounded-lg" style={{ backgroundColor: couleurHeaderEmail }}>
+                  <p className="text-white font-bold text-center">Aperçu du header</p>
+                </div>
+              </div>
+
+              {/* Objet de l'email */}
+              <div>
+                <label htmlFor="objetEmailInscription" className="block text-sm font-medium text-gray-700 mb-1">
+                  Objet de l'email d'inscription
+                </label>
+                <input
+                  type="text"
+                  id="objetEmailInscription"
+                  value={objetEmailInscription}
+                  onChange={(e) => setObjetEmailInscription(e.target.value)}
+                  placeholder="Ex: Confirmation d'inscription - {{event_name}}"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Variables disponibles : {'{'}{'{'} event_name {'}'}{'}'},  {'{'}{'{'} participant_firstname {'}'}{'}'},  {'{'}{'{'} participant_lastname {'}'}{'}'},  {'{'}{'{'} event_date {'}'}{'}'} 
+                </p>
+                {objetEmailInscription && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                    <p className="text-sm text-blue-800">
+                      <strong>Aperçu :</strong> {objetEmailInscription.replace('{{event_name}}', nom || 'Nom de l\'événement')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Aperçu de l'email */}
+              <div className="md:col-span-2">
+                <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Aperçu de l'email de confirmation
+                </h4>
+
+                {/* Objet de l'email */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm font-medium text-blue-800 mb-1">📧 Objet de l'email :</p>
+                  <p className="text-base font-semibold text-blue-900">
+                    {objetEmailInscription && objetEmailInscription.trim() 
+                      ? objetEmailInscription.replace('{{event_name}}', nom || 'Nom de l\'événement')
+                                             .replace('{{participant_firstname}}', 'Jean')
+                                             .replace('{{participant_lastname}}', 'Dupont')
+                                             .replace('{{event_date}}', dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date de l\'événement')
+                      : `Confirmation d'inscription - ${nom || 'Nom de l\'événement'}`
+                    }
+                  </p>
+                </div>
+                
+                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6">
+                  {/* Simuler l'email avec les données actuelles */}
+                  <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+                    {/* Header avec couleur personnalisée */}
+                    <div 
+                      className="px-8 py-6 text-center text-white"
+                      style={{ 
+                        backgroundColor: couleurHeaderEmail,
+                        borderRadius: '8px 8px 0 0' 
+                      }}
+                    >
+                      <h1 className="text-2xl font-bold mb-4">
+                        Confirmation d'inscription
+                      </h1>
+                      
+                      {/* Logo si défini */}
+                      {logoUrl && (
+                        <img 
+                          src={logoUrl} 
+                          alt="Logo de l'événement" 
+                          className="mx-auto mb-4 max-w-32 h-auto rounded"
+                          style={{ maxWidth: '128px' }}
+                        />
+                      )}
+                      
+                      <p className="text-lg opacity-90">
+                        Merci Jean Dupont !
+                      </p>
+                    </div>
+
+                    {/* Contenu de l'email */}
+                    <div className="px-8 py-6 bg-gray-50">
+                      <p className="text-base text-gray-700 mb-6">
+                        Votre inscription à l'événement <strong>{nom || 'Nom de l\'événement'}</strong> a été confirmée avec succès.
+                      </p>
+
+                      {/* Détails de l'événement */}
+                      <div className="bg-white p-6 rounded-lg mb-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                          <span className="mr-2">📅</span>
+                          Détails de l'événement
+                        </h2>
+                        <div className="space-y-3 text-sm text-gray-600">
+                          <p><strong>Nom:</strong> {nom || 'Nom de l\'événement'}</p>
+                          <p><strong>Date:</strong> {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          }) : 'Date à définir'}</p>
+                          <p><strong>Lieu:</strong> {lieu || 'Lieu à définir'}</p>
+                          {prix && (
+                            <p><strong>Prix:</strong> {prix}€</p>
+                          )}
+                          {description && (
+                            <div>
+                              <strong>Description:</strong>
+                              <div 
+                                className="mt-2 prose prose-sm max-w-none" 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: description 
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Sessions inscrites */}
+                      <div className="bg-white p-6 rounded-lg mb-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                          <span className="mr-2">🎯</span>
+                          Vos sessions sélectionnées
+                        </h2>
+                        <div className="space-y-4">
+                          {/* Session exemple 1 */}
+                          <div className="border-l-4 border-blue-500 pl-4 py-2">
+                            <h3 className="font-semibold text-gray-900">Conférence d'ouverture</h3>
+                            <p className="text-sm text-gray-600">
+                              <span className="inline-flex items-center mr-4">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date'} - 09h00 à 10h30
+                              </span>
+                              <span className="inline-flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {lieu || 'Salle principale'}
+                              </span>
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">Présentation des enjeux et objectifs de l'événement</p>
+                          </div>
+                          
+                          {/* Session exemple 2 */}
+                          <div className="border-l-4 border-green-500 pl-4 py-2">
+                            <h3 className="font-semibold text-gray-900">Atelier pratique</h3>
+                            <p className="text-sm text-gray-600">
+                              <span className="inline-flex items-center mr-4">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date'} - 11h00 à 12h30
+                              </span>
+                              <span className="inline-flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {lieu || 'Salle d\'atelier'}
+                              </span>
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">Session interactive avec mise en pratique</p>
+                          </div>
+
+                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>Note :</strong> Ces sessions sont des exemples. Les vraies sessions seront affichées selon les inscriptions du participant.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Informations participant */}
+                      <div className="bg-white p-6 rounded-lg mb-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                          <span className="mr-2">👤</span>
+                          Vos informations
+                        </h2>
+                        <div className="space-y-2 text-sm text-gray-600">
+                          <p><strong>Nom:</strong> Jean Dupont</p>
+                          <p><strong>Email:</strong> jean.dupont@exemple.com</p>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-500 text-center">
+                        Nous vous recontacterons prochainement avec plus d'informations.
+                      </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-8 py-6 bg-gray-100 text-center">
+                      <p className="text-sm text-gray-500 mb-2">
+                        Cet email a été envoyé automatiquement suite à votre inscription.
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Pour toute question, contactez-nous à {emailContact || 'l\'organisateur'}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium mb-2">ℹ️ Informations sur l'aperçu :</p>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• Les données participant sont simulées (Jean Dupont, jean.dupont@exemple.com)</li>
+                    <li>• L'aperçu se met à jour automatiquement quand vous modifiez les paramètres</li>
+                    <li>• La description complète est affichée avec formatage HTML</li>
+                    <li>• Le logo s'affiche uniquement s'il est téléchargé dans la section ci-dessus</li>
+                    <li>• La couleur du header et l'objet sont appliqués en temps réel</li>
+                  </ul>
+                </div>
+              </div>
+
               {/* Code d'accès pour QR Scanner */}
               <div className="md:col-span-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2 mt-6">
+                  📱 Configuration QR Scanner
+                </h3>
                 <label htmlFor="codeAcces" className="block text-sm font-medium text-gray-700 mb-1">
                   Code d&apos;accès QR Scanner (4 chiffres)
                 </label>
