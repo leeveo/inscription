@@ -138,10 +138,7 @@ export const ImageHero = ({
     ...(maxHeight && maxHeight !== 'none' ? { maxHeight } : {}),
   };
 
-  // Debug simplifié
-  if (imageUrl) {
-    console.log('🖼️ ImageHero:', imageUrl ? '✅' : '❌', isEditing ? 'EDIT' : 'VIEW');
-  }
+  console.log('🖼️ ImageHero render:', { imageUrl, isEditing, selected, shouldUseFlexibleHeight });
 
   return (
     <div 
@@ -156,62 +153,97 @@ export const ImageHero = ({
         </div>
       )}
 
-
-
-      {/* ========== AFFICHAGE PRINCIPAL DE L'IMAGE - VERSION SIMPLE ET ROBUSTE ========== */}
+      {/* ========== AFFICHAGE PRINCIPAL DE L'IMAGE - VERSION RESPONSIVE ========== */}
       {imageUrl && (
-        <>
-          {/* Image principale - TOUJOURS visible */}
-          <img
-            src={imageUrl}
-            alt={alt}
-            className={`
-              ${shouldUseFlexibleHeight ? 'w-full h-auto' : 'absolute inset-0 w-full h-full'}
-              object-cover transition-all duration-300 block
-            `}
-            style={{
-              objectFit: preserveAspectRatio ? 'contain' : objectFit,
-              zIndex: 1,
-              display: 'block !important' as any,
-            }}
-            loading="lazy"
-            onLoad={() => console.log('✅ Image loaded:', imageUrl)}
-          />
-          
-          {/* Overlay sombre */}
-          {overlay && (
-            <div
-              className="absolute inset-0 bg-black transition-opacity duration-300"
-              style={{ opacity: overlayOpacity / 100, zIndex: 2 }}
-            />
-          )}
+        <div 
+          className={`${shouldUseFlexibleHeight ? 'flex-1 flex items-center justify-center' : 'absolute inset-0'} w-full ${shouldUseFlexibleHeight ? 'min-h-0' : 'h-full'}`}
+        >
+          {shouldUseFlexibleHeight ? (
+            // Mode flexible : l'image définit la hauteur du conteneur
+            <div className="w-full relative">
+              <img
+                src={imageUrl}
+                alt={alt}
+                className="w-full h-auto transition-all duration-300 block"
+                style={{
+                  objectFit: preserveAspectRatio ? 'scale-down' : objectFit,
+                  maxWidth: '100%',
+                }}
+                loading="lazy"
+              />
+              
+              {/* Overlay pour mode flexible */}
+              {overlay && (
+                <div
+                  className="absolute inset-0 bg-black transition-opacity duration-300"
+                  style={{ opacity: overlayOpacity / 100 }}
+                />
+              )}
 
-          {/* Textes overlay */}
-          {(title || subtitle) && (
-            <div 
-              className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-white"
-              style={{ zIndex: 3 }}
-            >
-              <div className="max-w-4xl mx-auto text-center">
-                {title && (
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 text-center drop-shadow-lg leading-tight">
-                    {title}
-                  </h1>
-                )}
-                {subtitle && (
-                  <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-center drop-shadow-lg opacity-90 max-w-3xl mx-auto leading-relaxed">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
+              {/* Text Overlay pour mode flexible */}
+              {(title || subtitle) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-white z-10">
+                  <div className="max-w-4xl mx-auto text-center">
+                    {title && (
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 text-center drop-shadow-lg leading-tight">
+                        {title}
+                      </h1>
+                    )}
+                    {subtitle && (
+                      <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-center drop-shadow-lg opacity-90 max-w-3xl mx-auto leading-relaxed">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+          ) : (
+            // Mode fixe : hauteur définie par le conteneur
+            <>
+              <img
+                src={imageUrl}
+                alt={alt}
+                className="w-full h-full transition-all duration-300 block"
+                style={{
+                  objectFit: preserveAspectRatio ? 'contain' : objectFit,
+                }}
+                loading="lazy"
+              />
+
+              {/* Overlay pour mode fixe */}
+              {overlay && (
+                <div
+                  className="absolute inset-0 bg-black transition-opacity duration-300"
+                  style={{ opacity: overlayOpacity / 100 }}
+                />
+              )}
+
+              {/* Text Overlay pour mode fixe */}
+              {(title || subtitle) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-white z-10">
+                  <div className="max-w-4xl mx-auto text-center">
+                    {title && (
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 sm:mb-3 md:mb-4 text-center drop-shadow-lg leading-tight">
+                        {title}
+                      </h1>
+                    )}
+                    {subtitle && (
+                      <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-center drop-shadow-lg opacity-90 max-w-3xl mx-auto leading-relaxed">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
-        </>
+        </div>
       )}
 
       {/* ========== CONTRÔLES D'ÉDITION SIMPLIFIÉS ========== */}
-      {isEditing && selected && (
-        <div className="absolute inset-0" style={{ zIndex: 50 }}>
+      {isEditing && (
+        <div className="absolute inset-0 z-50">
           {imageUrl ? (
             /* Bouton pour changer l'image existante */
             <div className="absolute top-4 right-4">

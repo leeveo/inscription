@@ -65,5 +65,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/admin/:path*', '/auth/:path*', '/landing/:path*', '/qr-scanner/:path*', '/qr-scanner-new/:path*', '/scanner/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/admin/:path*', '/auth/:path*', '/landing/:path*', '/qr-scanner/:path*', '/qr-scanner-new/:path*', '/scanner/:path*', '/p/:path*', '/preview/:path*'],
 }

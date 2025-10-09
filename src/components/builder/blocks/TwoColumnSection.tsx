@@ -14,6 +14,8 @@ export interface TwoColumnSectionProps {
   sectionWidth?: string;
   horizontalAlign?: 'left' | 'center' | 'right';
   className?: string;
+  responsiveMode?: 'always-columns' | 'stack-mobile' | 'stack-tablet' | 'always-stack';
+  mobileGap?: number;
 }
 
 export const TwoColumnSection = ({
@@ -27,6 +29,8 @@ export const TwoColumnSection = ({
   sectionWidth = '100%',
   horizontalAlign = 'left',
   className = '',
+  responsiveMode = 'stack-mobile',
+  mobileGap = 10,
 }: TwoColumnSectionProps) => {
   const {
     connectors: { connect, drag },
@@ -69,7 +73,47 @@ export const TwoColumnSection = ({
     }
   };
 
+  // Fonction pour gérer les classes de responsivité
+  const getResponsiveClasses = (mode: string) => {
+    switch (mode) {
+      case 'always-columns':
+        return 'flex flex-row'; // Toujours en colonnes
+      case 'stack-mobile':
+        return 'flex flex-col sm:flex-row'; // Stack sur mobile, colonnes sur tablet+
+      case 'stack-tablet':
+        return 'flex flex-col lg:flex-row'; // Stack sur mobile/tablet, colonnes sur desktop
+      case 'always-stack':
+        return 'flex flex-col'; // Toujours en stack
+      default:
+        return 'flex flex-col sm:flex-row';
+    }
+  };
+
+  // 🔥 Fonction pour les classes de largeur responsive des colonnes
+  const getColumnWidthClasses = (width: string, isLeft: boolean = true) => {
+    // Sur mobile : toujours 100%
+    // Sur desktop : largeur configurée
+    const baseClasses = 'w-full'; // 100% par défaut (mobile)
+    
+    // Ajout des breakpoints pour desktop
+    switch (responsiveMode) {
+      case 'always-columns':
+        return `${baseClasses}`; // Pas de responsive, géré par style
+      case 'stack-mobile':
+        // w-full sur mobile, largeur configurée sur sm+
+        return `${baseClasses} sm:flex-none`; 
+      case 'stack-tablet':
+        // w-full sur mobile/tablet, largeur configurée sur lg+
+        return `${baseClasses} lg:flex-none`;
+      case 'always-stack':
+        return baseClasses; // Toujours 100%
+      default:
+        return `${baseClasses} sm:flex-none`;
+    }
+  };
+
   const horizontalAlignStyle = getHorizontalAlignStyle(horizontalAlign);
+  const responsiveClasses = getResponsiveClasses(responsiveMode);
 
   return (
     <div
@@ -92,64 +136,96 @@ export const TwoColumnSection = ({
         transition: 'border 0.2s ease',
       }}
     >
-      {/* Hide Craft.js formatting elements in preview mode */}
-      {!enabled && (
-        <style jsx global>{`
-          .twocolumn-preview-mode [data-canvas="true"] {
-            border: none !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            outline: none !important;
-            min-height: auto !important;
+      {/* CSS RESPONSIVE + Hide Craft.js formatting elements in preview mode + ImageHero compatibility */}
+      <style jsx global>{`
+        /* 🔥 CSS RESPONSIVE SIMPLE ET SÛR */
+        
+        /* Sur mobile : toujours 100% (flex-col force déjà ça) */
+        .two-column-left,
+        .two-column-right {
+          width: 100%;
+        }
+
+        /* Sur desktop EN MODE FLEX-ROW seulement : largeurs configurées */
+        @media (min-width: 640px) {
+          .flex-row .two-column-left {
+            flex: 0 0 ${leftColumnWidth};
+            width: ${leftColumnWidth};
+            max-width: ${leftColumnWidth};
           }
-          .twocolumn-preview-mode [data-canvas="true"] > div {
-            border: none !important;
-            background: transparent !important;
+          .flex-row .two-column-right {
+            flex: 0 0 ${rightColumnWidth};
+            width: ${rightColumnWidth};
+            max-width: ${rightColumnWidth};
           }
-          .twocolumn-preview-mode [data-canvas="true"] .m-auto {
-            display: none !important;
-          }
-          .twocolumn-preview-mode svg {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .flex.items-center.justify-center {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .bg-blue-100 {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .bg-green-100 {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .text-blue-700 {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .text-green-700 {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .border-dashed {
-            border: none !important;
-          }
-          .twocolumn-preview-mode .border-blue-200 {
-            border: none !important;
-          }
-          .twocolumn-preview-mode .border-green-200 {
-            border: none !important;
-          }
-          .twocolumn-preview-mode .border-2 {
-            border: none !important;
-          }
-          .twocolumn-preview-mode .min-h-\\[100px\\] {
-            border: none !important;
-          }
-          .twocolumn-preview-mode .flex.items-center.justify-center.h-full {
-            display: none !important;
-          }
-          .twocolumn-preview-mode .text-gray-400 {
-            display: none !important;
-          }
+        }
+
+        /* Preview mode styles */
+        .twocolumn-preview-mode [data-canvas="true"] {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          outline: none !important;
+          min-height: auto !important;
+          width: 100% !important;
+          display: block !important;
+        }
+        .twocolumn-preview-mode [data-canvas="true"] > div {
+          border: none !important;
+          background: transparent !important;
+          width: 100% !important;
+        }
+        
+        /* Masquer les éléments de l'éditeur */
+        .twocolumn-preview-mode .m-auto {
+          display: none !important;
+        }
+        .twocolumn-preview-mode svg {
+          display: none !important;
+        }
+        .twocolumn-preview-mode .flex.items-center.justify-center {
+          display: none !important;
+        }
+        .twocolumn-preview-mode .bg-blue-100,
+        .twocolumn-preview-mode .bg-green-100 {
+          display: none !important;
+        }
+        .twocolumn-preview-mode .text-blue-700,
+        .twocolumn-preview-mode .text-green-700 {
+          display: none !important;
+        }
+        .twocolumn-preview-mode .border-dashed,
+        .twocolumn-preview-mode .border-blue-200,
+        .twocolumn-preview-mode .border-green-200,
+        .twocolumn-preview-mode .border-2 {
+          border: none !important;
+        }
+        .twocolumn-preview-mode .min-h-\\[100px\\] {
+          border: none !important;
+          min-height: auto !important;
+        }
+        .twocolumn-preview-mode .flex.items-center.justify-center.h-full {
+          display: none !important;
+        }
+        .twocolumn-preview-mode .text-gray-400 {
+          display: none !important;
+        }
+        
+        /* Améliorer la compatibilité avec ImageHero */
+        .twocolumn-preview-mode .relative {
+          position: relative !important;
+        }
+        .twocolumn-preview-mode img {
+          display: block !important;
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        .twocolumn-preview-mode .aspect-video,
+        .twocolumn-preview-mode .aspect-square,
+        .twocolumn-preview-mode [class*="aspect-"] {
+          width: 100% !important;
+        }
         `}</style>
-      )}
 
       {/* Selection Indicator - Only in edit mode */}
       {enabled && (selected || hovered) && (
@@ -158,53 +234,67 @@ export const TwoColumnSection = ({
         </div>
       )}
 
-      {/* Content - Two columns layout */}
-      <div className="flex gap-4 w-full" style={{ gap: `${gap}px`, ...verticalAlignStyle }}>
+      {/* Content - Responsive Two columns layout */}
+      <div 
+        className={`${responsiveClasses} w-full gap-4 sm:gap-6 md:gap-8`} 
+        style={{ 
+          gap: responsiveMode === 'always-stack' || responsiveMode === 'stack-mobile' ? `${mobileGap}px` : `${gap}px`,
+          ...verticalAlignStyle 
+        }}
+      >
         {/* Left Column */}
-        <div style={{ width: leftColumnWidth }}>
+        <div 
+          className="two-column-left"
+        >
           {enabled && (
             <div className="mb-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded border border-blue-300 text-center">
-              Colonne Gauche
+              📱 Colonne Gauche (responsive)
             </div>
           )}
 
-          {/* Same Element container for both modes, but different styling and content */}
+          {/* Element container avec meilleure gestion pour ImageHero */}
           <Element
             id={`${id}-left-column`}
             is="div"
             canvas={true}
-            className={enabled ? 'min-h-[100px] border-2 border-dashed border-blue-200 rounded-lg p-3 flex flex-col' : ''}
+            className={enabled ? 'min-h-[100px] border-2 border-dashed border-blue-200 rounded-lg p-3' : 'w-full'}
             style={{
               minHeight: enabled ? '100px' : 'auto',
               border: enabled ? '2px dashed #3b82f6' : 'none',
               borderRadius: enabled ? '8px' : '0',
               padding: enabled ? '12px' : '0',
               backgroundColor: enabled ? 'transparent' : 'transparent',
+              width: '100%',
+              display: 'block', // Améliore la compatibilité avec ImageHero
             }}
           >
           </Element>
         </div>
 
         {/* Right Column */}
-        <div style={{ width: rightColumnWidth }}>
+        <div 
+          className="two-column-right"
+        >
           {enabled && (
             <div className="mb-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded border border-green-300 text-center">
-              Colonne Droite
+              📱 Colonne Droite (responsive)
             </div>
           )}
 
-          {/* Same Element container for both modes, but different styling and content */}
+          {/* Element container avec meilleure gestion pour ImageHero */}
           <Element
             id={`${id}-right-column`}
             is="div"
             canvas={true}
-            className={enabled ? 'min-h-[100px] border-2 border-dashed border-green-200 rounded-lg p-3 flex flex-col' : ''}
+            className={enabled ? 'min-h-[100px] border-2 border-dashed border-green-200 rounded-lg p-3' : 'w-full'}
             style={{
               minHeight: enabled ? '100px' : 'auto',
               border: enabled ? '2px dashed #10b981' : 'none',
               borderRadius: enabled ? '8px' : '0',
               padding: enabled ? '12px' : '0',
               backgroundColor: enabled ? 'transparent' : 'transparent',
+              width: '100%',
+              display: 'block', // Améliore la compatibilité avec ImageHero
             }}
           >
           </Element>
@@ -250,6 +340,8 @@ export const TwoColumnSectionSettings = () => {
     verticalAlign,
     sectionWidth,
     horizontalAlign,
+    responsiveMode,
+    mobileGap,
   } = useNode((node) => ({
     background: node.data.props.background,
     padding: node.data.props.padding,
@@ -260,16 +352,62 @@ export const TwoColumnSectionSettings = () => {
     verticalAlign: node.data.props.verticalAlign,
     sectionWidth: node.data.props.sectionWidth,
     horizontalAlign: node.data.props.horizontalAlign,
+    responsiveMode: node.data.props.responsiveMode,
+    mobileGap: node.data.props.mobileGap,
   }));
 
   return (
     <div className="space-y-4">
       {/* Section Info */}
       <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-        <p className="text-sm font-medium text-purple-900 mb-1">📊 Section 2 Colonnes</p>
+        <p className="text-sm font-medium text-purple-900 mb-1">📊 Section 2 Colonnes Responsive</p>
         <p className="text-xs text-purple-700">
-          Créez une mise en page à 2 colonnes avec glisser-déposer indépendant pour chaque colonne.
+          Mise en page adaptative : 2 colonnes sur desktop, 2 lignes sur mobile/tablette.
+          Compatible avec tous les blocs, y compris ImageHero.
         </p>
+      </div>
+
+      {/* Responsiveness */}
+      <div>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">📱 Responsivité</h4>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mode responsive
+            </label>
+            <select
+              value={responsiveMode || 'stack-mobile'}
+              onChange={(e) => setProp((props: TwoColumnSectionProps) => (props.responsiveMode = e.target.value as any))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="stack-mobile">📱 Stack sur mobile (recommandé)</option>
+              <option value="stack-tablet">📱💻 Stack sur mobile + tablette</option>
+              <option value="always-columns">🖥️ Toujours en colonnes</option>
+              <option value="always-stack">📋 Toujours en lignes</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Le mode "Stack sur mobile" transforme automatiquement les 2 colonnes en 2 lignes sur smartphone
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Espacement mobile (px)
+            </label>
+            <input
+              type="number"
+              value={mobileGap || 10}
+              onChange={(e) => setProp((props: TwoColumnSectionProps) => (props.mobileGap = parseInt(e.target.value)))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              min="0"
+              max="50"
+            />
+            <p className="text-xs text-gray-500">
+              Espacement entre les éléments quand ils sont empilés sur mobile
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Layout */}
@@ -489,12 +627,18 @@ export const TwoColumnSectionSettings = () => {
 
       {/* Instructions */}
       <div className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-2">Comment utiliser</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-2">💡 Instructions d'utilisation</h4>
         <div className="text-xs text-gray-600 space-y-1">
-          <p>• Glissez des blocs directement dans les colonnes</p>
-          <p>• Les blocs peuvent être déplacés entre les colonnes</p>
-          <p>• Chaque colonne fonctionne comme un conteneur indépendant</p>
-          <p>• Personnalisez la largeur de chaque colonne selon vos besoins</p>
+          <p><strong>✅ Compatible avec ImageHero :</strong> Les images s'affichent parfaitement dans les colonnes</p>
+          <p><strong>📱 Responsive :</strong> 2 colonnes sur desktop → 2 lignes sur mobile automatiquement</p>
+          <p><strong>🎯 Glisser-déposer :</strong> Glissez des blocs directement dans les colonnes</p>
+          <p><strong>🔄 Flexible :</strong> Les blocs peuvent être déplacés entre les colonnes</p>
+          <p><strong>⚙️ Personnalisable :</strong> Largeur de chaque colonne configurable</p>
+        </div>
+        
+        <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+          <p className="text-blue-800 font-medium">🔧 Dépannage ImageHero :</p>
+          <p className="text-blue-700">Si les images ne s'affichent pas, vérifiez que le mode "Préserver l'image complète" est activé dans les paramètres ImageHero.</p>
         </div>
       </div>
     </div>
@@ -513,6 +657,8 @@ TwoColumnSection.craft = {
     verticalAlign: 'top',
     sectionWidth: '100%',
     horizontalAlign: 'left',
+    responsiveMode: 'stack-mobile', // Responsive par défaut
+    mobileGap: 10,
   },
   related: {
     settings: TwoColumnSectionSettings,
@@ -521,7 +667,7 @@ TwoColumnSection.craft = {
     canDrag: () => true,
     canDrop: () => true,
     canMoveIn: (incomingNodes, currentNode) => {
-      // Allow any elements to be dropped
+      // Allow any elements to be dropped, especially ImageHero
       return true;
     },
     canMoveOut: () => true,

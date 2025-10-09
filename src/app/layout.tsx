@@ -26,9 +26,11 @@ export default async function RootLayout({
 }) {
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') || ''
+  const clientView = headersList.get('x-client-view') || ''
+  const domainProxy = headersList.get('x-domain-proxy') || ''
 
   // Debug logging
-  console.log('RootLayout - pathname:', pathname)
+  console.log('RootLayout - pathname:', pathname, 'clientView:', clientView, 'domainProxy:', domainProxy)
 
   // Routes qui ne doivent pas avoir la sidebar
   const isLandingPage = pathname.includes('/landing')
@@ -42,11 +44,13 @@ export default async function RootLayout({
   // Check for any UUID pattern in /admin/builder/... path
   const isBuilderEditorPage = /^\/admin\/builder\/[a-f0-9-]{36}/i.test(pathname)
   const isPreviewPage = pathname.startsWith('/preview/') || pathname.startsWith('/p/')
+  // NOUVEAU: Détecter les vues client via le worker
+  const isClientView = clientView === 'true' || domainProxy === 'cloudflare-worker'
 
-  console.log('RootLayout - isBuilderEditorPage:', isBuilderEditorPage, 'isPreviewPage:', isPreviewPage, 'pathname:', pathname)
+  console.log('RootLayout - isBuilderEditorPage:', isBuilderEditorPage, 'isPreviewPage:', isPreviewPage, 'isClientView:', isClientView, 'pathname:', pathname)
 
   // Utiliser un layout simplifié pour ces pages
-  if (isLandingPage || isQRScannerPage || isAuthPage || isHomePage || isTicketPage || isInscriptionPage || isCheckinPage || isBuilderEditorPage || isPreviewPage) {
+  if (isLandingPage || isQRScannerPage || isAuthPage || isHomePage || isTicketPage || isInscriptionPage || isCheckinPage || isBuilderEditorPage || isPreviewPage || isClientView) {
     return (
       <html lang="fr" className={`${inter.variable} ${roboto.variable} ${poppins.variable} ${playfair.variable} ${montserrat.variable} ${lato.variable} ${opensans.variable} ${raleway.variable} ${ubuntu.variable} ${bebas.variable}`}>
         <body className={`${inter.className} min-h-screen`}>

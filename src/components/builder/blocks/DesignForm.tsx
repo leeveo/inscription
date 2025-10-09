@@ -704,20 +704,40 @@ export const DesignForm = ({
 
   const styles = getTemplateStyles()
 
-  // Fonction pour obtenir le style d'alignement horizontal
-  const getHorizontalAlignStyle = (align: string) => {
-    switch (align) {
-      case 'center':
-        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
-      case 'right':
-        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
-      case 'left':
+  // 🎯 RESPONSIVE SIMPLE - FORCE 100% sur mobile avec max-width
+  const getWidthClasses = (width: string) => {
+    switch (width) {
+      case '100%':
+        return 'w-full';
+      case '75%':
+        return 'w-full max-w-full lg:max-w-[75%]';
+      case '66%':
+        return 'w-full max-w-full lg:max-w-[66.666667%]';
+      case '50%':
+        return 'w-full max-w-full lg:max-w-[50%]';
+      case '33%':
+        return 'w-full max-w-full lg:max-w-[33.333333%]';
+      case '25%':
+        return 'w-full max-w-full lg:max-w-[25%]';
       default:
-        return { marginLeft: '0', marginRight: '0', display: 'block' };
+        return 'w-full';
     }
   };
 
-  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+  const getHorizontalAlignClasses = (align: string) => {
+    switch (align) {
+      case 'center':
+        return 'mx-auto';
+      case 'right':
+        return 'ml-auto mr-0';
+      case 'left':
+      default:
+        return 'ml-0 mr-0';
+    }
+  };
+
+  // Classes responsives combinées avec la nouvelle approche
+  const responsiveClasses = `${getWidthClasses(width || '100%')} ${getHorizontalAlignClasses(horizontalAlign || 'left')}`;
 
   // Formater les sessions pour l'affichage
   const formatSessionForDisplay = (session: Session) => {
@@ -1146,11 +1166,9 @@ export const DesignForm = ({
           connect(drag(ref));
         }
       }}
-      className="relative my-4"
+      className={`relative my-4 ${responsiveClasses}`}
       style={{
         border: selected || hovered ? '2px solid #3B82F6' : '2px solid transparent',
-        width,
-        ...alignStyle,
       }}
     >
       {/* Selection Indicator */}
@@ -1436,39 +1454,30 @@ export const DesignFormSettings = () => {
         </div>
       </div>
 
-      {/* Width and Alignment */}
+      {/* Width and Alignment - Version Responsive */}
       <div className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Largeur et Alignement</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">📱 Largeur Responsive</h4>
 
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Largeur du formulaire
             </label>
-            <div className="space-y-2">
-              <select
-                value={width || '100%'}
-                onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="100%">100% (pleine largeur)</option>
-                <option value="75%">75%</option>
-                <option value="66.66%">66.66% (2/3)</option>
-                <option value="50%">50% (moitié)</option>
-                <option value="33.33%">33.33% (1/3)</option>
-                <option value="25%">25%</option>
-              </select>
-              <input
-                type="text"
-                value={width || '100%'}
-                onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                placeholder="100%, 500px, 20rem, etc."
-              />
-              <p className="text-xs text-gray-500">
-                Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
-              </p>
-            </div>
+            <select
+              value={width || '100%'}
+              onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="100%">100% (Pleine largeur)</option>
+              <option value="75%">75% (Large sur desktop)</option>
+              <option value="66%">66% (2/3 sur desktop)</option>
+              <option value="50%">50% (Moitié sur desktop)</option>
+              <option value="33%">33% (1/3 sur desktop)</option>
+              <option value="25%">25% (Quart sur desktop)</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              ⚡ Sur mobile/tablette, toujours 100% de largeur pour un meilleur affichage
+            </p>
           </div>
 
           <div>
