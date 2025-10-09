@@ -3,6 +3,13 @@
 import React from 'react';
 import { useNode, useEditor, Element } from '@craftjs/core';
 
+// Interface pour la gestion responsive des largeurs
+export interface ResponsiveWidth {
+  mobile?: string;   // < 640px (sm breakpoint)
+  tablet?: string;   // 640px - 1024px (md breakpoint) 
+  desktop?: string;  // > 1024px (lg breakpoint)
+}
+
 export interface TwoColumnSectionProps {
   background?: string;
   padding?: number;
@@ -11,7 +18,8 @@ export interface TwoColumnSectionProps {
   leftColumnWidth?: string;
   rightColumnWidth?: string;
   verticalAlign?: string;
-  sectionWidth?: string;
+  // Nouveau système responsive pour remplacer sectionWidth
+  responsiveSectionWidth?: ResponsiveWidth | string; // Compatibilité avec ancien système
   horizontalAlign?: 'left' | 'center' | 'right';
   className?: string;
   responsiveMode?: 'always-columns' | 'stack-mobile' | 'stack-tablet' | 'always-stack';
@@ -26,7 +34,7 @@ export const TwoColumnSection = ({
   leftColumnWidth = '50%',
   rightColumnWidth = '50%',
   verticalAlign = 'top',
-  sectionWidth = '100%',
+  responsiveSectionWidth = '100%',
   horizontalAlign = 'left',
   className = '',
   responsiveMode = 'stack-mobile',
@@ -47,6 +55,71 @@ export const TwoColumnSection = ({
     enabled: state.options.enabled,
   }));
 
+  // Fonction utilitaire pour générer les classes Tailwind responsives
+  const generateResponsiveWidthClasses = (responsiveWidth: ResponsiveWidth | string | undefined): string => {
+    // Si c'est une string (compatibilité avec l'ancien système)
+    if (typeof responsiveWidth === 'string') {
+      return getWidthClass(responsiveWidth);
+    }
+    
+    // Si c'est un objet responsive
+    if (responsiveWidth && typeof responsiveWidth === 'object') {
+      const classes: string[] = [];
+      
+      // Largeur mobile (base)
+      if (responsiveWidth.mobile) {
+        classes.push(getWidthClass(responsiveWidth.mobile));
+      }
+      
+      // Largeur tablette (sm: breakpoint)
+      if (responsiveWidth.tablet) {
+        classes.push(`sm:${getWidthClass(responsiveWidth.tablet)}`);
+      }
+      
+      // Largeur desktop (lg: breakpoint)  
+      if (responsiveWidth.desktop) {
+        classes.push(`lg:${getWidthClass(responsiveWidth.desktop)}`);
+      }
+      
+      return classes.join(' ');
+    }
+    
+    // Valeur par défaut
+    return 'w-full';
+  };
+
+  // Fonction pour convertir les valeurs de largeur en classes Tailwind
+  const getWidthClass = (width: string): string => {
+    switch (width) {
+      case '100%':
+        return 'w-full';
+      case '90%':
+        return 'w-[90%]';
+      case '80%':
+        return 'w-4/5';
+      case '75%':
+        return 'w-3/4';
+      case '66.66%':
+        return 'w-2/3';
+      case '60%':
+        return 'w-3/5';
+      case '50%':
+        return 'w-1/2';
+      case '1200px':
+        return 'w-full max-w-[1200px]';
+      case '1024px':
+        return 'w-full max-w-[1024px]';
+      case '768px':
+        return 'w-full max-w-[768px]';
+      default:
+        // Pour les valeurs personnalisées, on utilise w-full par défaut
+        return 'w-full';
+    }
+  };
+
+  // Générer les classes responsives pour la section
+  const sectionWidthClasses = generateResponsiveWidthClasses(responsiveSectionWidth);
+
   const getVerticalAlignStyle = (align: string) => {
     switch (align) {
       case 'center':
@@ -61,15 +134,28 @@ export const TwoColumnSection = ({
 
   const verticalAlignStyle = getVerticalAlignStyle(verticalAlign);
 
+  // Fonction pour obtenir les styles d'alignement avec flexbox (comme SimpleText)
   const getHorizontalAlignStyle = (align: string) => {
     switch (align) {
       case 'center':
-        return { marginLeft: 'auto', marginRight: 'auto' };
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'center' as const,
+          width: '100%'
+        };
       case 'right':
-        return { marginLeft: 'auto', marginRight: '0' };
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'flex-end' as const,
+          width: '100%'
+        };
       case 'left':
       default:
-        return { marginLeft: '0', marginRight: 'auto' };
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'flex-start' as const,
+          width: '100%'
+        };
     }
   };
 
@@ -116,25 +202,23 @@ export const TwoColumnSection = ({
   const responsiveClasses = getResponsiveClasses(responsiveMode);
 
   return (
-    <div
-      ref={(ref: HTMLDivElement | null) => {
-        if (ref) {
-          connect(drag(ref));
-        }
-      }}
-      className={`relative ${className} ${!enabled ? 'twocolumn-preview-mode' : ''}`}
-      style={{
-        background,
-        padding: `${padding}px`,
-        margin: `${margin}px`,
-        width: sectionWidth,
-        maxWidth: sectionWidth,
-        ...horizontalAlignStyle,
-        border: enabled
-          ? (selected || hovered ? '2px solid #3B82F6' : '2px dashed #e5e7eb')
-          : 'none',
-        transition: 'border 0.2s ease',
-      }}
+    <div className="w-full" style={horizontalAlignStyle}>
+      <div
+        ref={(ref: HTMLDivElement | null) => {
+          if (ref) {
+            connect(drag(ref));
+          }
+        }}
+        className={`relative ${className} ${!enabled ? 'twocolumn-preview-mode' : ''} ${sectionWidthClasses}`}
+        style={{
+          background,
+          padding: `${padding}px`,
+          margin: `${margin}px`,
+          border: enabled
+            ? (selected || hovered ? '2px solid #3B82F6' : '2px dashed #e5e7eb')
+            : 'none',
+          transition: 'border 0.2s ease',
+        }}
     >
       {/* CSS RESPONSIVE + Hide Craft.js formatting elements in preview mode + ImageHero compatibility */}
       <style jsx global>{`
@@ -323,6 +407,7 @@ export const TwoColumnSection = ({
           <p className="text-sm text-gray-500 mt-1">Glissez des blocs dans les colonnes ci-dessus</p>
         </div>
       )}
+      </div>
     </div>
   );
 };
@@ -338,7 +423,7 @@ export const TwoColumnSectionSettings = () => {
     leftColumnWidth,
     rightColumnWidth,
     verticalAlign,
-    sectionWidth,
+    responsiveSectionWidth,
     horizontalAlign,
     responsiveMode,
     mobileGap,
@@ -350,7 +435,7 @@ export const TwoColumnSectionSettings = () => {
     leftColumnWidth: node.data.props.leftColumnWidth,
     rightColumnWidth: node.data.props.rightColumnWidth,
     verticalAlign: node.data.props.verticalAlign,
-    sectionWidth: node.data.props.sectionWidth,
+    responsiveSectionWidth: node.data.props.responsiveSectionWidth,
     horizontalAlign: node.data.props.horizontalAlign,
     responsiveMode: node.data.props.responsiveMode,
     mobileGap: node.data.props.mobileGap,
@@ -446,20 +531,95 @@ export const TwoColumnSectionSettings = () => {
         </div>
       </div>
 
-      {/* Section Width */}
+      {/* Section Width - Version Responsive */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Largeur de la section</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">📱 Largeur responsive de la section</h4>
+        
+        {/* Presets responsives */}
+        <div className="space-y-3 mb-4">
+          <div className="text-xs font-medium text-gray-600 mb-2">Presets adaptatifs :</div>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              onClick={() => setProp((props: TwoColumnSectionProps) => {
+                props.responsiveSectionWidth = {
+                  mobile: '100%',
+                  tablet: '100%', 
+                  desktop: '100%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-left"
+            >
+              📱 Pleine largeur sur tous écrans
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 100% • Desktop: 100%</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: TwoColumnSectionProps) => {
+                props.responsiveSectionWidth = {
+                  mobile: '100%',
+                  tablet: '90%',
+                  desktop: '80%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
+            >
+              📱💻 Adaptatif recommandé
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 90% • Desktop: 80%</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: TwoColumnSectionProps) => {
+                props.responsiveSectionWidth = {
+                  mobile: '100%',
+                  tablet: '80%',
+                  desktop: '66.66%'
+                };
+                props.horizontalAlign = 'center'; // 🎯 Ajout de l'alignement center
+              })}
+              className="px-3 py-2 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors text-left"
+            >
+              🎯 Centré progressif
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 80% • Desktop: 2/3 (centré)</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: TwoColumnSectionProps) => {
+                props.responsiveSectionWidth = {
+                  mobile: '100%',
+                  tablet: '1024px',
+                  desktop: '1200px'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-left"
+            >
+              📏 Largeur fixe adaptative
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 1024px • Desktop: 1200px</div>
+            </button>
+          </div>
+        </div>
 
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Largeur globale de la section
-            </label>
-            <div className="space-y-2">
+        {/* Configuration manuelle */}
+        <div className="border-t pt-3">
+          <div className="text-xs font-medium text-gray-600 mb-3">Configuration manuelle :</div>
+          
+          <div className="space-y-3">
+            {/* Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📱 Mobile (&lt; 640px)
+              </label>
               <select
-                value={sectionWidth}
-                onChange={(e) => setProp((props: TwoColumnSectionProps) => (props.sectionWidth = e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                value={typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth?.mobile || '100%' : responsiveSectionWidth || '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth : { mobile: responsiveSectionWidth || '100%' };
+                  setProp((props: TwoColumnSectionProps) => {
+                    props.responsiveSectionWidth = {
+                      ...currentWidth,
+                      mobile: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
               >
                 <option value="100%">100% (pleine largeur)</option>
                 <option value="90%">90%</option>
@@ -467,20 +627,78 @@ export const TwoColumnSectionSettings = () => {
                 <option value="75%">75%</option>
                 <option value="66.66%">66.66% (2/3)</option>
                 <option value="60%">60%</option>
-                <option value="50%">50% (moitié)</option>
-                <option value="1200px">1200px (max-width)</option>
-                <option value="1024px">1024px (max-width)</option>
-                <option value="768px">768px (max-width)</option>
+                <option value="50%">50%</option>
               </select>
-              <input
-                type="text"
-                value={sectionWidth}
-                onChange={(e) => setProp((props: TwoColumnSectionProps) => (props.sectionWidth = e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                placeholder="100%, 800px, etc."
-              />
+            </div>
+            
+            {/* Tablette */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📟 Tablette (640px - 1024px)
+              </label>
+              <select
+                value={typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth?.tablet || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth : { mobile: responsiveSectionWidth || '100%' };
+                  setProp((props: TwoColumnSectionProps) => {
+                    props.responsiveSectionWidth = {
+                      mobile: currentWidth.mobile || responsiveSectionWidth || '100%',
+                      ...currentWidth,
+                      tablet: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="90%">90%</option>
+                <option value="80%">80%</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="60%">60%</option>
+                <option value="50%">50%</option>
+                <option value="768px">768px (max-width)</option>
+                <option value="1024px">1024px (max-width)</option>
+              </select>
+            </div>
+            
+            {/* Desktop */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                💻 Desktop (&gt; 1024px)
+              </label>
+              <select
+                value={typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth?.desktop || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveSectionWidth === 'object' ? responsiveSectionWidth : { mobile: responsiveSectionWidth || '100%' };
+                  setProp((props: TwoColumnSectionProps) => {
+                    props.responsiveSectionWidth = {
+                      mobile: currentWidth.mobile || responsiveSectionWidth || '100%',
+                      tablet: currentWidth.tablet,
+                      ...currentWidth,
+                      desktop: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="90%">90%</option>
+                <option value="80%">80%</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="60%">60%</option>
+                <option value="50%">50%</option>
+                <option value="768px">768px (max-width)</option>
+                <option value="1024px">1024px (max-width)</option>
+                <option value="1200px">1200px (max-width)</option>
+              </select>
             </div>
           </div>
+          
+          <p className="text-xs text-gray-500 mt-2">
+            💡 Les largeurs s'adaptent automatiquement selon la taille d'écran pour une expérience optimale sur smartphone
+          </p>
         </div>
       </div>
 
@@ -655,7 +873,11 @@ TwoColumnSection.craft = {
     leftColumnWidth: '50%',
     rightColumnWidth: '50%',
     verticalAlign: 'top',
-    sectionWidth: '100%',
+    responsiveSectionWidth: {
+      mobile: '100%',
+      tablet: '100%',
+      desktop: '100%'
+    },
     horizontalAlign: 'left',
     responsiveMode: 'stack-mobile', // Responsive par défaut
     mobileGap: 10,

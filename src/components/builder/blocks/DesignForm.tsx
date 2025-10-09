@@ -115,6 +115,13 @@ interface Event {
   created_at: string
 }
 
+// Interface pour la gestion responsive des largeurs
+export interface ResponsiveWidth {
+  mobile?: string;   // < 640px (sm breakpoint)
+  tablet?: string;   // 640px - 1024px (md breakpoint) 
+  desktop?: string;  // > 1024px (lg breakpoint)
+}
+
 interface DesignFormProps {
   eventId?: string
   formTemplate?: 'modern' | 'classic' | 'minimal' | 'elegant' | 'creative' | 'corporate' | 'tech'
@@ -143,7 +150,8 @@ interface DesignFormProps {
   // Options d'affichage existantes
   showSessions?: boolean
   showSocialMedia?: boolean
-  width?: string
+  // Nouveau système responsive
+  responsiveWidth?: ResponsiveWidth | string; // Compatibilité avec ancien système
   horizontalAlign?: string
 }
 
@@ -175,7 +183,7 @@ export const DesignForm = ({
   // Options d'affichage existantes
   showSessions = true,
   showSocialMedia = false,
-  width = '100%',
+  responsiveWidth = '100%',
   horizontalAlign = 'left',
 }: DesignFormProps) => {
   const [sessions, setSessions] = useState<Session[]>([])
@@ -704,22 +712,58 @@ export const DesignForm = ({
 
   const styles = getTemplateStyles()
 
-  // 🎯 RESPONSIVE SIMPLE - FORCE 100% sur mobile avec max-width
-  const getWidthClasses = (width: string) => {
+  // Fonction utilitaire pour générer les classes Tailwind responsives
+  const generateResponsiveWidthClasses = (responsiveWidth: ResponsiveWidth | string | undefined): string => {
+    // Si c'est une string (compatibilité avec l'ancien système)
+    if (typeof responsiveWidth === 'string') {
+      return getWidthClass(responsiveWidth);
+    }
+    
+    // Si c'est un objet responsive
+    if (responsiveWidth && typeof responsiveWidth === 'object') {
+      const classes: string[] = [];
+      
+      // Largeur mobile (base)
+      if (responsiveWidth.mobile) {
+        classes.push(getWidthClass(responsiveWidth.mobile));
+      }
+      
+      // Largeur tablette (sm: breakpoint)
+      if (responsiveWidth.tablet) {
+        classes.push(`sm:${getWidthClass(responsiveWidth.tablet)}`);
+      }
+      
+      // Largeur desktop (lg: breakpoint)  
+      if (responsiveWidth.desktop) {
+        classes.push(`lg:${getWidthClass(responsiveWidth.desktop)}`);
+      }
+      
+      return classes.join(' ');
+    }
+    
+    // Valeur par défaut
+    return 'w-full';
+  };
+
+  // Fonction pour convertir les valeurs de largeur en classes Tailwind
+  const getWidthClass = (width: string): string => {
     switch (width) {
       case '100%':
         return 'w-full';
       case '75%':
-        return 'w-full max-w-full lg:max-w-[75%]';
-      case '66%':
-        return 'w-full max-w-full lg:max-w-[66.666667%]';
+        return 'w-3/4';
+      case '66.66%':
+        return 'w-2/3';
       case '50%':
-        return 'w-full max-w-full lg:max-w-[50%]';
-      case '33%':
-        return 'w-full max-w-full lg:max-w-[33.333333%]';
+        return 'w-1/2';
+      case '33.33%':
+        return 'w-1/3';
       case '25%':
-        return 'w-full max-w-full lg:max-w-[25%]';
+        return 'w-1/4';
+      case 'auto':
+        return 'w-auto';
       default:
+        // Pour les valeurs personnalisées, on utilise w-full par défaut
         return 'w-full';
     }
   };
@@ -736,8 +780,11 @@ export const DesignForm = ({
     }
   };
 
+  // Générer les classes responsives
+  const widthClasses = generateResponsiveWidthClasses(responsiveWidth);
+  
   // Classes responsives combinées avec la nouvelle approche
-  const responsiveClasses = `${getWidthClasses(width || '100%')} ${getHorizontalAlignClasses(horizontalAlign || 'left')}`;
+  const responsiveClasses = `${widthClasses} ${getHorizontalAlignClasses(horizontalAlign || 'left')}`;
 
   // Formater les sessions pour l'affichage
   const formatSessionForDisplay = (session: Session) => {
@@ -1217,7 +1264,7 @@ export const DesignFormSettings = () => {
     showMessage,
     showSessions,
     showSocialMedia,
-    width,
+    responsiveWidth,
     horizontalAlign,
   } = useNode((node) => ({
     id: node.id,
@@ -1245,7 +1292,7 @@ export const DesignFormSettings = () => {
     showMessage: node.data.props.showMessage,
     showSessions: node.data.props.showSessions,
     showSocialMedia: node.data.props.showSocialMedia,
-    width: node.data.props.width,
+    responsiveWidth: node.data.props.responsiveWidth,
     horizontalAlign: node.data.props.horizontalAlign,
   }));
 
@@ -1456,83 +1503,222 @@ export const DesignFormSettings = () => {
 
       {/* Width and Alignment - Version Responsive */}
       <div className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">📱 Largeur Responsive</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-3">📱 Largeur responsive du formulaire</h4>
+        
+        {/* Presets responsives */}
+        <div className="space-y-3 mb-4">
+          <div className="text-xs font-medium text-gray-600 mb-2">Presets adaptatifs :</div>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              onClick={() => setProp((props: DesignFormProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '100%', 
+                  desktop: '100%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-left"
+            >
+              📱 Pleine largeur sur tous écrans
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 100% • Desktop: 100%</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: DesignFormProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '75%',
+                  desktop: '66.66%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
+            >
+              📱💻 Adaptatif recommandé
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 75% • Desktop: 2/3</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: DesignFormProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '66.66%',
+                  desktop: '50%'
+                };
+                props.horizontalAlign = 'center'; // 🎯 Ajout de l'alignement center
+              })}
+              className="px-3 py-2 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors text-left"
+            >
+              🎯 Centré progressif
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 2/3 • Desktop: 50% (centré)</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: DesignFormProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '50%',
+                  desktop: '33.33%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-left"
+            >
+              📝 Formulaire étroit
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 50% • Desktop: 1/3</div>
+            </button>
+          </div>
+        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Largeur du formulaire
-            </label>
+        {/* Configuration manuelle */}
+        <div className="border-t pt-3">
+          <div className="text-xs font-medium text-gray-600 mb-3">Configuration manuelle :</div>
+          
+          <div className="space-y-3">
+            {/* Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📱 Mobile (&lt; 640px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.mobile || '100%' : responsiveWidth || '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: DesignFormProps) => {
+                    props.responsiveWidth = {
+                      ...currentWidth,
+                      mobile: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+            
+            {/* Tablette */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📟 Tablette (640px - 1024px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.tablet || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: DesignFormProps) => {
+                    props.responsiveWidth = {
+                      mobile: currentWidth.mobile || responsiveWidth || '100%',
+                      ...currentWidth,
+                      tablet: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+            
+            {/* Desktop */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                💻 Desktop (&gt; 1024px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.desktop || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: DesignFormProps) => {
+                    props.responsiveWidth = {
+                      mobile: currentWidth.mobile || responsiveWidth || '100%',
+                      tablet: currentWidth.tablet,
+                      ...currentWidth,
+                      desktop: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 mt-2">
+            💡 Les largeurs s'adaptent automatiquement selon la taille d'écran pour une expérience optimale
+          </p>
+        </div>
+
+        {/* Alignement horizontal */}
+        <div className="border-t pt-3 mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Alignement horizontal du formulaire
+          </label>
+          <div className="space-y-2">
             <select
-              value={width || '100%'}
-              onChange={(e) => setProp((props: DesignFormProps) => (props.width = e.target.value))}
+              value={horizontalAlign || 'left'}
+              onChange={(e) => setProp((props: DesignFormProps) => (props.horizontalAlign = e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             >
-              <option value="100%">100% (Pleine largeur)</option>
-              <option value="75%">75% (Large sur desktop)</option>
-              <option value="66%">66% (2/3 sur desktop)</option>
-              <option value="50%">50% (Moitié sur desktop)</option>
-              <option value="33%">33% (1/3 sur desktop)</option>
-              <option value="25%">25% (Quart sur desktop)</option>
+              <option value="left">Gauche</option>
+              <option value="center">Centre</option>
+              <option value="right">Droite</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              ⚡ Sur mobile/tablette, toujours 100% de largeur pour un meilleur affichage
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Alignement horizontal du formulaire
-            </label>
-            <div className="space-y-2">
-              <select
-                value={horizontalAlign || 'left'}
-                onChange={(e) => setProp((props: DesignFormProps) => (props.horizontalAlign = e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            <div className="flex gap-2">
+              <button
+                onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'left'))}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                  horizontalAlign === 'left'
+                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
               >
-                <option value="left">Gauche</option>
-                <option value="center">Centre</option>
-                <option value="right">Droite</option>
-              </select>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'left'))}
-                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                    horizontalAlign === 'left'
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="block">⬅️</span>
-                  Gauche
-                </button>
-                <button
-                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'center'))}
-                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                    horizontalAlign === 'center'
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="block">↔️</span>
-                  Centre
-                </button>
-                <button
-                  onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'right'))}
-                  className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                    horizontalAlign === 'right'
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <span className="block">➡️</span>
-                  Droite
-                </button>
-              </div>
-              <p className="text-xs text-gray-500">
-                Permet de centrer le formulaire sur la page
-              </p>
+                <span className="block">⬅️</span>
+                Gauche
+              </button>
+              <button
+                onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'center'))}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                  horizontalAlign === 'center'
+                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="block">↔️</span>
+                Centre
+              </button>
+              <button
+                onClick={() => setProp((props: DesignFormProps) => (props.horizontalAlign = 'right'))}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                  horizontalAlign === 'right'
+                    ? 'bg-blue-100 text-blue-700 border-blue-300'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span className="block">➡️</span>
+                Droite
+              </button>
             </div>
+            <p className="text-xs text-gray-500">
+              Permet de centrer le formulaire entier sur la page
+            </p>
           </div>
         </div>
       </div>
@@ -1745,7 +1931,11 @@ DesignForm.craft = {
     // Options d'affichage existantes
     showSessions: true,
     showSocialMedia: false,
-    width: '100%',
+    responsiveWidth: {
+      mobile: '100%',
+      tablet: '100%',
+      desktop: '100%'
+    },
     horizontalAlign: 'left',
   },
   related: {

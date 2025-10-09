@@ -4,6 +4,13 @@ import React from 'react';
 import { useNode } from '@craftjs/core';
 import { useBuilderMode } from '@/contexts/BuilderModeContext';
 
+// Interface pour la gestion responsive des largeurs
+export interface ResponsiveWidth {
+  mobile?: string;   // < 640px (sm breakpoint)
+  tablet?: string;   // 640px - 1024px (md breakpoint) 
+  desktop?: string;  // > 1024px (lg breakpoint)
+}
+
 export interface SimpleTextProps {
   text?: string;
   fontSize?: number;
@@ -15,7 +22,8 @@ export interface SimpleTextProps {
   textDecoration?: string;
   showBorder?: boolean;
   padding?: string;
-  width?: string;
+  // Remplacé par le système responsive
+  responsiveWidth?: ResponsiveWidth | string; // Compatibilité avec ancien système
   horizontalAlign?: string;
 }
 
@@ -30,7 +38,7 @@ export const SimpleText = ({
   textDecoration = 'none',
   showBorder = true,
   padding = '16px',
-  width = '100%',
+  responsiveWidth = '100%',
   horizontalAlign = 'left',
 }: SimpleTextProps) => {
   const { isEditing } = useBuilderMode();
@@ -38,44 +46,114 @@ export const SimpleText = ({
     connectors: { connect, drag },
     selected,
     hovered,
-    actions,
   } = useNode((state) => ({
     selected: state.events.selected,
     hovered: state.events.hovered,
-    actions: state.actions,
   }));
 
-  // Debug log pour vérifier les valeurs
-  console.log('SimpleText - width value:', width, 'horizontalAlign:', horizontalAlign);
+  const { actions } = useNode();
 
-  // Fonction pour obtenir le style d'alignement horizontal
-  const getHorizontalAlignStyle = (align: string) => {
-    switch (align) {
-      case 'center':
-        return { marginLeft: 'auto', marginRight: 'auto', display: 'block' };
-      case 'right':
-        return { marginLeft: 'auto', marginRight: '0', display: 'block' };
-      case 'left':
+  // Fonction utilitaire pour générer les classes Tailwind responsives
+  const generateResponsiveWidthClasses = (responsiveWidth: ResponsiveWidth | string | undefined): string => {
+    // Si c'est une string (compatibilité avec l'ancien système)
+    if (typeof responsiveWidth === 'string') {
+      return getWidthClass(responsiveWidth);
+    }
+    
+    // Si c'est un objet responsive
+    if (responsiveWidth && typeof responsiveWidth === 'object') {
+      const classes: string[] = [];
+      
+      // Largeur mobile (base)
+      if (responsiveWidth.mobile) {
+        classes.push(getWidthClass(responsiveWidth.mobile));
+      }
+      
+      // Largeur tablette (sm: breakpoint)
+      if (responsiveWidth.tablet) {
+        classes.push(`sm:${getWidthClass(responsiveWidth.tablet)}`);
+      }
+      
+      // Largeur desktop (lg: breakpoint)  
+      if (responsiveWidth.desktop) {
+        classes.push(`lg:${getWidthClass(responsiveWidth.desktop)}`);
+      }
+      
+      return classes.join(' ');
+    }
+    
+    // Valeur par défaut
+    return 'w-full';
+  };
+
+  // Fonction pour convertir les valeurs de largeur en classes Tailwind
+  const getWidthClass = (width: string): string => {
+    switch (width) {
+      case '100%':
+        return 'w-full';
+      case '75%':
+        return 'w-3/4';
+      case '66.66%':
+        return 'w-2/3';
+      case '50%':
+        return 'w-1/2';
+      case '33.33%':
+        return 'w-1/3';
+      case '25%':
+        return 'w-1/4';
+      case 'auto':
+        return 'w-auto';
       default:
-        return { marginLeft: '0', marginRight: '0', display: 'inline-block' };
+        // Pour les valeurs personnalisées, on utilise un style inline
+        return 'w-full';
     }
   };
 
-  const alignStyle = getHorizontalAlignStyle(horizontalAlign);
+  // Générer les classes responsives
+  const widthClasses = generateResponsiveWidthClasses(responsiveWidth);
+  
+  // Fonction pour obtenir les styles d'alignement avec flexbox
+  const getHorizontalAlignStyle = (align: string) => {
+    switch (align) {
+      case 'center':
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'center' as const,
+          width: '100%'
+        };
+      case 'right':
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'flex-end' as const,
+          width: '100%'
+        };
+      case 'left':
+      default:
+        return { 
+          display: 'flex' as const,
+          justifyContent: 'flex-start' as const,
+          width: '100%'
+        };
+    }
+  };
+
+  const containerAlignStyle = getHorizontalAlignStyle(horizontalAlign);
+  
+  // Debug log pour vérifier les valeurs
+  console.log('SimpleText - responsive width:', responsiveWidth, 'classes:', widthClasses, 'horizontalAlign:', horizontalAlign, 'containerAlign:', containerAlignStyle);
 
   return (
-    <div
-      ref={isEditing ? (ref) => ref && connect(drag(ref)) : undefined}
-      style={{
-        border: isEditing && (selected || hovered) ? '2px dashed #3B82F6' : 'none',
-        padding: '4px',
-        borderRadius: '8px',
-        margin: '8px 0',
-        width,
-        minWidth: '50px',
-        ...alignStyle,
-      }}
-    >
+    <div className="w-full my-2" style={containerAlignStyle}>
+      <div
+        ref={isEditing ? (ref) => { if (ref) connect(drag(ref)); } : undefined}
+        className={`${widthClasses} min-w-12`}
+        style={{
+          border: isEditing && (selected || hovered) ? '2px dashed #3B82F6' : 'none',
+          padding: '4px',
+          borderRadius: '8px',
+          minWidth: '50px',
+        }}
+      >
       {/* Selection Indicator */}
       {isEditing && (selected || hovered) && (
         <div
@@ -105,7 +183,6 @@ export const SimpleText = ({
           });
         }}
         style={{
-          width: '100%',
           padding,
           backgroundColor,
           border: showBorder ? '2px solid #d1d5db' : 'none',
@@ -114,7 +191,7 @@ export const SimpleText = ({
           color,
           fontWeight,
           fontStyle,
-          textAlign,
+          textAlign: textAlign as any,
           textDecoration,
           outline: isEditing && selected ? '2px solid #3B82F6' : 'none',
           cursor: isEditing && selected ? 'text' : 'default',
@@ -123,6 +200,7 @@ export const SimpleText = ({
         }}
       >
         {text}
+      </div>
       </div>
     </div>
   );
@@ -142,7 +220,7 @@ export const SimpleTextSettings = () => {
     textDecoration,
     showBorder,
     padding,
-    width,
+    responsiveWidth,
     horizontalAlign,
   } = useNode((node) => ({
     text: node.data.props.text,
@@ -155,7 +233,7 @@ export const SimpleTextSettings = () => {
     textDecoration: node.data.props.textDecoration,
     showBorder: node.data.props.showBorder,
     padding: node.data.props.padding,
-    width: node.data.props.width,
+    responsiveWidth: node.data.props.responsiveWidth,
     horizontalAlign: node.data.props.horizontalAlign,
   }));
 
@@ -227,31 +305,167 @@ export const SimpleTextSettings = () => {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Largeur du bloc
+          Largeur responsive du bloc
         </label>
-        <div className="space-y-2">
-          <select
-            value={width || '100%'}
-            onChange={(e) => setProp((props: SimpleTextProps) => (props.width = e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="100%">100% (pleine largeur)</option>
-            <option value="75%">75%</option>
-            <option value="66.66%">66.66% (2/3)</option>
-            <option value="50%">50% (moitié)</option>
-            <option value="33.33%">33.33% (1/3)</option>
-            <option value="25%">25%</option>
-            <option value="auto">Auto (contenu)</option>
-          </select>
-          <input
-            type="text"
-            value={width || '100%'}
-            onChange={(e) => setProp((props: SimpleTextProps) => (props.width = e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            placeholder="100%, 500px, 20rem, etc."
-          />
-          <p className="text-xs text-gray-500">
-            Utilisez les valeurs prédéfinies ou entrez une valeur personnalisée (px, %, rem, etc.)
+        
+        {/* Presets responsives */}
+        <div className="space-y-3 mb-4">
+          <div className="text-xs font-medium text-gray-600 mb-2">Presets adaptatifs :</div>
+          <div className="grid grid-cols-1 gap-2">
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '100%', 
+                  desktop: '100%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-left"
+            >
+              📱 Pleine largeur sur tous écrans
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 100% • Desktop: 100%</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '75%',
+                  desktop: '66.66%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-left"
+            >
+              📱💻 Adaptatif recommandé
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 75% • Desktop: 2/3</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '66.66%',
+                  desktop: '50%'
+                };
+                props.horizontalAlign = 'center'; // 🎯 Ajout de l'alignement center
+              })}
+              className="px-3 py-2 text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors text-left"
+            >
+              🎯 Centré progressif
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 2/3 • Desktop: 50% (centré)</div>
+            </button>
+            
+            <button
+              onClick={() => setProp((props: SimpleTextProps) => {
+                props.responsiveWidth = {
+                  mobile: '100%',
+                  tablet: '50%',
+                  desktop: '33.33%'
+                };
+              })}
+              className="px-3 py-2 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-left"
+            >
+              📝 Colonne étroite
+              <div className="text-xs text-gray-500 mt-1">Mobile: 100% • Tablette: 50% • Desktop: 1/3</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Configuration manuelle */}
+        <div className="border-t pt-3">
+          <div className="text-xs font-medium text-gray-600 mb-3">Configuration manuelle :</div>
+          
+          <div className="space-y-3">
+            {/* Mobile */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📱 Mobile (&lt; 640px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.mobile || '100%' : responsiveWidth || '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: SimpleTextProps) => {
+                    props.responsiveWidth = {
+                      ...currentWidth,
+                      mobile: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+            
+            {/* Tablette */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                📟 Tablette (640px - 1024px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.tablet || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: SimpleTextProps) => {
+                    props.responsiveWidth = {
+                      mobile: currentWidth.mobile || responsiveWidth || '100%',
+                      ...currentWidth,
+                      tablet: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+            
+            {/* Desktop */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                💻 Desktop (&gt; 1024px)
+              </label>
+              <select
+                value={typeof responsiveWidth === 'object' ? responsiveWidth?.desktop || '100%' : '100%'}
+                onChange={(e) => {
+                  const currentWidth = typeof responsiveWidth === 'object' ? responsiveWidth : { mobile: responsiveWidth || '100%' };
+                  setProp((props: SimpleTextProps) => {
+                    props.responsiveWidth = {
+                      mobile: currentWidth.mobile || responsiveWidth || '100%',
+                      tablet: currentWidth.tablet,
+                      ...currentWidth,
+                      desktop: e.target.value
+                    };
+                  });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs"
+              >
+                <option value="100%">100% (pleine largeur)</option>
+                <option value="75%">75%</option>
+                <option value="66.66%">66.66% (2/3)</option>
+                <option value="50%">50% (moitié)</option>
+                <option value="33.33%">33.33% (1/3)</option>
+                <option value="25%">25%</option>
+                <option value="auto">Auto (contenu)</option>
+              </select>
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 mt-2">
+            💡 Les largeurs s'adaptent automatiquement selon la taille d'écran pour une expérience optimale
           </p>
         </div>
       </div>
@@ -441,7 +655,11 @@ SimpleText.craft = {
     textDecoration: 'none',
     showBorder: true,
     padding: '16px',
-    width: '100%',
+    responsiveWidth: {
+      mobile: '100%',
+      tablet: '100%',
+      desktop: '100%'
+    },
     horizontalAlign: 'left',
   },
   related: {

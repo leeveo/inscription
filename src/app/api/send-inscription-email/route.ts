@@ -61,30 +61,64 @@ export async function POST(request: Request) {
 
     let senderEmail: string;
     let senderName: string;
+    let replyToEmail: string | undefined;
 
     if (senderError || !authorizedSender) {
-      console.warn(`⚠️ Email non autorisé: ${requestedEmail}, utilisation de l'email par défaut`);
+      console.warn(`⚠️ Email non autorisé: ${requestedEmail}`);
 
-      // Fallback vers l'email par défaut du SaaS
-      const { data: defaultSender, error: defaultError } = await supabase
-        .from('authorized_email_senders')
-        .select('*')
-        .eq('is_default', true)
-        .eq('is_active', true)
-        .eq('verification_status', 'verified')
-        .single();
+      // Vérifier si l'email client est un domaine autorisé dans Brevo
+      const clientEmail = event.email_envoi || requestedEmail;
+      const isBrevoAuthorizedDomain = await checkBrevoAuthorizedDomain(clientEmail);
+      
+      // Priorité 1: Utiliser l'email client si le domaine est autorisé dans Brevo
+      if (clientEmail && clientEmail.includes('@') && isBrevoAuthorizedDomain) {
+        senderEmail = clientEmail;
+        senderName = event.nom || 'Organisation';
+        console.log(`📧 ✅ Utilisation de l'email client autorisé: ${senderEmail}`);
+      } 
+      // Priorité 2: Utiliser votre email avec reply-to client
+      else if (clientEmail && clientEmail.includes('@')) {
+        // Utiliser votre email vérifié mais avec reply-to du client
+        const { data: defaultSender, error: defaultError } = await supabase
+          .from('authorized_email_senders')
+          .select('*')
+          .eq('is_default', true)
+          .eq('is_active', true)
+          .eq('verification_status', 'verified')
+          .single();
 
-      if (defaultError || !defaultSender) {
-        return NextResponse.json(
-          { success: false, error: 'Aucun email d\'envoi autorisé disponible' },
-          { status: 403 }
-        );
+        if (!defaultError && defaultSender) {
+          senderEmail = defaultSender.email_address;
+          senderName = event.nom || defaultSender.display_name || 'Organisation';
+          replyToEmail = clientEmail; // Les réponses iront vers le client
+          console.log(`📧 ⚠️ Email client non autorisé, utilisation email vérifié avec reply-to: ${senderEmail} (reply-to: ${clientEmail})`);
+        } else {
+          senderEmail = clientEmail;
+          senderName = event.nom || 'Organisation';
+          console.log(`📧 ⚠️ Tentative d'utilisation email client non vérifié: ${senderEmail}`);
+        }
+      } 
+      // Fallback: email par défaut du SaaS
+      else {
+        const { data: defaultSender, error: defaultError } = await supabase
+          .from('authorized_email_senders')
+          .select('*')
+          .eq('is_default', true)
+          .eq('is_active', true)
+          .eq('verification_status', 'verified')
+          .single();
+
+        if (defaultError || !defaultSender) {
+          return NextResponse.json(
+            { success: false, error: 'Aucun email d\'envoi autorisé disponible' },
+            { status: 403 }
+          );
+        }
+
+        senderEmail = defaultSender.email_address;
+        senderName = defaultSender.display_name || process.env.BREVO_FROM_NAME || 'Waibooth';
+        console.log(`🔄 Utilisation de l'email par défaut: ${senderEmail}`);
       }
-
-      senderEmail = defaultSender.email_address;
-      senderName = defaultSender.display_name || process.env.BREVO_FROM_NAME || 'Waibooth';
-
-      console.log(`🔄 Utilisation de l'email par défaut: ${senderEmail}`);
     } else {
       senderEmail = authorizedSender.email_address;
       senderName = authorizedSender.display_name || event.nom;
@@ -97,6 +131,8 @@ export async function POST(request: Request) {
           usage_count: authorizedSender.usage_count + 1
         })
         .eq('id', authorizedSender.id);
+        
+      console.log(`✅ Utilisation de l'email autorisé: ${senderEmail}`);
     }
 
     // Récupérer le template email d'inscription personnalisé s'il existe
@@ -118,11 +154,13 @@ export async function POST(request: Request) {
     // Envoyer l'email via Brevo
     const brevoResponse = await sendEmailViaBrevo({
       senderEmail,
+      senderName,
       recipientEmail: participantData.email,
       subject,
       htmlContent,
       participantName: `${participantData.prenom} ${participantData.nom}`,
-      eventName: event.nom
+      eventName: event.nom,
+      replyToEmail
     });
 
     if (!brevoResponse.success) {
@@ -231,13 +269,44 @@ function generateDefaultEmailContent(event: any, participant: { nom: string; pre
   `;
 }
 
+// Fonction pour vérifier si un domaine est autorisé dans Brevo
+async function checkBrevoAuthorizedDomain(email: string): Promise<boolean> {
+  if (!email || !email.includes('@')) return false;
+  
+  const domain = email.split('@')[1];
+  
+  try {
+    const supabase = supabaseApi();
+    const { data, error } = await supabase
+      .from('brevo_authorized_domains')
+      .select('domain_name, is_verified')
+      .eq('domain_name', domain.toLowerCase())
+      .eq('is_verified', true)
+      .eq('is_active', true)
+      .single();
+    
+    if (error || !data) {
+      console.log(`🔍 Domaine ${domain} non trouvé dans les domaines autorisés Brevo`);
+      return false;
+    }
+    
+    console.log(`✅ Domaine ${domain} vérifié dans Brevo`);
+    return true;
+  } catch (error) {
+    console.warn('Erreur lors de la vérification du domaine Brevo:', error);
+    return false;
+  }
+}
+
 async function sendEmailViaBrevo(params: {
   senderEmail: string;
+  senderName?: string;
   recipientEmail: string;
   subject: string;
   htmlContent: string;
   participantName: string;
   eventName: string;
+  replyToEmail?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     const brevoApiKey = process.env.BREVO_API_KEY;
@@ -256,7 +325,7 @@ async function sendEmailViaBrevo(params: {
       body: JSON.stringify({
         sender: {
           email: params.senderEmail,
-          name: `Équipe ${params.eventName}`
+          name: params.senderName || `Équipe ${params.eventName}`
         },
         to: [{
           email: params.recipientEmail,
@@ -265,8 +334,8 @@ async function sendEmailViaBrevo(params: {
         subject: params.subject,
         htmlContent: params.htmlContent,
         replyTo: {
-          email: params.senderEmail,
-          name: `Équipe ${params.eventName}`
+          email: params.replyToEmail || params.senderEmail,
+          name: params.senderName || `Équipe ${params.eventName}`
         }
       })
     });
