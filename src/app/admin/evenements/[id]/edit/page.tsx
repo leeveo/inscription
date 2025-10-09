@@ -176,6 +176,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   // Builder page data state
   const [builderPageData, setBuilderPageData] = useState<any>(null);
 
+  // Delete participant state
+  const [showDeleteParticipantModal, setShowDeleteParticipantModal] = useState(false);
+  const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null);
+  const [isDeletingParticipant, setIsDeletingParticipant] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isDeletingBulkParticipants, setIsDeletingBulkParticipants] = useState(false);
+
   
   useEffect(() => {
     const getParams = async () => {
@@ -729,6 +736,102 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     if (selectedParticipants.length > 0) {
       setLandingLinkTarget(null);
       setShowLandingLinkForm(true);
+    }
+  };
+
+  // Delete functions
+  const handleDeleteParticipant = (participant: Participant) => {
+    setParticipantToDelete(participant);
+    setShowDeleteParticipantModal(true);
+  };
+
+  const confirmDeleteParticipant = async () => {
+    if (!participantToDelete || !eventId) return;
+
+    setIsDeletingParticipant(true);
+    
+    try {
+      const response = await fetch('/api/participants/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantId: participantToDelete.id,
+          eventId: eventId
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh participants list
+        await fetchParticipants();
+        
+        // Show success message
+        alert(`Participant ${participantToDelete.prenom} ${participantToDelete.nom} supprimé avec succès`);
+        
+        // Close modal
+        setShowDeleteParticipantModal(false);
+        setParticipantToDelete(null);
+      } else {
+        alert(`Erreur lors de la suppression: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting participant:', error);
+      alert('Erreur lors de la suppression du participant');
+    } finally {
+      setIsDeletingParticipant(false);
+    }
+  };
+
+  const handleBulkDeleteParticipants = () => {
+    if (selectedParticipants.length === 0) {
+      alert('Veuillez sélectionner au moins un participant à supprimer');
+      return;
+    }
+    setShowBulkDeleteModal(true);
+  };
+
+  const confirmBulkDeleteParticipants = async () => {
+    if (selectedParticipants.length === 0 || !eventId) return;
+
+    setIsDeletingBulkParticipants(true);
+    
+    try {
+      const response = await fetch('/api/participants/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantIds: selectedParticipants,
+          eventId: eventId
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh participants list
+        await fetchParticipants();
+        
+        // Clear selection
+        setSelectedParticipants([]);
+        
+        // Show success message
+        alert(`${result.deletedCount} participant(s) supprimé(s) avec succès`);
+        
+        // Close modal
+        setShowBulkDeleteModal(false);
+      } else {
+        alert(`Erreur lors de la suppression: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error bulk deleting participants:', error);
+      alert('Erreur lors de la suppression des participants');
+    } finally {
+      setIsDeletingBulkParticipants(false);
     }
   };
 
@@ -1843,6 +1946,22 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={handleBulkDeleteParticipants}
+                  disabled={selectedParticipants.length === 0}
+                  className="inline-flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer sélectionnés
+                  {selectedParticipants.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                      {selectedParticipants.length}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -2055,6 +2174,15 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
                             </Link>
+                            <button
+                              onClick={() => handleDeleteParticipant(participant)}
+                              className="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                              title="Supprimer le participant"
+                            >
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -2972,6 +3100,109 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   setLandingLinkTarget(null);
                 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de suppression d'un participant */}
+      {showDeleteParticipantModal && participantToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Confirmer la suppression
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer le participant <strong>{participantToDelete.prenom} {participantToDelete.nom}</strong> ?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="flex">
+                  <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.598 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-red-800 font-medium">Attention</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Cette action supprimera également toutes les données associées : inscriptions aux sessions, check-ins, QR codes et visites de landing page.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteParticipantModal(false);
+                    setParticipantToDelete(null);
+                  }}
+                  disabled={isDeletingParticipant}
+                  className="inline-flex items-center px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteParticipant}
+                  disabled={isDeletingParticipant}
+                  className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50"
+                >
+                  {isDeletingParticipant && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  )}
+                  {isDeletingParticipant ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de suppression en lot */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Confirmer la suppression en lot
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer <strong>{selectedParticipants.length} participant(s)</strong> sélectionné(s) ?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div className="flex">
+                  <svg className="w-5 h-5 text-red-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.598 0L4.732 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm text-red-800 font-medium">Attention</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Cette action supprimera également toutes les données associées pour tous les participants sélectionnés : inscriptions aux sessions, check-ins, QR codes et visites de landing page.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteModal(false)}
+                  disabled={isDeletingBulkParticipants}
+                  className="inline-flex items-center px-4 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmBulkDeleteParticipants}
+                  disabled={isDeletingBulkParticipants}
+                  className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 text-sm font-medium disabled:opacity-50"
+                >
+                  {isDeletingBulkParticipants && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                  )}
+                  {isDeletingBulkParticipants ? 'Suppression...' : `Supprimer ${selectedParticipants.length} participant(s)`}
+                </button>
+              </div>
             </div>
           </div>
         </div>
