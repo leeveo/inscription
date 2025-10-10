@@ -2,11 +2,11 @@ export default function WaiEventLogo({ className = "w-12 h-12" }: { className?: 
   return (
     <div className="relative inline-flex items-center justify-center group">
       {/* Multi-layer glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-500 via-cyan-400 to-fuchsia-500 rounded-2xl blur-2xl opacity-40 group-hover:opacity-70 transition-all duration-500 animate-pulse"></div>
-      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-300 to-violet-400 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-all duration-500"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-500 via-cyan-400 to-fuchsia-500 rounded-2xl blur-2xl opacity-70 transition-all duration-500 animate-pulse"></div>
+      <div className="absolute inset-0 bg-gradient-to-tr from-cyan-300 to-violet-400 rounded-2xl blur-xl opacity-50 transition-all duration-500"></div>
 
       {/* Logo container with glassmorphism */}
-      <div className={`relative ${className} rounded-2xl bg-gradient-to-br from-white/10 via-cyan-500/20 to-violet-500/20 backdrop-blur-sm p-3 border border-white/20 shadow-2xl shadow-cyan-500/30 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+      <div className={`relative ${className} rounded-2xl bg-gradient-to-br from-white/10 via-cyan-500/20 to-violet-500/20 backdrop-blur-sm p-3 border border-white/20 shadow-2xl shadow-cyan-500/30 transform scale-110 transition-all duration-300`}>
         {/* Geometric modern logo */}
         <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
           {/* Abstract wave/event symbol */}

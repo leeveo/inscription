@@ -212,7 +212,7 @@ async function generateDefaultEmailContent(event: any, participant: { nom: strin
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  });
+  }).replace(/^(.)|\s+(.)/g, c => c.toUpperCase());
 
   // Utiliser la couleur personnalisée ou la couleur par défaut
   const headerColor = event.couleur_header_email || '#667eea';

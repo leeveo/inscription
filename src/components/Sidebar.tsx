@@ -11,6 +11,7 @@ import {
   FiLogOut,
   FiLayout
 } from 'react-icons/fi';
+import WaiEventLogo from '@/components/WaiEventLogo';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -86,14 +87,14 @@ export default function Sidebar() {
         {/* Logo ou titre */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg">
-              <FiGrid className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 flex items-center justify-center">
+              <WaiEventLogo className="w-12 h-12" />
             </div>
-            <div>
+            <div className="ml-1">
               <h1 className="text-xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                Event Admin
+                Waivent.app
               </h1>
-              <p className="text-xs text-blue-200/80">Interface de gestion</p>
+              <p className="text-xs text-blue-200/80">Gestion d'événements</p>
             </div>
           </div>
         </div>
@@ -157,7 +158,7 @@ export default function Sidebar() {
               </div>
               <div className="flex-1 text-left">
                 <span className="font-semibold block">Scanner QR Code</span>
-                <span className="text-xs text-blue-200/80">Ouvrir dans un nouvel onglet</span>
+               
               </div>
               <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
             </button>
@@ -179,9 +180,7 @@ export default function Sidebar() {
                 </div>
                 <span className="font-semibold text-white">Documentation</span>
               </div>
-              <p className="text-blue-200/80 text-xs mb-3 leading-relaxed">
-                Guides, API et FAQ pour gérer les inscriptions aux événements.
-              </p>
+            
               <Link
                 href="/admin/documentation"
                 className="inline-flex items-center gap-2 px-3 py-2

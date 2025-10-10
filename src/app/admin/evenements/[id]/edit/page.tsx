@@ -1656,7 +1656,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
-                          }) : 'Date à définir'}</p>
+                          }).replace(/^(.)|\s+(.)/g, c => c.toUpperCase()) : 'Date à définir'}</p>
                           <p><strong>Lieu:</strong> {lieu || 'Lieu à définir'}</p>
                           {prix && (
                             <p><strong>Prix:</strong> {prix}€</p>
