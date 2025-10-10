@@ -1621,16 +1621,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         Confirmation d'inscription
                       </h1>
                       
-                      {/* Logo si défini */}
-                      {logoUrl && (
-                        <img 
-                          src={logoUrl} 
-                          alt="Logo de l'événement" 
-                          className="mx-auto mb-4 max-w-32 h-auto rounded"
-                          style={{ maxWidth: '128px' }}
-                        />
-                      )}
-                      
                       <p className="text-lg opacity-90">
                         Merci Jean Dupont !
                       </p>
@@ -1638,8 +1628,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
                     {/* Contenu de l'email */}
                     <div className="px-8 py-6 bg-gray-50">
+                      {/* Logo si défini */}
+                      {logoUrl && (
+                        <div className="text-center mb-6">
+                          <img 
+                            src={logoUrl} 
+                            alt="Logo de l'événement" 
+                            className="mx-auto max-w-32 h-auto rounded"
+                            style={{ maxWidth: '128px' }}
+                          />
+                        </div>
+                      )}
                       <p className="text-base text-gray-700 mb-6">
-                        Votre inscription à l'événement <strong>{nom || 'Nom de l\'événement'}</strong> a été confirmée avec succès.
+                        Votre inscription à l'événement a bien été prise en compte.
                       </p>
 
                       {/* Détails de l'événement */}
@@ -1662,7 +1663,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                           )}
                           {description && (
                             <div>
-                              <strong>Description:</strong>
                               <div 
                                 className="mt-2 prose prose-sm max-w-none" 
                                 dangerouslySetInnerHTML={{ 
@@ -1742,10 +1742,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                           <p><strong>Email:</strong> jean.dupont@exemple.com</p>
                         </div>
                       </div>
-
-                      <p className="text-sm text-gray-500 text-center">
-                        Nous vous recontacterons prochainement avec plus d'informations.
-                      </p>
                     </div>
 
                     {/* Footer */}
@@ -1754,7 +1750,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         Cet email a été envoyé automatiquement suite à votre inscription.
                       </p>
                       <p className="text-sm text-gray-500">
-                        Pour toute question, contactez-nous à {emailContact || 'l\'organisateur'}.
+                        Pour toute question, vous pouvez nous contacter à l'adresse suivante :
+                        <br />
+                        {emailContact || 'l\'organisateur'}.
                       </p>
                     </div>
                   </div>

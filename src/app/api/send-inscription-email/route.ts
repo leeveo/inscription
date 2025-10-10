@@ -246,38 +246,37 @@ async function generateDefaultEmailContent(event: any, participant: { nom: strin
         <div class="container">
             <div class="header">
                 <h1>Confirmation d'inscription</h1>
-                ${event.logo_url ? `<img src="${event.logo_url}" alt="Logo ${event.nom}" class="logo" />` : ''}
                 <p>Merci ${participant.prenom} ${participant.nom} !</p>
             </div>
 
             <div class="content">
-                <p>Votre inscription à l'événement <strong>${event.nom}</strong> a été confirmée avec succès.</p>
+                ${event.logo_url ? `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="${event.logo_url}" alt="Logo ${event.nom}" class="logo" />
+                </div>` : ''}
+                <p>Votre inscription a bien été prise en compte.</p>
 
                 <div class="event-details">
                     <h2>📅 Détails de l'événement</h2>
                     <p><strong>Nom:</strong> ${event.nom}</p>
                     <p><strong>Date:</strong> ${eventDate}</p>
                     <p><strong>Lieu:</strong> ${event.lieu}</p>
-                    ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
+                    ${event.description ? `<p>${event.description}</p>` : ''}
                     ${event.prix ? `<p><strong>Prix:</strong> ${event.prix}€</p>` : ''}
                 </div>
+
+                ${sessionsHtml}
 
                 <div class="event-details">
                     <h2>👤 Vos informations</h2>
                     <p><strong>Nom:</strong> ${participant.prenom} ${participant.nom}</p>
                     <p><strong>Email:</strong> ${participant.email}</p>
                 </div>
-
-                ${sessionsHtml}
-
-                <p style="text-align: center;">
-                    Nous vous recontacterons prochainement avec plus d'informations.
-                </p>
             </div>
 
             <div class="footer">
                 <p>Cet email a été envoyé automatiquement suite à votre inscription.</p>
-                <p>Pour toute question, contactez-nous à ${event.email_contact || 'l\'organisateur'}.</p>
+                <p>Pour toute question, vous pouvez nous contacter à l'adresse suivante :<br/>${event.email_contact || 'l\'organisateur'}.</p>
             </div>
         </div>
     </body>
@@ -383,7 +382,8 @@ function generateSessionsHtml(sessions: any[]): string {
       ${sessionsHtml}
       <div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-top: 15px;">
         <p style="color: #1e40af; margin: 0; font-size: 14px;">
-          <strong>Rappel important :</strong> Présentez-vous 10 minutes avant le début de chaque session.
+          <strong>Rappel important :</strong>  N’oubliez pas de vous présenter avec une pièce
+d’identité pour accéder au ministère de l’Intérieur. 
         </p>
       </div>
     </div>
