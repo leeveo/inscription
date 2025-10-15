@@ -17,11 +17,12 @@ type TicketTemplate = {
 type TicketTemplateWizardProps = {
   eventId: string
   onClose: () => void
+  onSuccess?: () => void
 }
 
 type Step = 1 | 2 | 3
 
-export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplateWizardProps) {
+export default function TicketTemplateWizard({ eventId, onClose, onSuccess }: TicketTemplateWizardProps) {
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [template, setTemplate] = useState<TicketTemplate | null>(null)
   const [subject, setSubject] = useState('')
@@ -130,10 +131,14 @@ export default function TicketTemplateWizard({ eventId, onClose }: TicketTemplat
       }
 
       setSuccessMessage('✅ Template sauvegardé avec succès!')
-      setTimeout(() => {
-        setSuccessMessage(null)
-        onClose()
-      }, 2000)
+      
+      // Appeler le callback onSuccess si fourni
+      if (onSuccess) {
+        onSuccess()
+      }
+      
+      // Fermer immédiatement après la sauvegarde
+      onClose()
     } catch (err) {
       console.error('Error saving ticket template:', err)
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')

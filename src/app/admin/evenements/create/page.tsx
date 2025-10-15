@@ -23,7 +23,7 @@ const schema = z.object({
   notes: z.string().optional(),
   capacite: z.string().optional(),
   // Make type_evenement required (not optional)
-  type_evenement: z.enum(['conférence', 'atelier', 'webinar', 'autre']).default('conférence'),
+  type_evenement: z.enum(['concert', 'salon_professionnel', 'atelier', 'conference', 'webinar', 'cours_en_ligne', 'festival', 'tourisme', 'spectacle', 'match', 'pratique_sportive', 'adhesion', 'don', 'autre']).default('conference'),
   statut: z.enum(['brouillon', 'publié', 'archivé']),
   // Note: description and logo_url are handled separately in state
 })
@@ -46,7 +46,7 @@ export default function CreateEventPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       type_participation: 'présentiel',
-      type_evenement: 'conférence',
+      type_evenement: 'conference',
       statut: 'brouillon'
     }
   })
@@ -165,16 +165,27 @@ export default function CreateEventPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="type_evenement" className="block text-sm font-medium text-gray-700 mb-1">
-                    Type d&apos;événement
+                    Type d&apos;événement *
                   </label>
                   <select
                     id="type_evenement"
                     {...register('type_evenement')}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   >
-                    <option value="conférence">Conférence</option>
+                    <option value="">Sélectionner un type d&apos;événement</option>
+                    <option value="concert">Concert</option>
+                    <option value="salon_professionnel">Salon professionnel</option>
                     <option value="atelier">Atelier</option>
-                    <option value="webinar">Webinar</option>
+                    <option value="conference">Conférence</option>
+                    <option value="webinar">Événement en ligne (webinar)</option>
+                    <option value="cours_en_ligne">Cours en ligne</option>
+                    <option value="festival">Festival</option>
+                    <option value="tourisme">Tourisme et parc de loisirs</option>
+                    <option value="spectacle">Spectacle</option>
+                    <option value="match">Match</option>
+                    <option value="pratique_sportive">Pratique sportive</option>
+                    <option value="adhesion">Adhésion</option>
+                    <option value="don">Don</option>
                     <option value="autre">Autre</option>
                   </select>
                 </div>

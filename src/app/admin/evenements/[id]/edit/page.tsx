@@ -27,8 +27,18 @@ import PageBuilderSelector from '@/components/PageBuilderSelector';
 import BasicPageSelector from '@/components/BasicPageSelector';
 import DomainManager from '@/components/DomainManager';
 import IntervenantsManager from '@/components/IntervenantsManager';
+import EmailTemplateSelector from '@/components/EmailTemplateSelector';
+import EmailTemplateDropdown from '@/components/EmailTemplateDropdown';
+import PagesManager from '@/components/PagesManagerSimple';
+import TicketCustomizationTab from '@/components/tickets/TicketCustomizationTab';
+import BadgeCustomizationTabNew from '@/components/badges/BadgeCustomizationTabNew';
 import { exportParticipantsToCSV, exportSelectedParticipantsToCSV } from '@/utils/csvExport';
+import { exportParticipantsToExcel, exportSelectedParticipantsToExcel } from '@/utils/excelExport';
 import { useSessionsStats } from '@/hooks/useSessionsStats';
+import { FiMail, FiEdit3 } from 'react-icons/fi';
+import TicketTypeManager from '@/components/billing/TicketTypeManager';
+import QuotaTracker from '@/components/billing/QuotaTracker';
+
 
 // Type pour les événements
 type Evenement = {
@@ -41,6 +51,7 @@ type Evenement = {
   created_at: string
   prix?: number
   places_disponibles?: number
+  evenement_payant?: boolean
   organisateur?: string
   email_contact?: string
   telephone_contact?: string
@@ -52,6 +63,18 @@ type Evenement = {
   couleur_header_email?: string
   objet_email_inscription?: string
   builder_page_id?: string | null
+  type_localisation?: string
+  nom_lieu?: string
+  adresse_evenement?: string
+  site_internet?: string
+  plateforme?: string
+  // Champs organisateur
+  nom_organisation?: string
+  statut_juridique?: string
+  numero_tva_intracommunautaire?: string
+  representant_legal_nom?: string
+  representant_legal_prenom?: string
+  representant_legal_fonction?: string
 }
 
 type Participant = {
@@ -91,10 +114,16 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'email' | 'participants' | 'sessions' | 'intervenants' | 'checkin' | 'landing-page' | 'participant-urls' | 'page-builder'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'participants' | 'sessions' | 'intervenants' | 'tickets' | 'checkin' | 'landing-page' | 'participant-urls' | 'page-builder' | 'billetterie'>('details');
+  const [ticketSubTab, setTicketSubTab] = useState<'ticket' | 'badge'>('ticket');
   const [showEmailTemplateEditor, setShowEmailTemplateEditor] = useState(false);
   const [showParticipantEmailManager, setShowParticipantEmailManager] = useState(false);
   const [showTicketTemplateModal, setShowTicketTemplateModal] = useState(false);
+  const [ticketTemplateRefreshTrigger, setTicketTemplateRefreshTrigger] = useState(0);
+  const [emailTemplateRefreshTrigger, setEmailTemplateRefreshTrigger] = useState(0);
+  const [showTicketPreview, setShowTicketPreview] = useState(false);
+  const [selectedParticipantForTicket, setSelectedParticipantForTicket] = useState<Participant | null>(null);
+  const [ticketTemplate, setTicketTemplate] = useState<any>(null);
   const [showFullAgendaModal, setShowFullAgendaModal] = useState(false);
   const [showDetailedStatsModal, setShowDetailedStatsModal] = useState(false);
   const [showLandingLinkForm, setShowLandingLinkForm] = useState(false);
@@ -111,6 +140,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [dateFin, setDateFin] = useState('');
   const [prix, setPrix] = useState<number | ''>('');
   const [placesDisponibles, setPlacesDisponibles] = useState<number | ''>('');
+  const [evenementPayant, setEvenementPayant] = useState(false);
   const [organisateur, setOrganisateur] = useState('');
   const [emailContact, setEmailContact] = useState('');
   const [telephoneContact, setTelephoneContact] = useState('');
@@ -119,11 +149,50 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [statut, setStatut] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [codeAcces, setCodeAcces] = useState('');
+  
+  // Nouveaux champs pour la localisation
+  const [typeLocalisation, setTypeLocalisation] = useState<'lieu' | 'en_ligne' | 'non_applicable'>('lieu');
+  const [nomLieu, setNomLieu] = useState('');
+  const [adresseEvenement, setAdresseEvenement] = useState('');
+  const [siteInternet, setSiteInternet] = useState('');
+  const [plateforme, setPlateforme] = useState('');
+  
+  // Nouveaux champs pour l'organisateur
+  const [nomOrganisation, setNomOrganisation] = useState('');
+  const [statutJuridique, setStatutJuridique] = useState('');
+  const [numeroTvaIntracommunautaire, setNumeroTvaIntracommunautaire] = useState('');
+  const [representantLegalNom, setRepresentantLegalNom] = useState('');
+  const [representantLegalPrenom, setRepresentantLegalPrenom] = useState('');
+  const [representantLegalFonction, setRepresentantLegalFonction] = useState('');
+  const [organisationAdresse, setOrganisationAdresse] = useState('');
+  const [organisationCodePostal, setOrganisationCodePostal] = useState('');
+  const [organisationVille, setOrganisationVille] = useState('');
+  const [organisationPays, setOrganisationPays] = useState('France');
+  const [organisationTelephone, setOrganisationTelephone] = useState('');
+  const [organisationSiteWeb, setOrganisationSiteWeb] = useState('');
+  
+  // Variables d'état supplémentaires pour l'organisateur (correspondances avec les champs UI)
+  const [statutLegal, setStatutLegal] = useState('');
+  const [numeroSiret, setNumeroSiret] = useState('');
+  const [numeroTva, setNumeroTva] = useState('');
+  const [siteWebOrganisation, setSiteWebOrganisation] = useState('');
+  // [descriptionActivite, setDescriptionActivite] supprimées - colonne n'existe pas
+  const [representantNom, setRepresentantNom] = useState('');
+  const [representantPrenom, setRepresentantPrenom] = useState('');
+  const [representantFonction, setRepresentantFonction] = useState('');
+  const [adresseOrganisation, setAdresseOrganisation] = useState('');
+  const [codePostalOrganisation, setCodePostalOrganisation] = useState('');
+  const [villeOrganisation, setVilleOrganisation] = useState('');
+  const [paysOrganisation, setPaysOrganisation] = useState('France');
   const [couleurHeaderEmail, setCouleurHeaderEmail] = useState('#667eea');
   const [objetEmailInscription, setObjetEmailInscription] = useState('');
+  const [emailTemplateId, setEmailTemplateId] = useState<string>('');
   const [builderPageId, setBuilderPageId] = useState<string | null>(null);
   const [builderPages, setBuilderPages] = useState<any[]>([]);
   const [isLoadingBuilderPages, setIsLoadingBuilderPages] = useState(false);
+
+  // State pour gérer les sections d'accordéon
+  const [activeSection, setActiveSection] = useState<'details' | 'organisateur' | 'email' | 'qr' | 'form' | 'email-template' | 'publication' | 'pagebuilder'>('details');
 
   // Participants state
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -205,21 +274,32 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         try {
           const result = await supabase
             .from('inscription_evenements')
-            .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription')
+            .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription, email_template_id')
             .eq('id', eventId)
             .single();
           data = result.data;
           error = result.error;
         } catch (err) {
-          // Fallback si les nouvelles colonnes n'existent pas encore
-          console.warn('Nouveaux champs non disponibles, utilisation du fallback');
-          const result = await supabase
-            .from('inscription_evenements')
-            .select('*, code_acces, builder_page_id')
-            .eq('id', eventId)
-            .single();
-          data = result.data;
-          error = result.error;
+          console.warn('Colonnes email_template_id non disponibles, essai sans elle');
+          try {
+            const result = await supabase
+              .from('inscription_evenements')
+              .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription')
+              .eq('id', eventId)
+              .single();
+            data = result.data;
+            error = result.error;
+          } catch (err2) {
+            // Fallback complet si les nouvelles colonnes n'existent pas encore
+            console.warn('Nouveaux champs non disponibles, utilisation du fallback complet');
+            const result = await supabase
+              .from('inscription_evenements')
+              .select('*, code_acces, builder_page_id')
+              .eq('id', eventId)
+              .single();
+            data = result.data;
+            error = result.error;
+          }
         }
           
         if (error) throw error;
@@ -233,16 +313,27 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setDateFin(event.date_fin ? new Date(event.date_fin).toISOString().slice(0, 16) : '');
           setPrix(event.prix || '');
           setPlacesDisponibles(event.places_disponibles || '');
+          setEvenementPayant(event.evenement_payant || false);
           setOrganisateur(event.organisateur || '');
           setEmailContact(event.email_contact || '');
           setTelephoneContact(event.telephone_contact || '');
           setEmailEnvoi(event.email_envoi || '');
           setTypeEvenement(event.type_evenement || '');
+          
+          // Initialiser les nouveaux champs de localisation
+          setTypeLocalisation((event.type_localisation as 'lieu' | 'en_ligne' | 'non_applicable') || 'lieu');
+          setNomLieu(event.nom_lieu || '');
+          setAdresseEvenement(event.adresse_evenement || '');
+          setSiteInternet(event.site_internet || '');
+          setPlateforme(event.plateforme || '');
+          
+          // Colonnes d'organisateur supprimées - non disponibles dans le schéma
           setStatut(event.statut || '');
           setLogoUrl(event.logo_url || ''); // Load existing logo
           setCodeAcces(event.code_acces || ''); // Load existing access code
           setCouleurHeaderEmail(event.couleur_header_email || '#667eea'); // Load header color
           setObjetEmailInscription(event.objet_email_inscription || ''); // Load email subject
+          setEmailTemplateId((event as any).email_template_id || ''); // Load email template
           setBuilderPageId(event.builder_page_id || null); // Load builder page ID
                   }
 
@@ -571,11 +662,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       const baseUpdateData = {
         nom,
         description,
-        lieu,
+        lieu: typeLocalisation === 'lieu' ? `${nomLieu} - ${adresseEvenement}` : (typeLocalisation === 'en_ligne' ? siteInternet : ''),
         date_debut: dateDebut,
         date_fin: dateFin,
         prix: prix === '' ? null : prix,
         places_disponibles: placesDisponibles === '' ? null : placesDisponibles,
+        evenement_payant: evenementPayant,
         organisateur,
         email_contact: emailContact,
         telephone_contact: telephoneContact,
@@ -584,6 +676,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         statut,
         logo_url: logoUrl || null,
         code_acces: codeAcces || null,
+        type_localisation: typeLocalisation,
+        nom_lieu: typeLocalisation === 'lieu' ? nomLieu : null,
+        adresse_evenement: typeLocalisation === 'lieu' ? adresseEvenement : null,
+        site_internet: typeLocalisation === 'en_ligne' ? siteInternet : null,
+        plateforme: typeLocalisation === 'en_ligne' ? plateforme : null
       };
 
       // Essayer d'inclure les nouveaux champs s'ils existent
@@ -592,6 +689,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         couleur_header_email: couleurHeaderEmail || '#667eea',
         objet_email_inscription: objetEmailInscription || '',
       };
+
+      // Ajouter email_template_id seulement si la colonne existe
+      if (emailTemplateId) {
+        updateData.email_template_id = emailTemplateId;
+      }
       
       console.log('Update data being sent:', updateData);
       
@@ -612,6 +714,200 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Fonction pour récupérer le template de ticket
+  const fetchTicketTemplate = async () => {
+    try {
+      const supabase = supabaseBrowser();
+      const { data, error } = await supabase
+        .from('inscription_ticket_templates')
+        .select('*')
+        .eq('evenement_id', eventId)
+        .maybeSingle();
+
+      if (error && error.code !== '42P01') {
+        console.error('Error fetching ticket template:', error);
+      } else if (data) {
+        setTicketTemplate(data);
+      }
+    } catch (err) {
+      console.error('Error fetching ticket template:', err);
+    }
+  };
+
+  // Fonction pour générer le contenu du ticket avec les vraies données
+  const getTicketPreviewContent = (participant: Participant) => {
+    if (!ticketTemplate) return '<div class="text-center p-8">Chargement du template...</div>';
+
+    // Générer un QR code valide avec les données du participant
+    const qrCodeData = JSON.stringify({
+      eventId: eventId,
+      participantId: participant.id,
+      name: `${participant.prenom} ${participant.nom}`,
+      email: participant.email,
+      timestamp: new Date().toISOString()
+    });
+
+    // URL pour le QR code (taille optimisée pour tenir sur une page)
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(qrCodeData)}`;
+
+    return ticketTemplate.html_content
+      .replace(/\{\{event_name\}\}/g, nom || 'Événement')
+      .replace(/\{\{event_date\}\}/g, dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : 'Date à définir')
+      .replace(/\{\{event_location\}\}/g, lieu || 'Lieu à définir')
+      .replace(/\{\{event_description\}\}/g, description || 'Description à venir')
+      .replace(/\{\{participant_firstname\}\}/g, participant.prenom)
+      .replace(/\{\{participant_lastname\}\}/g, participant.nom)
+      .replace(/\{\{participant_email\}\}/g, participant.email)
+      .replace(/\{\{participant_phone\}\}/g, participant.telephone || 'Non renseigné')
+      .replace(/\{\{participant_profession\}\}/g, participant.profession || 'Non renseigné')
+      .replace(/\{\{participant_sessions\}\}/g, participant.sessions_selectionnees ? 
+        `<ul style="list-style: none; padding: 0;">${participant.sessions_selectionnees.split(',').map(session => 
+          `<li style="padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">✅ ${session.trim()}</li>`
+        ).join('')}</ul>` : 'Aucune session sélectionnée')
+      .replace(/\{\{qr_code\}\}/g, `<img src="${qrCodeUrl}" alt="QR Code" class="qr-code" style="width: 80px; height: 80px; margin: 0 auto; display: block; border-radius: 4px;" />`)
+      .replace(/\{\{ticket_url\}\}/g, `${window.location.origin}/ticket/${participant.id}`)
+      .replace(/\{\{registration_date\}\}/g, participant.created_at ? new Date(participant.created_at).toLocaleDateString('fr-FR') : 'Date inconnue');
+  };
+
+  // Récupérer le template quand le modal s'ouvre
+  useEffect(() => {
+    if (showTicketPreview && !ticketTemplate) {
+      fetchTicketTemplate();
+    }
+  }, [showTicketPreview]);
+
+  // Fonction pour imprimer le ticket dans une nouvelle fenêtre
+  const printTicket = (participant: Participant) => {
+    if (!ticketTemplate) {
+      alert('Template de ticket non disponible');
+      return;
+    }
+
+    const ticketContent = getTicketPreviewContent(participant);
+    
+    // Créer le HTML complet pour l'impression
+    const printHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Ticket - ${participant.prenom} ${participant.nom}</title>
+        <style>
+          @page {
+            margin: 10mm 8mm;
+            size: A4 portrait;
+          }
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: white;
+            font-size: 10px;
+            line-height: 1.2;
+            overflow: hidden;
+          }
+          .ticket-container {
+            width: 100%;
+            max-width: 190mm;
+            margin: 0 auto;
+            padding: 5mm;
+            box-sizing: border-box;
+            transform: scale(0.65);
+            transform-origin: top center;
+            max-height: calc(297mm - 20mm);
+            overflow: hidden;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            font-size: 14px !important;
+            margin: 4px 0 !important;
+            line-height: 1.1 !important;
+          }
+          p, div, span {
+            font-size: 10px !important;
+            margin: 2px 0 !important;
+            line-height: 1.2 !important;
+          }
+          img {
+            max-width: 80px !important;
+            height: auto !important;
+            max-height: 80px !important;
+          }
+          table {
+            font-size: 9px !important;
+            margin: 2px 0 !important;
+          }
+          td, th {
+            font-size: 9px !important;
+            padding: 2px !important;
+          }
+          .qr-code {
+            width: 80px !important;
+            height: 80px !important;
+            max-width: 80px !important;
+            max-height: 80px !important;
+          }
+          ul, ol {
+            margin: 2px 0 !important;
+            padding-left: 15px !important;
+          }
+          li {
+            font-size: 9px !important;
+            margin: 1px 0 !important;
+            padding: 1px 0 !important;
+          }
+          @media print {
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+            }
+            .ticket-container {
+              transform: scale(0.6) !important;
+              max-height: 277mm !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            * {
+              page-break-inside: avoid !important;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="ticket-container" style="page-break-inside: avoid; break-inside: avoid;">
+          <div style="page-break-inside: avoid; break-inside: avoid; height: auto; max-height: 250mm; overflow: hidden;">
+            ${ticketContent}
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    // Ouvrir nouvelle fenêtre et imprimer
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
     }
   };
 
@@ -896,6 +1192,26 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     exportParticipantsToCSV(checkedInParticipants, filename);
   };
 
+  // Function to export all participants to Excel
+  const handleExportAllParticipantsToExcel = () => {
+    if (participants.length === 0) {
+      alert('Aucun participant à exporter');
+      return;
+    }
+    const filename = `participants_${nom.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportParticipantsToExcel(participants, filename);
+  };
+
+  // Function to export selected participants to Excel
+  const handleExportSelectedParticipantsToExcel = () => {
+    if (selectedParticipants.length === 0) {
+      alert('Aucun participant sélectionné');
+      return;
+    }
+    const filename = `participants_selectionnes_${nom.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportSelectedParticipantsToExcel(participants, selectedParticipants, filename);
+  };
+
   // Builder forms management functions
   const handleDeleteForm = async () => {
     if (!formToDelete) {
@@ -1174,10 +1490,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <span>Sessions</span>
             </button>
 
-            {/* 4. Landing Page */}
+            {/* 4. Landing Page & Email */}
             <button
               onClick={() => setActiveTab('landing-page')}
-              title="Configuration de la page d'inscription publique avec templates personnalisables"
+              title="Configuration de la page d'inscription publique et des emails automatiques"
               className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
                 activeTab === 'landing-page'
                   ? 'bg-blue-600 text-white shadow-md'
@@ -1187,7 +1503,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
-              <span>Creation de formulaire</span>
+              <span>Formulaires & Emails</span>
             </button>
 
 
@@ -1207,7 +1523,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <span>URLs</span>
             </button>
 
-            {/* 6. Page Builder */}
+            {/* 6. Mini site web */}
             <button
               onClick={() => setActiveTab('page-builder')}
               title="Éditeur visuel pour créer des pages personnalisées sans code"
@@ -1220,38 +1536,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
               </svg>
-              <span>Page Builder</span>
+              <span>Mini site web</span>
             </button>
 
-            {/* 6b. Gestionnaire de Pages */}
-            <button
-              onClick={() => window.open('/admin/pages-builder', '_blank')}
-              title="Gestionnaire centralisé de toutes les pages (landing pages et formulaires)"
-              className="group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 bg-purple-100 text-purple-700 hover:bg-purple-200"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <span>Gestionnaire</span>
-            </button>
-
-            {/* 7. Email */}
-            <button
-              onClick={() => setActiveTab('email')}
-              title="Templates d'emails, envoi de billets et invitations aux participants"
-              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
-                activeTab === 'email'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <span>Email</span>
-            </button>
-
-            {/* 8. Participants */}
+            {/* 7. Participants */}
             <button
               onClick={() => setActiveTab('participants')}
               title="Liste des participants inscrits, import CSV, gestion des inscriptions"
@@ -1274,7 +1562,39 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               )}
             </button>
 
-            {/* 9. Check-in */}
+            {/* 8. Tickets */}
+            <button
+              onClick={() => setActiveTab('tickets')}
+              title="Gestion des templates de billets et tickets d'entrée"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'tickets'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
+              <span>Badges & Tickets</span>
+            </button>
+
+            {/* 9. Billetterie */}
+            <button
+              onClick={() => setActiveTab('billetterie')}
+              title="Configuration de la billetterie, types de billets, quotas et paiements"
+              className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                activeTab === 'billetterie'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2zm0 8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Billetterie</span>
+            </button>
+
+            {/* 10. Check-in */}
             <button
               onClick={() => setActiveTab('checkin')}
               title="Gestion des présences, scan QR codes, statistiques de check-in"
@@ -1303,540 +1623,946 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </div>
             )}
 
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nom de l'événement */}
-              <div className="md:col-span-2">
-                <label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom de l&apos;événement *
-                </label>
-                <input
-                  type="text"
-                  id="nom"
-                  value={nom}
-                  onChange={(e) => setNom(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description * (HTML)
-                </label>
-                <EventDescriptionEditor
-                  value={description}
-                  onChange={setDescription}
-                  placeholder="Décrivez votre événement en détail avec du texte formaté..."
-                />
-              </div>
-
-              {/* Logo de l'événement */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Logo de l&apos;événement
-                </label>
-                <ImageUpload
-                  currentImageUrl={logoUrl || ''}
-                  onImageUploaded={setLogoUrl}
-                  className="w-full"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Téléchargez un logo qui apparaîtra sur les pages d&apos;inscription et templates (max 1MB)
-                </p>
-              </div>
-
-              {/* Lieu */}
-              <div>
-                <label htmlFor="lieu" className="block text-sm font-medium text-gray-700 mb-1">
-                  Lieu *
-                </label>
-                <input
-                  type="text"
-                  id="lieu"
-                  value={lieu}
-                  onChange={(e) => setLieu(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Type d'événement */}
-              <div>
-                <label htmlFor="typeEvenement" className="block text-sm font-medium text-gray-700 mb-1">
-                  Type d&apos;événement
-                </label>
-                <input
-                  type="text"
-                  id="typeEvenement"
-                  value={typeEvenement}
-                  onChange={(e) => setTypeEvenement(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Date de début */}
-              <div>
-                <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date et heure de début *
-                </label>
-                <input
-                  type="datetime-local"
-                  id="dateDebut"
-                  value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Date de fin */}
-              <div>
-                <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date et heure de fin *
-                </label>
-                <input
-                  type="datetime-local"
-                  id="dateFin"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Prix */}
-              <div>
-                <label htmlFor="prix" className="block text-sm font-medium text-gray-700 mb-1">
-                  Prix (€)
-                </label>
-                <input
-                  type="number"
-                  id="prix"
-                  value={prix}
-                  onChange={(e) => setPrix(e.target.value ? parseFloat(e.target.value) : '')}
-                  min="0"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Places disponibles */}
-              <div>
-                <label htmlFor="placesDisponibles" className="block text-sm font-medium text-gray-700 mb-1">
-                  Places disponibles
-                </label>
-                <input
-                  type="number"
-                  id="placesDisponibles"
-                  value={placesDisponibles}
-                  onChange={(e) => setPlacesDisponibles(e.target.value ? parseInt(e.target.value) : '')}
-                  min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Organisateur */}
-              <div>
-                <label htmlFor="organisateur" className="block text-sm font-medium text-gray-700 mb-1">
-                  Organisateur
-                </label>
-                <input
-                  type="text"
-                  id="organisateur"
-                  value={organisateur}
-                  onChange={(e) => setOrganisateur(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Email de contact */}
-              <div>
-                <label htmlFor="emailContact" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email de contact
-                </label>
-                <input
-                  type="email"
-                  id="emailContact"
-                  value={emailContact}
-                  onChange={(e) => setEmailContact(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Téléphone de contact */}
-              <div>
-                <label htmlFor="telephoneContact" className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone de contact
-                </label>
-                <input
-                  type="tel"
-                  id="telephoneContact"
-                  value={telephoneContact}
-                  onChange={(e) => setTelephoneContact(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Email d'envoi (Brevo) */}
-              <div>
-                <label htmlFor="emailEnvoi" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email d'envoi (Brevo)
-                </label>
-                <input
-                  type="email"
-                  id="emailEnvoi"
-                  value={emailEnvoi}
-                  onChange={(e) => setEmailEnvoi(e.target.value)}
-                  placeholder="email@domaine.com (doit être vérifié dans Brevo)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Adresse email utilisée pour l'envoi des emails d'inscription (doit être vérifiée dans votre compte Brevo)
-                </p>
-              </div>
-
-              {/* Statut */}
-              <div>
-                <label htmlFor="statut" className="block text-sm font-medium text-gray-700 mb-1">
-                  Statut
-                </label>
-                <select
-                  id="statut"
-                  value={statut}
-                  onChange={(e) => setStatut(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {/* Système d'accordéon avec sliders verticaux */}
+            <div className="space-y-4">
+              
+              {/* Section 1: Détail de l'événement */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'details' ? 'details' : 'details')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 flex items-center justify-between group"
                 >
-                  <option value="">Sélectionner un statut</option>
-                  <option value="actif">Actif</option>
-                  <option value="brouillon">Brouillon</option>
-                  <option value="annule">Annulé</option>
-                  <option value="termine">Terminé</option>
-                </select>
-              </div>
-
-              {/* Section Personnalisation Email */}
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
-                  🎨 Personnalisation des emails d'inscription
-                </h3>
-              </div>
-
-              {/* Couleur du header */}
-              <div>
-                <label htmlFor="couleurHeaderEmail" className="block text-sm font-medium text-gray-700 mb-2">
-                  Couleur du header
-                </label>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    id="couleurHeaderEmail"
-                    value={couleurHeaderEmail}
-                    onChange={(e) => setCouleurHeaderEmail(e.target.value)}
-                    className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={couleurHeaderEmail}
-                    onChange={(e) => {
-                      // Valider le format hex
-                      if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                        setCouleurHeaderEmail(e.target.value);
-                      }
-                    }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                    placeholder="#667eea"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Couleur de fond du header des emails de confirmation d'inscription
-                </p>
-                <div className="mt-2 p-3 rounded-lg" style={{ backgroundColor: couleurHeaderEmail }}>
-                  <p className="text-white font-bold text-center">Aperçu du header</p>
-                </div>
-              </div>
-
-              {/* Objet de l'email */}
-              <div>
-                <label htmlFor="objetEmailInscription" className="block text-sm font-medium text-gray-700 mb-1">
-                  Objet de l'email d'inscription
-                </label>
-                <input
-                  type="text"
-                  id="objetEmailInscription"
-                  value={objetEmailInscription}
-                  onChange={(e) => setObjetEmailInscription(e.target.value)}
-                  placeholder="Ex: Confirmation d'inscription - {{event_name}}"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Variables disponibles : {'{'}{'{'} event_name {'}'}{'}'},  {'{'}{'{'} participant_firstname {'}'}{'}'},  {'{'}{'{'} participant_lastname {'}'}{'}'},  {'{'}{'{'} event_date {'}'}{'}'} 
-                </p>
-                {objetEmailInscription && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-sm text-blue-800">
-                      <strong>Aperçu :</strong> {objetEmailInscription.replace('{{event_name}}', nom || 'Nom de l\'événement')}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Aperçu de l'email */}
-              <div className="md:col-span-2">
-                <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  Aperçu de l'email de confirmation
-                </h4>
-
-                {/* Objet de l'email */}
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm font-medium text-blue-800 mb-1">📧 Objet de l'email :</p>
-                  <p className="text-base font-semibold text-blue-900">
-                    {objetEmailInscription && objetEmailInscription.trim() 
-                      ? objetEmailInscription.replace('{{event_name}}', nom || 'Nom de l\'événement')
-                                             .replace('{{participant_firstname}}', 'Jean')
-                                             .replace('{{participant_lastname}}', 'Dupont')
-                                             .replace('{{event_date}}', dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date de l\'événement')
-                      : `Confirmation d'inscription - ${nom || 'Nom de l\'événement'}`
-                    }
-                  </p>
-                </div>
-                
-                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6">
-                  {/* Simuler l'email avec les données actuelles */}
-                  <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
-                    {/* Header avec couleur personnalisée */}
-                    <div 
-                      className="px-8 py-6 text-center text-white"
-                      style={{ 
-                        backgroundColor: couleurHeaderEmail,
-                        borderRadius: '8px 8px 0 0' 
-                      }}
-                    >
-                      <h1 className="text-2xl font-bold mb-4">
-                        Confirmation d'inscription
-                      </h1>
-                      
-                      <p className="text-lg opacity-90">
-                        Merci Jean Dupont !
-                      </p>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
                     </div>
-
-                    {/* Contenu de l'email */}
-                    <div className="px-8 py-6 bg-gray-50">
-                      {/* Logo si défini */}
-                      {logoUrl && (
-                        <div className="text-center mb-6">
-                          <img 
-                            src={logoUrl} 
-                            alt="Logo de l'événement" 
-                            className="mx-auto max-w-32 h-auto rounded"
-                            style={{ maxWidth: '128px' }}
+                    <h3 className="text-lg font-bold text-gray-900">Détail de l'événement</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'details' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'details' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Colonne de gauche - Informations principales */}
+                      <div className="space-y-6">
+                        {/* Nom de l'événement */}
+                        <div>
+                          <label htmlFor="nom" className="block text-sm font-medium text-gray-700 mb-2">
+                            Nom de l&apos;événement *
+                          </label>
+                          <input
+                            type="text"
+                            id="nom"
+                            value={nom}
+                            onChange={(e) => setNom(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Nom de votre événement"
                           />
                         </div>
-                      )}
-                      <p className="text-base text-gray-700 mb-6">
-                        Votre inscription à l'événement a bien été prise en compte.
-                      </p>
 
-                      {/* Détails de l'événement */}
-                      <div className="bg-white p-6 rounded-lg mb-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                          <span className="mr-2">📅</span>
-                          Détails de l'événement
-                        </h2>
-                        <div className="space-y-3 text-sm text-gray-600">
-                          <p><strong>Nom:</strong> {nom || 'Nom de l\'événement'}</p>
-                          <p><strong>Date:</strong> {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          }).replace(/^(.)|\s+(.)/g, c => c.toUpperCase()) : 'Date à définir'}</p>
-                          <p><strong>Lieu:</strong> {lieu || 'Lieu à définir'}</p>
-                          {prix && (
-                            <p><strong>Prix:</strong> {prix}€</p>
+                        {/* Type de localisation */}
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                              Choisir mon type de localisation *
+                            </label>
+                            <div className="space-y-2">
+                              <div className="flex items-center">
+                                <input
+                                  type="radio"
+                                  id="lieu-physique"
+                                  name="type_localisation"
+                                  value="lieu"
+                                  checked={typeLocalisation === 'lieu'}
+                                  onChange={(e) => setTypeLocalisation(e.target.value as 'lieu')}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <label htmlFor="lieu-physique" className="ml-3 text-sm text-gray-700">
+                                  Lieu
+                                </label>
+                              </div>
+                              <div className="flex items-center">
+                                <input
+                                  type="radio"
+                                  id="evenement-en-ligne"
+                                  name="type_localisation"
+                                  value="en_ligne"
+                                  checked={typeLocalisation === 'en_ligne'}
+                                  onChange={(e) => setTypeLocalisation(e.target.value as 'en_ligne')}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <label htmlFor="evenement-en-ligne" className="ml-3 text-sm text-gray-700">
+                                  Événement en ligne
+                                </label>
+                              </div>
+                              <div className="flex items-center">
+                                <input
+                                  type="radio"
+                                  id="non-applicable"
+                                  name="type_localisation"
+                                  value="non_applicable"
+                                  checked={typeLocalisation === 'non_applicable'}
+                                  onChange={(e) => setTypeLocalisation(e.target.value as 'non_applicable')}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                />
+                                <label htmlFor="non-applicable" className="ml-3 text-sm text-gray-700">
+                                  Non applicable
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Champs conditionnels selon le type de localisation */}
+                          {typeLocalisation === 'lieu' && (
+                            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                              <div>
+                                <label htmlFor="nomLieu" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Nom du lieu *
+                                </label>
+                                <input
+                                  type="text"
+                                  id="nomLieu"
+                                  value={nomLieu}
+                                  onChange={(e) => setNomLieu(e.target.value)}
+                                  required={typeLocalisation === 'lieu'}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="Ex: Centre de conférences Paris"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor="adresseEvenement" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Adresse complète *
+                                </label>
+                                <textarea
+                                  id="adresseEvenement"
+                                  value={adresseEvenement}
+                                  onChange={(e) => setAdresseEvenement(e.target.value)}
+                                  required={typeLocalisation === 'lieu'}
+                                  rows={3}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="123 rue de la Paix&#10;75001 Paris&#10;France"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">
+                                  Saisissez l'adresse complète du lieu de l'événement
+                                </p>
+                              </div>
+                            </div>
                           )}
-                          {description && (
-                            <div>
-                              <div 
-                                className="mt-2 prose prose-sm max-w-none" 
-                                dangerouslySetInnerHTML={{ 
-                                  __html: description 
-                                }}
-                              />
+
+                          {typeLocalisation === 'en_ligne' && (
+                            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                              <div>
+                                <label htmlFor="siteInternet" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Site internet *
+                                </label>
+                                <input
+                                  type="url"
+                                  id="siteInternet"
+                                  value={siteInternet}
+                                  onChange={(e) => setSiteInternet(e.target.value)}
+                                  required={typeLocalisation === 'en_ligne'}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="https://www.exemple.com"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor="plateforme" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Plateforme
+                                </label>
+                                <select
+                                  id="plateforme"
+                                  value={plateforme}
+                                  onChange={(e) => setPlateforme(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                >
+                                  <option value="">Sélectionner une plateforme</option>
+                                  <option value="zoom">Zoom</option>
+                                  <option value="teams">Microsoft Teams</option>
+                                  <option value="meet">Google Meet</option>
+                                  <option value="webex">Cisco Webex</option>
+                                  <option value="gotomeeting">GoToMeeting</option>
+                                  <option value="skype">Skype</option>
+                                  <option value="autre">Autre</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {typeLocalisation === 'non_applicable' && (
+                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                              <p className="text-sm text-gray-600">
+                                Aucun lieu spécifique n'est requis pour cet événement.
+                              </p>
                             </div>
                           )}
                         </div>
-                      </div>
 
-                      {/* Sessions inscrites */}
-                      <div className="bg-white p-6 rounded-lg mb-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                          <span className="mr-2">🎯</span>
-                          Vos sessions sélectionnées
-                        </h2>
+                        {/* Date de début */}
+                        <div>
+                          <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700 mb-2">
+                            Date et heure de début *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            id="dateDebut"
+                            value={dateDebut}
+                            onChange={(e) => setDateDebut(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
+
+                        {/* Date de fin */}
+                        <div>
+                          <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700 mb-2">
+                            Date et heure de fin *
+                          </label>
+                          <input
+                            type="datetime-local"
+                            id="dateFin"
+                            value={dateFin}
+                            onChange={(e) => setDateFin(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
+
+                        {/* Prix et places */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="prix" className="block text-sm font-medium text-gray-700 mb-2">
+                              Prix (€)
+                            </label>
+                            <input
+                              type="number"
+                              id="prix"
+                              value={prix}
+                              onChange={(e) => setPrix(e.target.value ? parseFloat(e.target.value) : '')}
+                              min="0"
+                              step="0.01"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Gratuit"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="placesDisponibles" className="block text-sm font-medium text-gray-700 mb-2">
+                              Places disponibles
+                            </label>
+                            <input
+                              type="number"
+                              id="placesDisponibles"
+                              value={placesDisponibles}
+                              onChange={(e) => setPlacesDisponibles(e.target.value ? parseInt(e.target.value) : '')}
+                              min="1"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Illimité"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Événement payant */}
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <div className="flex items-start space-x-3">
+                            <input
+                              type="checkbox"
+                              id="evenementPayant"
+                              checked={evenementPayant}
+                              onChange={(e) => setEvenementPayant(e.target.checked)}
+                              className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <div className="flex-1">
+                              <label htmlFor="evenementPayant" className="block text-sm font-medium text-gray-900 cursor-pointer">
+                                Événement payant
+                              </label>
+                              <p className="text-sm text-gray-600 mt-1">
+                                Activez cette option pour permettre la vente de billets en ligne via Stripe.
+                                Une fois activé, vous pourrez configurer les types de billets et les quotas dans l'onglet "Billetterie".
+                              </p>
+                              {evenementPayant && (
+                                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-sm text-green-800">
+                                    ✅ La billetterie est activée pour cet événement.
+                                    Configurez les types de billets et les quotas dans l'onglet "Billetterie".
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Type d'événement et statut */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="typeEvenement" className="block text-sm font-medium text-gray-700 mb-2">
+                              Type d&apos;événement *
+                            </label>
+                            <select
+                              id="typeEvenement"
+                              value={typeEvenement}
+                              onChange={(e) => setTypeEvenement(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              required
+                            >
+                              <option value="">Sélectionner un type d&apos;événement</option>
+                              <option value="concert">Concert</option>
+                              <option value="salon_professionnel">Salon professionnel</option>
+                              <option value="atelier">Atelier</option>
+                              <option value="conference">Conférence</option>
+                              <option value="webinar">Événement en ligne (webinar)</option>
+                              <option value="cours_en_ligne">Cours en ligne</option>
+                              <option value="festival">Festival</option>
+                              <option value="tourisme">Tourisme et parc de loisirs</option>
+                              <option value="spectacle">Spectacle</option>
+                              <option value="match">Match</option>
+                              <option value="pratique_sportive">Pratique sportive</option>
+                              <option value="adhesion">Adhésion</option>
+                              <option value="don">Don</option>
+                              <option value="autre">Autre</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor="statut" className="block text-sm font-medium text-gray-700 mb-2">
+                              Statut
+                            </label>
+                            <select
+                              id="statut"
+                              value={statut}
+                              onChange={(e) => setStatut(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            >
+                              <option value="">Sélectionner un statut</option>
+                              <option value="actif">Actif</option>
+                              <option value="brouillon">Brouillon</option>
+                              <option value="annule">Annulé</option>
+                              <option value="termine">Terminé</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Organisateur */}
+                        <div>
+                          <label htmlFor="organisateur" className="block text-sm font-medium text-gray-700 mb-2">
+                            Organisateur
+                          </label>
+                          <input
+                            type="text"
+                            id="organisateur"
+                            value={organisateur}
+                            onChange={(e) => setOrganisateur(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Nom de l'organisateur"
+                          />
+                        </div>
+
+                        {/* Contacts */}
                         <div className="space-y-4">
-                          {/* Session exemple 1 */}
-                          <div className="border-l-4 border-blue-500 pl-4 py-2">
-                            <h3 className="font-semibold text-gray-900">Conférence d'ouverture</h3>
-                            <p className="text-sm text-gray-600">
-                              <span className="inline-flex items-center mr-4">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date'} - 09h00 à 10h30
-                              </span>
-                              <span className="inline-flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                {lieu || 'Salle principale'}
-                              </span>
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">Présentation des enjeux et objectifs de l'événement</p>
+                          <div>
+                            <label htmlFor="emailContact" className="block text-sm font-medium text-gray-700 mb-2">
+                              Email de contact
+                            </label>
+                            <input
+                              type="email"
+                              id="emailContact"
+                              value={emailContact}
+                              onChange={(e) => setEmailContact(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="contact@exemple.com"
+                            />
                           </div>
-                          
-                          {/* Session exemple 2 */}
-                          <div className="border-l-4 border-green-500 pl-4 py-2">
-                            <h3 className="font-semibold text-gray-900">Atelier pratique</h3>
-                            <p className="text-sm text-gray-600">
-                              <span className="inline-flex items-center mr-4">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {dateDebut ? new Date(dateDebut).toLocaleDateString('fr-FR') : 'Date'} - 11h00 à 12h30
-                              </span>
-                              <span className="inline-flex items-center">
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                {lieu || 'Salle d\'atelier'}
-                              </span>
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">Session interactive avec mise en pratique</p>
+                          <div>
+                            <label htmlFor="telephoneContact" className="block text-sm font-medium text-gray-700 mb-2">
+                              Téléphone de contact
+                            </label>
+                            <input
+                              type="tel"
+                              id="telephoneContact"
+                              value={telephoneContact}
+                              onChange={(e) => setTelephoneContact(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="+33 1 23 45 67 89"
+                            />
                           </div>
-
-                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                            <p className="text-sm text-blue-800">
-                              <strong>Note :</strong> Ces sessions sont des exemples. Les vraies sessions seront affichées selon les inscriptions du participant.
+                          <div>
+                            <label htmlFor="emailEnvoi" className="block text-sm font-medium text-gray-700 mb-2">
+                              Email d'envoi (Brevo)
+                            </label>
+                            <input
+                              type="email"
+                              id="emailEnvoi"
+                              value={emailEnvoi}
+                              onChange={(e) => setEmailEnvoi(e.target.value)}
+                              placeholder="email@domaine.com (doit être vérifié dans Brevo)"
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                              Adresse email utilisée pour l'envoi des emails d'inscription (doit être vérifiée dans votre compte Brevo)
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Informations participant */}
-                      <div className="bg-white p-6 rounded-lg mb-6">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                          <span className="mr-2">👤</span>
-                          Vos informations
-                        </h2>
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <p><strong>Nom:</strong> Jean Dupont</p>
-                          <p><strong>Email:</strong> jean.dupont@exemple.com</p>
+                      {/* Colonne de droite - Description et Logo */}
+                      <div className="space-y-6">
+                        {/* Description */}
+                        <div>
+                          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                            Description * (HTML)
+                          </label>
+                          <EventDescriptionEditor
+                            value={description}
+                            onChange={setDescription}
+                            placeholder="Décrivez votre événement en détail avec du texte formaté..."
+                          />
+                        </div>
+
+                        {/* Logo de l'événement */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Logo de l&apos;événement
+                          </label>
+                          <ImageUpload
+                            currentImageUrl={logoUrl || ''}
+                            onImageUploaded={setLogoUrl}
+                            className="w-full"
+                          />
+                          <p className="mt-2 text-xs text-gray-500">
+                            Téléchargez un logo qui apparaîtra sur les pages d&apos;inscription et templates (max 1MB)
+                          </p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="px-8 py-6 bg-gray-100 text-center">
-                      <p className="text-sm text-gray-500 mb-2">
-                        Cet email a été envoyé automatiquement suite à votre inscription.
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Pour toute question, vous pouvez nous contacter à l'adresse suivante :
-                        <br />
-                        {emailContact || 'l\'organisateur'}.
-                      </p>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800 font-medium mb-2">ℹ️ Informations sur l'aperçu :</p>
-                  <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• Les données participant sont simulées (Jean Dupont, jean.dupont@exemple.com)</li>
-                    <li>• L'aperçu se met à jour automatiquement quand vous modifiez les paramètres</li>
-                    <li>• La description complète est affichée avec formatage HTML</li>
-                    <li>• Le logo s'affiche uniquement s'il est téléchargé dans la section ci-dessus</li>
-                    <li>• La couleur du header et l'objet sont appliqués en temps réel</li>
-                  </ul>
+              {/* Section 2: Informations organisateur */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'organisateur' ? 'details' : 'organisateur')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Informations organisateur</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'organisateur' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'organisateur' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Colonne de gauche - Informations générales */}
+                      <div className="space-y-6">
+                        {/* Nom de l'organisation */}
+                        <div>
+                          <label htmlFor="nomOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                            Nom de l'organisation
+                          </label>
+                          <input
+                            type="text"
+                            id="nomOrganisation"
+                            value={nomOrganisation}
+                            onChange={(e) => setNomOrganisation(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Nom de votre organisation"
+                          />
+                        </div>
+
+                        {/* Statut légal */}
+                        <div>
+                          <label htmlFor="statutLegal" className="block text-sm font-medium text-gray-700 mb-2">
+                            Statut légal
+                          </label>
+                          <select
+                            id="statutLegal"
+                            value={statutLegal}
+                            onChange={(e) => setStatutLegal(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                          >
+                            <option value="">Sélectionner un statut</option>
+                            <option value="association">Association</option>
+                            <option value="entreprise">Entreprise</option>
+                            <option value="auto_entrepreneur">Auto-entrepreneur</option>
+                            <option value="collectivite">Collectivité territoriale</option>
+                            <option value="etablissement_public">Établissement public</option>
+                            <option value="particulier">Particulier</option>
+                            <option value="autre">Autre</option>
+                          </select>
+                        </div>
+
+                        {/* Numéro SIRET */}
+                        <div>
+                          <label htmlFor="numeroSiret" className="block text-sm font-medium text-gray-700 mb-2">
+                            Numéro SIRET
+                          </label>
+                          <input
+                            type="text"
+                            id="numeroSiret"
+                            value={numeroSiret}
+                            onChange={(e) => setNumeroSiret(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                            placeholder="12345678901234"
+                            maxLength={14}
+                          />
+                          <p className="mt-1 text-xs text-gray-500">14 chiffres (optionnel pour les associations)</p>
+                        </div>
+
+                        {/* Numéro TVA */}
+                        <div>
+                          <label htmlFor="numeroTva" className="block text-sm font-medium text-gray-700 mb-2">
+                            Numéro TVA intracommunautaire
+                          </label>
+                          <input
+                            type="text"
+                            id="numeroTva"
+                            value={numeroTva}
+                            onChange={(e) => setNumeroTva(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                            placeholder="FR12345678901"
+                          />
+                          <p className="mt-1 text-xs text-gray-500">Format : FR + 11 caractères (optionnel)</p>
+                        </div>
+
+                        {/* Site web */}
+                        <div>
+                          <label htmlFor="siteWebOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                            Site web
+                          </label>
+                          <input
+                            type="url"
+                            id="siteWebOrganisation"
+                            value={siteWebOrganisation}
+                            onChange={(e) => setSiteWebOrganisation(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                            placeholder="https://www.exemple.com"
+                          />
+                        </div>
+
+                        {/* Description activité - SUPPRIMÉE car colonne n'existe pas en base */}
+                        {/* 
+                        <div>
+                          <label htmlFor="descriptionActivite" className="block text-sm font-medium text-gray-700 mb-2">
+                            Description de l'activité
+                          </label>
+                          <textarea
+                            id="descriptionActivite"
+                            value={descriptionActivite}
+                            onChange={(e) => setDescriptionActivite(e.target.value)}
+                            rows={4}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Décrivez brièvement l'activité de votre organisation..."
+                          />
+                        </div>
+                        */}
+                      </div>
+
+                      {/* Colonne de droite - Représentant légal et adresse */}
+                      <div className="space-y-6">
+                        {/* Représentant légal */}
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Représentant légal
+                          </h4>
+                          
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="representantNom" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Nom
+                                </label>
+                                <input
+                                  type="text"
+                                  id="representantNom"
+                                  value={representantNom}
+                                  onChange={(e) => setRepresentantNom(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="Nom"
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor="representantPrenom" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Prénom
+                                </label>
+                                <input
+                                  type="text"
+                                  id="representantPrenom"
+                                  value={representantPrenom}
+                                  onChange={(e) => setRepresentantPrenom(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="Prénom"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label htmlFor="representantFonction" className="block text-sm font-medium text-gray-700 mb-2">
+                                Fonction
+                              </label>
+                              <input
+                                type="text"
+                                id="representantFonction"
+                                value={representantFonction}
+                                onChange={(e) => setRepresentantFonction(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200"
+                                placeholder="Président, Directeur, etc."
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Adresse organisation */}
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Adresse de l'organisation
+                          </h4>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label htmlFor="adresseOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                                Adresse complète
+                              </label>
+                              <textarea
+                                id="adresseOrganisation"
+                                value={adresseOrganisation}
+                                onChange={(e) => setAdresseOrganisation(e.target.value)}
+                                rows={3}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="123 Rue de l'Exemple&#10;Complément d'adresse&#10;75001 Paris, France"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label htmlFor="codePostalOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Code postal
+                                </label>
+                                <input
+                                  type="text"
+                                  id="codePostalOrganisation"
+                                  value={codePostalOrganisation}
+                                  onChange={(e) => setCodePostalOrganisation(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="75001"
+                                  maxLength={10}
+                                />
+                              </div>
+                              <div>
+                                <label htmlFor="villeOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                                  Ville
+                                </label>
+                                <input
+                                  type="text"
+                                  id="villeOrganisation"
+                                  value={villeOrganisation}
+                                  onChange={(e) => setVilleOrganisation(e.target.value)}
+                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                  placeholder="Paris"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label htmlFor="paysOrganisation" className="block text-sm font-medium text-gray-700 mb-2">
+                                Pays
+                              </label>
+                              <input
+                                type="text"
+                                id="paysOrganisation"
+                                value={paysOrganisation}
+                                onChange={(e) => setPaysOrganisation(e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="France"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Code d'accès pour QR Scanner */}
-              <div className="md:col-span-2">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2 mt-6">
-                  📱 Configuration QR Scanner
-                </h3>
-                <label htmlFor="codeAcces" className="block text-sm font-medium text-gray-700 mb-1">
-                  Code d&apos;accès QR Scanner (4 chiffres)
-                </label>
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    id="codeAcces"
-                    value={codeAcces}
-                    onChange={(e) => setCodeAcces(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    maxLength={4}
-                    placeholder="0000"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl font-bold tracking-widest"
-                  />
-                  <button
-                    type="button"
-                    onClick={generateNewAccessCode}
-                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                    title="Générer un nouveau code"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Générer
-                  </button>
-                  {codeAcces && (
-                    <button
-                      type="button"
-                      onClick={copyAccessCode}
-                      className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm font-medium"
-                      title="Copier le code"
-                    >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              {/* Section 3: Personnalisation des emails */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'email' ? 'details' : 'email')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      Copier
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-gray-600 space-y-1">
-                  <p>
-                    💡 <strong>Ce code est requis pour accéder au QR Scanner mobile.</strong>
-                  </p>
-                  <p>
-                    🔗 Les hôtesses pourront utiliser ce code sur: 
-                    <Link 
-                      href="/qr-scanner-new" 
-                      target="_blank" 
-                      className="text-blue-600 hover:text-blue-800 font-medium ml-1"
-                    >
-                      /qr-scanner-new
-                    </Link>
-                  </p>
-                  {codeAcces && (
-                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-blue-800 font-medium">
-                        ✅ Code actuel: <span className="text-2xl font-bold tracking-widest">{codeAcces}</span>
-                      </p>
-                      <p className="text-blue-700 text-sm mt-1">
-                        Partagez ce code avec les hôtesses pour leur permettre d&apos;accéder au système de check-in mobile.
-                      </p>
                     </div>
-                  )}
+                    <h3 className="text-lg font-bold text-gray-900">Personnalisation des emails d'inscription</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'email' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'email' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Colonne de gauche - Configuration */}
+                      <div className="space-y-6">
+                        {/* Couleur du header */}
+                        <div>
+                          <label htmlFor="couleurHeaderEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                            Couleur du header
+                          </label>
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="color"
+                              id="couleurHeaderEmail"
+                              value={couleurHeaderEmail}
+                              onChange={(e) => setCouleurHeaderEmail(e.target.value)}
+                              className="w-12 h-10 border border-gray-300 rounded-md cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={couleurHeaderEmail}
+                              onChange={(e) => {
+                                // Valider le format hex
+                                if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+                                  setCouleurHeaderEmail(e.target.value);
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                              placeholder="#667eea"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Couleur de fond du header des emails de confirmation d'inscription
+                          </p>
+                          <div className="mt-2 p-3 rounded-lg" style={{ backgroundColor: couleurHeaderEmail }}>
+                            <p className="text-white font-bold text-center">Aperçu du header</p>
+                          </div>
+                        </div>
+
+                        {/* Objet de l'email */}
+                        <div>
+                          <label htmlFor="objetEmailInscription" className="block text-sm font-medium text-gray-700 mb-1">
+                            Objet de l'email d'inscription
+                          </label>
+                          <input
+                            type="text"
+                            id="objetEmailInscription"
+                            value={objetEmailInscription}
+                            onChange={(e) => setObjetEmailInscription(e.target.value)}
+                            placeholder="Ex: Confirmation d'inscription - {{event_name}}"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Variables : {'{'}{'{'} event_name {'}'}{'}'},  {'{'}{'{'} participant_firstname {'}'}{'}'},  {'{'}{'{'} participant_lastname {'}'}{'}'},  {'{'}{'{'} event_date {'}'}{'}'} 
+                          </p>
+                          {objetEmailInscription && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                              <p className="text-sm text-blue-800">
+                                <strong>Aperçu :</strong> {objetEmailInscription.replace('{{event_name}}', nom || 'Nom de l\'événement')}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Sélecteur de template avec composant dynamique */}
+                        <EmailTemplateDropdown
+                          selectedTemplateId={emailTemplateId}
+                          onTemplateSelect={setEmailTemplateId}
+                        />
+                      </div>
+
+                      {/* Colonne de droite - Aperçu en grand */}
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-md font-semibold text-gray-800 mb-3 flex items-center">
+                            <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            Aperçu en direct
+                          </h4>
+
+                          {/* Objet de l'email */}
+                          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-sm font-medium text-blue-800 mb-1">📧 Objet :</p>
+                            <p className="text-base font-semibold text-blue-900">
+                              {objetEmailInscription || `Confirmation d'inscription - ${nom || 'Votre événement'}`}
+                            </p>
+                          </div>
+
+                          {/* Aperçu grand format sans scroll */}
+                          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl overflow-hidden">
+                            <EmailTemplateSelector
+                              eventId={eventId}
+                              eventData={{
+                                nom,
+                                description,
+                                lieu,
+                                dateDebut,
+                                prix: typeof prix === 'number' ? prix : undefined,
+                                emailContact,
+                                logoUrl
+                              }}
+                              couleurHeaderEmail={couleurHeaderEmail}
+                              objetEmailInscription={objetEmailInscription}
+                              selectedTemplateId={emailTemplateId}
+                              onTemplateSelect={setEmailTemplateId}
+                              previewMode="large"
+                            />
+                          </div>
+                        </div>
+
+                        {/* À propos du template */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h5 className="text-sm font-medium text-blue-800 mb-2 flex items-center">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            À propos de ce template
+                          </h5>
+                          <ul className="text-xs text-blue-700 space-y-1">
+                            <li>• <strong>Responsive</strong> : s'adapte aux mobiles et tablettes</li>
+                            <li>• <strong>Personnalisable</strong> : couleur et contenu dynamiques</li>
+                            <li>• <strong>Compatible</strong> : fonctionne avec tous les clients email</li>
+                            <li>• <strong>Données simulées</strong> : Jean Dupont pour la prévisualisation</li>
+                            <li>• <strong>Variables automatiques</strong> : informations de l'événement intégrées</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Configuration QR Scanner */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'qr' ? 'details' : 'qr')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-green-50 to-teal-50 hover:from-green-100 hover:to-teal-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Configuration QR Scanner</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'qr' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'qr' ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <label htmlFor="codeAcces" className="block text-sm font-medium text-gray-700 mb-1">
+                      Code d&apos;accès QR Scanner (4 chiffres)
+                    </label>
+                    <div className="flex space-x-3">
+                      <input
+                        type="text"
+                        id="codeAcces"
+                        value={codeAcces}
+                        onChange={(e) => setCodeAcces(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        maxLength={4}
+                        placeholder="0000"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl font-bold tracking-widest"
+                      />
+                      <button
+                        type="button"
+                        onClick={generateNewAccessCode}
+                        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        title="Générer un nouveau code"
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Générer
+                      </button>
+                      {codeAcces && (
+                        <button
+                          type="button"
+                          onClick={copyAccessCode}
+                          className="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm font-medium"
+                          title="Copier le code"
+                        >
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copier
+                        </button>
+                      )}
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600 space-y-1">
+                      <p>
+                        💡 <strong>Ce code est requis pour accéder au QR Scanner mobile.</strong>
+                      </p>
+                      <p>
+                        🔗 Les hôtesses pourront utiliser ce code sur: 
+                        <Link 
+                          href="/qr-scanner-new" 
+                          target="_blank" 
+                          className="text-blue-600 hover:text-blue-800 font-medium ml-1"
+                        >
+                          /qr-scanner-new
+                        </Link>
+                      </p>
+                      {codeAcces && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-blue-800 font-medium">
+                            ✅ Code actuel: <span className="text-2xl font-bold tracking-widest">{codeAcces}</span>
+                          </p>
+                          <p className="text-blue-700 text-sm mt-1">
+                            Partagez ce code avec les hôtesses pour leur permettre d&apos;accéder au système de check-in mobile.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1868,14 +2594,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       {activeTab === 'participants' && (
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="p-6">
-            {/* Template Viewer */}
-            <div className="mb-8">
-              <TicketTemplateViewer
-                eventId={eventId}
-                onEdit={() => setShowTicketTemplateModal(true)}
-              />
-            </div>
-
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
@@ -1896,6 +2614,16 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Exporter CSV
+                </button>
+
+                <button
+                  onClick={handleExportAllParticipantsToExcel}
+                  className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Exporter Excel
                 </button>
 
                 <button
@@ -1935,11 +2663,43 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   className="inline-flex items-center px-4 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   Email général
                   {selectedParticipants.length > 0 && (
                     <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                      {selectedParticipants.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleExportSelectedParticipants}
+                  disabled={selectedParticipants.length === 0}
+                  className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV sélection
+                  {selectedParticipants.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                      {selectedParticipants.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleExportSelectedParticipantsToExcel}
+                  disabled={selectedParticipants.length === 0}
+                  className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export Excel sélection
+                  {selectedParticipants.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
                       {selectedParticipants.length}
                     </span>
                   )}
@@ -2162,16 +2922,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                               </svg>
                             </button>
-                            <Link
-                              href={`/ticket/${participant.id}`}
-                              target="_blank"
+                            <button
+                              onClick={() => {
+                                setSelectedParticipantForTicket(participant);
+                                setShowTicketPreview(true);
+                              }}
                               className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors duration-200"
-                              title="Voir le billet"
+                              title="Voir l'aperçu du billet"
                             >
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                               </svg>
-                            </Link>
+                            </button>
                             <button
                               onClick={() => handleDeleteParticipant(participant)}
                               className="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
@@ -2197,7 +2959,120 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       {activeTab === 'intervenants' && (
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                  Gestion des intervenants
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  Gérez les conférenciers et intervenants de cet événement
+                </p>
+              </div>
+            </div>
             <IntervenantsManager eventId={eventId} />
+          </div>
+        </div>
+      )}
+
+      {/* Billetterie Tab */}
+      {activeTab === 'billetterie' && (
+        <div className="space-y-6">
+          {/* Configuration de la billetterie */}
+          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                Billetterie SaaS
+              </h2>
+              <p className="text-gray-600">
+                Configurez les types de billets, les quotas et surveillez les ventes en temps réel
+              </p>
+            </div>
+
+            {/* Avertissement si la billetterie n'est pas active */}
+            <div className="mx-6 mb-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-amber-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h3 className="text-sm font-medium text-amber-800">Configuration requise</h3>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Pour utiliser la billetterie, assurez-vous d'activer l'option "Événement payant" dans les détails de l'événement.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Types de billets */}
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Types de billets</h3>
+                <p className="text-sm text-gray-600">
+                  Créez et gérez les différents types de billets avec leurs quotas
+                </p>
+              </div>
+              <div className="p-6">
+                <TicketTypeManager
+                  evenementId={eventId}
+                  onTicketTypeChange={() => {
+                    // Rafraîchir les données si nécessaire
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Suivi des quotas */}
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Suivi des quotas</h3>
+                <p className="text-sm text-gray-600">
+                  Surveillez les ventes et les disponibilités en temps réel
+                </p>
+              </div>
+              <div className="p-6">
+                <QuotaTracker
+                  evenementId={eventId}
+                  ticketTypes={[]} // Sera chargé automatiquement
+                  refreshInterval={30}
+                  showAlerts={true}
+                  showAnalytics={true}
+                  compact={false}
+                />
+              </div>
+            </div>
+
+            {/* Statistiques de vente */}
+            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Statistiques de vente</h3>
+                <p className="text-sm text-gray-600">
+                  Vue d'ensemble des performances de votre billetterie
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">0</div>
+                    <div className="text-sm text-gray-600">Billets vendus</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">0€</div>
+                    <div className="text-sm text-gray-600">Chiffre d'affaires</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600">0</div>
+                    <div className="text-sm text-gray-600">Taux de conversion</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Les statistiques détaillées seront disponibles une fois les premières ventes effectuées
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -2431,11 +3306,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           <div className="bg-gradient-to-br from-white via-blue-50 to-purple-50 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
             <div className="p-8">
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
-                <div className="space-y-3">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Sessions et Planning
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                    Gestion des sessions et planning
                   </h2>
-                  <p className="text-gray-600 font-medium text-lg max-w-2xl">
+                  <p className="text-gray-600 font-medium">
                     Créez et gérez les sessions de votre événement auxquelles les participants pourront s'inscrire.
                   </p>
                 </div>
@@ -2578,20 +3453,110 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
       {/* Landing Page Tab */}
       {activeTab === 'landing-page' && (
-        <div className="space-y-6">
-  
-          {/* Formulaire Builder */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div className="p-6">
-              <BasicPageSelector
-                eventId={eventId}
-                currentPageId={builderPageId}
-                onPageSelected={(pageId) => {
-                  setBuilderPageId(pageId);
-                }}
-                pageTitle="Formulaire d'inscription"
-                pageType="registration_form"
-              />
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="p-6">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                  Gestion des formulaires & emails
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  Configurez le formulaire d'inscription et personnalisez les emails automatiques
+                </p>
+              </div>
+            </div>
+
+            {/* Système d'accordéon */}
+            <div className="space-y-4">
+              
+              {/* Section 1: Formulaire d'inscription */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'form' ? 'details' : 'form')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Formulaire d'inscription</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'form' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'form' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600">
+                        Sélectionnez et configurez le formulaire d'inscription que verront les participants
+                      </p>
+                    </div>
+                    <BasicPageSelector
+                      eventId={eventId}
+                      currentPageId={builderPageId}
+                      onPageSelected={(pageId) => {
+                        setBuilderPageId(pageId);
+                      }}
+                      pageTitle="Formulaire d'inscription"
+                      pageType="registration_form"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Modèle d'email */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'email-template' ? 'details' : 'email-template')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Modèle d'email</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'email-template' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'email-template' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="mb-6">
+                      <p className="text-sm text-gray-600">
+                        Personnalisez le modèle d'email qui sera envoyé aux participants après leur inscription au formulaire
+                      </p>
+                    </div>
+
+                    <EmailTemplatePreview
+                      eventId={eventId}
+                      eventName={nom}
+                      onEditTemplate={() => setShowEmailTemplateEditor(true)}
+                      refreshTrigger={emailTemplateRefreshTrigger}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2602,11 +3567,15 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         <div className="space-y-8">
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
             <div className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">URLs Personnalisées des Participants</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Générez des liens personnalisés pour chaque participant et suivez les performances
-                </p>
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                    Gestion des URLs personnalisées
+                  </h2>
+                  <p className="text-gray-600 font-medium">
+                    Générez des liens personnalisés pour chaque participant et suivez les performances
+                  </p>
+                </div>
               </div>
               
               <ParticipantUrlGenerator 
@@ -2632,77 +3601,204 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* Modèle d'email Tab */}
-      {activeTab === 'email' && (
+
+
+      {/* Tickets Tab */}
+      {activeTab === 'tickets' && (
         <div className="bg-white shadow-lg rounded-lg overflow-hidden">
           <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Modèle d&apos;email</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Personnalisez le modèle d&apos;email qui sera envoyé aux participants
-              </p>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-red-500 bg-clip-text text-transparent">
+                  Badges & Tickets
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  Configurez et gérez les templates de badges et billets d'entrée pour cet événement
+                </p>
+              </div>
             </div>
 
-            <EmailTemplatePreview
-              eventId={eventId}
-              eventName={nom}
-              onEditTemplate={() => setShowEmailTemplateEditor(true)}
-            />
+            {/* Sous-onglets pour la gestion des tickets */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setTicketSubTab('ticket')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    ticketSubTab === 'ticket'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <FiMail className="w-4 h-4 inline mr-2" />
+                  Ticket
+                </button>
+                <button
+                  onClick={() => setTicketSubTab('badge')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    ticketSubTab === 'badge'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <FiEdit3 className="w-4 h-4 inline mr-2" />
+                  Badge
+                </button>
+              </nav>
+            </div>
+
+            {/* Contenu des sous-onglets */}
+            {ticketSubTab === 'ticket' && (
+              <TicketCustomizationTab
+                eventId={eventId}
+                eventName={nom}
+              />
+            )}
+
+            {ticketSubTab === 'badge' && (
+              <BadgeCustomizationTabNew
+                eventId={eventId}
+                eventName={nom}
+              />
+            )}
           </div>
         </div>
       )}
 
-      {/* Page Builder Tab */}
+      {/* Mini site web Tab */}
       {activeTab === 'page-builder' && (
-        <div className="space-y-6">
-          {/* Domain Management - Only show if a page is selected */}
-          {builderPageId && (
-            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <div className="p-6">
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Options de Publication</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Configurez comment votre page sera accessible publiquement. Vous pouvez utiliser notre adresse SaaS gratuite ou configurer votre propre domaine personnalisé.
-                  </p>
-                </div>
-
-                <DomainManager
-                  pageId={builderPageId}
-                  currentPage={builderPageData ? {
-                    id: builderPageData.id,
-                    slug: builderPageData.slug || 'temp-slug',
-                    status: builderPageData.status || 'draft',
-                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/${builderPageData.slug || 'temp-slug'}`
-                  } : {
-                    id: builderPageId,
-                    slug: 'temp-slug',
-                    status: 'draft',
-                    saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/temp-slug`
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Page Selection */}
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div className="p-6">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Page Builder</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Choisissez ou créez une page builder pour cet événement. Les données de l&apos;événement seront automatiquement intégrées dans les modules de la page.
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                  Mini site web
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  Créez et gérez vos pages personnalisées avec l'éditeur visuel
                 </p>
               </div>
+            </div>
 
-              <BasicPageSelector
-                eventId={eventId}
-                currentPageId={builderPageId}
-                onPageSelected={(pageId) => {
-                  setBuilderPageId(pageId);
-                }}
-                pageTitle="Landing Page"
-                pageType="landing_page"
-              />
+            {/* Système d'accordéon */}
+            <div className="space-y-4">
+              
+              {/* Section 1: Options de publication */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'publication' ? 'details' : 'publication')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Options de publication</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'publication' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'publication' ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="space-y-6">
+                      {/* Contenu pour les options de publication */}
+                      {builderPageId ? (
+                        <DomainManager
+                          pageId={builderPageId}
+                          currentPage={builderPageData ? {
+                            id: builderPageData.id,
+                            slug: builderPageData.slug || 'temp-slug',
+                            status: builderPageData.status || 'draft',
+                            saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/${builderPageData.slug || 'temp-slug'}`
+                          } : {
+                            id: builderPageId,
+                            slug: 'temp-slug',
+                            status: 'draft',
+                            saasUrl: `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:3000')}/p/temp-slug`
+                          }}
+                        />
+                      ) : (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h3 className="text-sm font-medium text-yellow-800">
+                                Aucune page sélectionnée
+                              </h3>
+                              <p className="text-sm text-yellow-700 mt-1">
+                                Vous devez d'abord sélectionner ou créer une page dans la section "Gestion du page builder" pour configurer les options de publication.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Gestion du page builder */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-white">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection(activeSection === 'pagebuilder' ? 'details' : 'pagebuilder')}
+                  className="w-full px-6 py-4 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 transition-all duration-200 flex items-center justify-between group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Gestion de mini site web</h3>
+                  </div>
+                  <svg 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${activeSection === 'pagebuilder' ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeSection === 'pagebuilder' ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="p-6 border-t border-gray-100">
+                    <div className="space-y-6">
+                      {/* Description */}
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                        <p className="text-gray-600">
+                          Choisissez ou créez une page builder pour cet événement. Les données de l'événement seront automatiquement intégrées dans les modules de la page.
+                        </p>
+                      </div>
+
+                      {/* Sélecteur de page */}
+                      <BasicPageSelector
+                        eventId={eventId}
+                        currentPageId={builderPageId}
+                        onPageSelected={(pageId) => {
+                          setBuilderPageId(pageId);
+                        }}
+                        pageTitle="Landing Page"
+                        pageType="landing_page"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3051,6 +4147,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         eventId={eventId}
         isOpen={showTicketTemplateModal}
         onClose={() => setShowTicketTemplateModal(false)}
+        onSuccess={() => {
+          // Forcer le refresh du TicketTemplateViewer
+          setTicketTemplateRefreshTrigger(prev => prev + 1);
+        }}
       />
 
       {/* Modal ImportParticipants */}
@@ -3078,6 +4178,69 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         isOpen={showDetailedStatsModal}
         onClose={() => setShowDetailedStatsModal(false)}
       />
+
+      {/* Modal Editor de Template d'Email */}
+      {showEmailTemplateEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <EmailTemplateEditor
+            eventId={eventId}
+            onClose={() => setShowEmailTemplateEditor(false)}
+            onSave={() => setEmailTemplateRefreshTrigger(prev => prev + 1)}
+          />
+        </div>
+      )}
+
+      {/* Modal Aperçu Ticket */}
+      {showTicketPreview && selectedParticipantForTicket && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-3xl max-h-[80vh] flex flex-col">
+            {/* En-tête simple avec bouton imprimer */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  🎫 Ticket de {selectedParticipantForTicket.prenom} {selectedParticipantForTicket.nom}
+                </h2>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => printTicket(selectedParticipantForTicket)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  🖨️ Imprimer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowTicketPreview(false);
+                    setSelectedParticipantForTicket(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 transition-colors p-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {/* Contenu du ticket sur fond blanc - Aperçu réduit */}
+            <div className="flex-1 bg-white p-4 overflow-hidden">
+              <div className="w-full">
+                {/* Template du ticket avec données réelles - Version réduite pour aperçu */}
+                <div 
+                  className="ticket-content transform scale-75 origin-top-left"
+                  style={{ 
+                    width: '133.33%', // Compense la réduction de 75%
+                    height: 'auto',
+                    fontSize: '0.75rem' // Texte plus petit
+                  }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: getTicketPreviewContent(selectedParticipantForTicket) 
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Landing Link Form */}
       {showLandingLinkForm && (

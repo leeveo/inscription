@@ -14,6 +14,7 @@ export { Footer } from './Footer';
 export { RegistrationForm } from './RegistrationForm';
 export { ImageHero } from './ImageHero';
 export { TwoColumnSection } from './TwoColumnSection';
+export { PaymentWidget } from './PaymentWidget';
 export {
   ConferenceFormBlock,
   WorkshopFormBlock,
@@ -37,6 +38,7 @@ import { Footer as FooterSettings } from './Footer';
 import { RegistrationForm as RegistrationFormSettings } from './RegistrationForm';
 import { ImageHero as ImageHeroSettings } from './ImageHero';
 import { TwoColumnSection as TwoColumnSectionSettings } from './TwoColumnSection';
+import { PaymentWidget as PaymentWidgetSettings } from './PaymentWidget';
 
 export const craftSettings = {
   Container: ContainerSettings.craft,
@@ -54,4 +56,5 @@ export const craftSettings = {
   RegistrationForm: RegistrationFormSettings.craft,
   ImageHero: ImageHeroSettings.craft,
   TwoColumnSection: TwoColumnSectionSettings.craft,
+  PaymentWidget: PaymentWidgetSettings.craft,
 };

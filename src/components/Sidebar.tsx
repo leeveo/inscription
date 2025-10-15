@@ -9,7 +9,8 @@ import {
   FiGrid,
   FiCamera,
   FiLogOut,
-  FiLayout
+  FiLayout,
+  FiZap
 } from 'react-icons/fi';
 import WaiEventLogo from '@/components/WaiEventLogo';
 import { supabaseBrowser } from '@/lib/supabase/client';
@@ -17,6 +18,7 @@ import type { User } from '@supabase/supabase-js';
 
 const eventAdminLinks = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: <FiGrid className="w-5 h-5" /> },
+  { href: '/admin/wizard-event', label: 'Wizard Event', icon: <FiZap className="w-5 h-5" /> },
   { href: '/admin/evenements', label: 'Événements', icon: <FiCalendar className="w-5 h-5" /> },
   { href: '/admin/participants', label: 'Participants', icon: <FiUsers className="w-5 h-5" /> },
   { href: '/admin/pages-builder', label: 'Page Builder', icon: <FiLayout className="w-5 h-5" /> },

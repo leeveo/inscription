@@ -131,11 +131,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
       Votre inscription à <strong>{{event_name}}</strong> est confirmée ! Imprimez votre badge ci-dessus ou présentez-le sur votre téléphone.
     </p>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ticket_url}}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px;">
-        🎟️ Voir mon ticket complet
-      </a>
-    </div>
+    <!-- Bouton supprimé pour éviter la confusion dans l'interface admin -->
 
     <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-top: 30px;">
       <p style="color: #92400e; font-size: 14px;">
@@ -254,11 +250,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <p style="color: #555; font-size: 16px; margin-bottom: 20px;">
       Votre badge professionnel pour <strong>{{event_name}}</strong> est prêt. Imprimez-le ou présentez-le sur votre appareil mobile.
     </p>
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ticket_url}}" style="display: inline-block; background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 16px 40px; text-decoration: none; border-radius: 6px; font-weight: 700;">
-        Voir mon badge complet
-      </a>
-    </div>
+    <!-- Bouton supprimé pour éviter la confusion dans l'interface admin -->
   </div>
 </body>
 </html>
@@ -385,11 +377,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <p style="color: #555; font-size: 16px; margin-bottom: 20px;">
       Ton pass créatif pour <strong>{{event_name}}</strong> est prêt! Imprime-le ou garde-le sur ton téléphone. On a hâte de te voir!
     </p>
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ticket_url}}" style="display: inline-block; background: linear-gradient(135deg, #ff6b6b, #4ecdc4); color: white; padding: 18px 45px; text-decoration: none; border-radius: 50px; font-weight: 900; font-size: 16px; box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);">
-        🎟️ Voir mon pass
-      </a>
-    </div>
+    <!-- Bouton supprimé pour éviter la confusion dans l'interface admin -->
   </div>
 </body>
 </html>
@@ -504,11 +492,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <p style="color: #666; font-size: 16px; margin-bottom: 20px; line-height: 1.6;">
       Votre ticket pour {{event_name}} est disponible. Imprimez-le ou présentez-le depuis votre appareil.
     </p>
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{ticket_url}}" style="display: inline-block; background: #000; color: white; padding: 14px 35px; text-decoration: none; border-radius: 4px; font-weight: 600; font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase;">
-        Voir mon ticket
-      </a>
-    </div>
+    <!-- Bouton supprimé pour éviter la confusion dans l'interface admin -->
   </div>
 </body>
 </html>
@@ -633,11 +617,7 @@ export const ticketEmailTemplates: TicketEmailTemplate[] = [
     <p style="color: #e0e0e0; font-size: 16px; margin-bottom: 20px; line-height: 1.8;">
       Nous sommes honorés de vous accueillir en tant qu'invité(e) VIP à <strong style="color: #d4af37;">{{event_name}}</strong>. Votre accès premium est confirmé.
     </p>
-    <div style="text-align: center; margin: 35px 0;">
-      <a href="{{ticket_url}}" style="display: inline-block; background: linear-gradient(135deg, #d4af37, #f4e4a7); color: #1a1a1a; padding: 18px 45px; text-decoration: none; border-radius: 8px; font-weight: 900; font-size: 16px; letter-spacing: 1px; box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4); text-transform: uppercase;">
-        👑 Mon Accès VIP
-      </a>
-    </div>
+    <!-- Bouton supprimé pour éviter la confusion dans l'interface admin -->
     <div style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; padding: 20px; border-radius: 8px; margin-top: 30px;">
       <p style="color: #f4e4a7; font-size: 13px; line-height: 1.6;">
         <strong>🌟 Avantages VIP:</strong> Accès prioritaire • Espace lounge exclusif • Service premium

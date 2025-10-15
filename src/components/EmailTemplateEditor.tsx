@@ -17,9 +17,10 @@ type EmailTemplate = {
 type EmailTemplateEditorProps = {
   eventId: string
   onClose: () => void
+  onSave?: () => void
 }
 
-export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateEditorProps) {
+export default function EmailTemplateEditor({ eventId, onClose, onSave }: EmailTemplateEditorProps) {
   const [template, setTemplate] = useState<EmailTemplate | null>(null)
   const [subject, setSubject] = useState('')
   const [htmlContent, setHtmlContent] = useState('')
@@ -52,7 +53,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
           <div style="background: white; padding: 40px 30px; text-align: center;">
             <h2 style="color: #4a5568; margin: 0 0 20px 0; font-size: 24px;">Bonjour {{participant_firstname}},</h2>
             
-            <p style="color: #718096; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+              <p style="color: #718096; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
               Nous avons le plaisir de vous inviter à participer à <strong>{{event_name}}</strong>. 
               Cet événement exceptionnel vous permettra de découvrir des sessions passionnantes et de rencontrer des experts du domaine.
             </p>
@@ -66,10 +67,8 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             
             <a href="{{landing_url}}" 
                style="display: inline-block; background: linear-gradient(135deg, #4299e1, #3182ce); color: white; padding: 16px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px; margin: 20px 0; box-shadow: 0 8px 20px rgba(66, 153, 225, 0.3); transition: transform 0.2s;">
-              🎉 Je m'inscris maintenant
-            </a>
-            
-            <p style="color: #a0aec0; font-size: 14px; margin: 30px 0 0 0; line-height: 1.5;">
+              📝 Accéder à l'inscription
+            </a>            <p style="color: #a0aec0; font-size: 14px; margin: 30px 0 0 0; line-height: 1.5;">
               Si le bouton ne fonctionne pas, copiez ce lien : {{landing_url}}<br>
               Cet email a été envoyé automatiquement.
             </p>
@@ -107,14 +106,12 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
               </ul>
             </div>
             
-            <div style="text-align: center; margin: 35px 0;">
+              <div style="text-align: center; margin: 35px 0;">
               <a href="{{landing_url}}" 
                  style="background: #2d3748; color: white; padding: 14px 35px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px; display: inline-block; letter-spacing: 0.5px;">
-                RÉSERVER MA PLACE
+                ACCÉDER À L'INSCRIPTION
               </a>
-            </div>
-            
-            <p style="color: #a0aec0; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.5; font-style: italic;">
+            </div>            <p style="color: #a0aec0; font-size: 14px; margin: 30px 0 0 0; text-align: center; line-height: 1.5; font-style: italic;">
               Cordialement,<br>
               L'équipe organisatrice
             </p>
@@ -915,7 +912,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
               </h3>
               <div style="color: #cbd5e1; font-size: 15px; line-height: 2;">
                 <div>📋 Vérifiez votre inscription et vos sessions</div>
-                <div>🎫 Téléchargez votre billet d'entrée</div>
+                <div>📝 Complétez votre inscription si nécessaire</div>
                 <div>🗺️ Consultez l'itinéraire vers le lieu</div>
                 <div>📱 Activez les notifications de rappel</div>
               </div>
@@ -924,7 +921,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             <div style="text-align: center; margin: 35px 0;">
               <a href="{{landing_url}}"
                  style="background: linear-gradient(135deg, #ef4444, #f97316); color: white; padding: 18px 45px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4); text-transform: uppercase; letter-spacing: 1px;">
-                🎫 Accéder à mon billet
+                📝 Finaliser mon inscription
               </a>
             </div>
 
@@ -1335,7 +1332,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
                 📌 Prochaines étapes
               </h4>
               <ol style="color: #4b5563; margin: 0; padding-left: 20px; line-height: 2;">
-                <li>Consultez votre email pour accéder à votre billet</li>
+                <li>Vérifiez votre inscription sur la plateforme</li>
                 <li>Téléchargez l'application mobile de l'événement</li>
                 <li>Sélectionnez vos sessions préférées</li>
                 <li>Préparez vos questions pour les speakers</li>
@@ -1343,9 +1340,9 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             </div>
 
             <div style="text-align: center; margin: 35px 0;">
-              <a href="{{ticket_url}}"
+              <a href="{{landing_url}}"
                  style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 10px;">
-                🎫 Mon Billet
+                📋 Ma Page d'Inscription
               </a>
               <a href="{{landing_url}}"
                  style="background: white; color: #10b981; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: 700; font-size: 16px; display: inline-block; border: 2px solid #10b981; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -1674,7 +1671,7 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
     { name: 'Prénom du participant', code: '{{participant_firstname}}' },
     { name: 'Nom du participant', code: '{{participant_lastname}}' },
     { name: 'Email du participant', code: '{{participant_email}}' },
-    { name: 'Lien du billet (admin.waivent.app)', code: '{{ticket_url}}' },
+    { name: 'Lien vers le ticket/billet (admin.waivent.app)', code: '{{ticket_url}}' },
     { name: 'Lien d\'inscription personnalisé (waivent.app)', code: '{{landing_url}}' },
   ]
   
@@ -1718,23 +1715,23 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
             
           if (eventError) throw eventError
           
-          const defaultSubject = `Votre billet pour ${eventData.nom}`
+          const defaultSubject = `Inscrivez-vous à ${eventData?.nom || 'notre événement'}`
           const defaultHtmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <h2 style="color: #1e3a8a; margin-bottom: 16px;">Votre billet pour {{event_name}}</h2>
+              <h2 style="color: #1e3a8a; margin-bottom: 16px;">Inscription à {{event_name}}</h2>
               
               <p>Bonjour {{participant_firstname}} {{participant_lastname}},</p>
               
-              <p>Voici votre billet pour l'événement "{{event_name}}" qui aura lieu le {{event_date}} à {{event_location}}.</p>
+              <p>Nous avons le plaisir de vous inviter à participer à "{{event_name}}" qui aura lieu le {{event_date}} à {{event_location}}.</p>
               
               <div style="margin: 24px 0; text-align: center;">
-                <a href="{{ticket_url}}" 
+                <a href="{{landing_url}}" 
                   style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                  Voir mon billet
+                  Accéder à l'inscription
                 </a>
               </div>
               
-              <p>Vous pouvez accéder à votre billet à tout moment en utilisant le lien ci-dessus. N'oubliez pas de présenter votre billet (QR code) lors de votre arrivée à l'événement.</p>
+              <p>Cliquez sur le bouton ci-dessus pour accéder au formulaire d'inscription et sélectionner les sessions qui vous intéressent. Les places sont limitées, nous vous conseillons de vous inscrire rapidement.</p>
               
               <p style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280;">
                 Cet email a été envoyé automatiquement, merci de ne pas y répondre.
@@ -1816,6 +1813,11 @@ export default function EmailTemplateEditor({ eventId, onClose }: EmailTemplateE
       }
       
       setSuccessMessage('Modèle d\'email sauvegardé avec succès')
+      
+      // Notifier le parent que la sauvegarde a réussi
+      if (onSave) {
+        onSave()
+      }
       
       // Fermer la fenêtre après une courte pause pour que l'utilisateur puisse voir le message de succès
       setTimeout(() => {

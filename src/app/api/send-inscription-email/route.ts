@@ -135,22 +135,44 @@ export async function POST(request: Request) {
       console.log(`✅ Utilisation de l'email autorisé: ${senderEmail}`);
     }
 
-    // Récupérer le template email d'inscription personnalisé s'il existe
-    const { data: template } = await supabase
-      .from('inscription_email_templates')
-      .select('*')
-      .eq('evenement_id', eventId)
-      .single();
+    // Récupérer le template d'email sélectionné pour cet événement
+    let selectedTemplate = null;
+    
+    // Essayer de récupérer le template sélectionné via email_template_id
+    if (event.email_template_id) {
+      const { data: templateData, error: templateError } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('id', event.email_template_id)
+        .single();
+        
+      if (!templateError && templateData) {
+        selectedTemplate = templateData;
+        console.log(`✅ Template trouvé: ${selectedTemplate.name} (${selectedTemplate.template_type})`);
+      }
+    }
+    
+    // Fallback: utiliser le template par défaut si aucun sélectionné
+    if (!selectedTemplate) {
+      const { data: defaultTemplate, error: defaultError } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('is_default', true)
+        .single();
+        
+      if (!defaultError && defaultTemplate) {
+        selectedTemplate = defaultTemplate;
+        console.log(`🔄 Utilisation du template par défaut: ${selectedTemplate.name}`);
+      }
+    }
 
     // Créer le contenu de l'email
-    const subject = template?.subject
-      ? replaceTemplateVariables(template.subject, event, participantData)
-      : event.objet_email_inscription && event.objet_email_inscription.trim()
-        ? replaceTemplateVariables(event.objet_email_inscription, event, participantData)
-        : `Confirmation d'inscription - ${event.nom}`;
+    const subject = event.objet_email_inscription && event.objet_email_inscription.trim()
+      ? event.objet_email_inscription
+      : `Confirmation d'inscription - ${event.nom}`;
 
-    const htmlContent = template?.html_content
-      ? replaceTemplateVariables(template.html_content, event, participantData)
+    const htmlContent = selectedTemplate
+      ? await generateEmailFromTemplate(selectedTemplate, event, participantData)
       : await generateDefaultEmailContent(event, participantData);
 
     // Envoyer l'email via Brevo
@@ -204,6 +226,216 @@ function replaceTemplateVariables(
     .replace(/{{participant_phone}}/g, participant.telephone || '')
     .replace(/{{participant_profession}}/g, participant.profession || '')
     .replace(/{{registration_date}}/g, new Date().toLocaleDateString('fr-FR'));
+}
+
+async function generateEmailFromTemplate(selectedTemplate: any, event: any, participant: { nom: string; prenom: string; email: string; telephone?: string; profession?: string }): Promise<string> {
+  // Formatter la date avec majuscules
+  const eventDate = new Date(event.date_debut).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).replace(/^(.)|\s+(.)/g, c => c.toUpperCase());
+
+  // Récupérer les sessions du participant
+  const sessions = await getParticipantSessions(participant.email, event.id);
+  const sessionsHtml = await generateSessionsHtmlForTemplate(sessions, selectedTemplate.template_type, event);
+
+  // Variables de remplacement
+  let html = selectedTemplate.html_content;
+  const variables = {
+    'header_color': event.couleur_header_email || '#667eea',
+    'subject': event.objet_email_inscription || `Confirmation d'inscription - ${event.nom}`,
+    'event_name': event.nom,
+    'event_date': eventDate,
+    'event_location': event.lieu,
+    'event_description': event.description || '',
+    'event_price': event.prix?.toString() || '',
+    'participant_firstname': participant.prenom,
+    'participant_lastname': participant.nom,
+    'participant_email': participant.email,
+    'participant_phone': participant.telephone || '',
+    'participant_profession': participant.profession || '',
+    'contact_email': event.email_contact || 'l\'organisateur',
+    'logo_url': event.logo_url || ''
+  };
+
+  // Remplacer les variables simples
+  Object.entries(variables).forEach(([key, value]) => {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    html = html.replace(regex, value);
+  });
+
+  // Gérer les conditions Handlebars simples
+  html = html.replace(/{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g, (match, variable, content) => {
+    const value = variables[variable as keyof typeof variables];
+    return value && value.trim() ? content : '';
+  });
+
+  // Remplacer les sessions
+  html = html.replace(/{{sessions_html}}/g, sessionsHtml);
+
+  // Nettoyer le HTML restant
+  html = html.replace(/{{{([^}]+)}}}/g, (match, content) => {
+    const variable = content.trim();
+    return variables[variable as keyof typeof variables] || '';
+  });
+
+  return html;
+}
+
+// Fonction pour générer le HTML des sessions selon le type de template
+async function generateSessionsHtmlForTemplate(sessions: any[], templateType: string, event: any): Promise<string> {
+  const headerColor = event.couleur_header_email || '#667eea';
+  
+  if (!sessions || sessions.length === 0) {
+    const noSessionsContent = templateType === 'modern' 
+      ? `<div style="background: #f8f9ff; padding: 25px; border-radius: 15px; margin: 25px 0; border-left: 4px solid ${headerColor};">
+           <h2 style="font-size: 20px; font-weight: 600; color: #2d3748; margin: 0 0 15px 0; display: flex; align-items: center;">
+             <span style="font-size: 24px; margin-right: 10px;">🎯</span>
+             Vos sessions sélectionnées
+           </h2>
+           <p style="color: #6b7280; margin: 0; font-style: italic;">
+             Aucune session spécifique sélectionnée. Vous aurez accès à l'ensemble du programme.
+           </p>
+         </div>`
+      : templateType === 'classic'
+      ? `<div style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; margin: 25px 0;">
+           <h2 style="margin: 0 0 20px 0; font-size: 18px; color: #2c3e50; border-bottom: 2px solid ${headerColor}; padding-bottom: 10px;">
+             VOS SESSIONS
+           </h2>
+           <p style="color: #7f8c8d; margin: 0; font-style: italic;">
+             Aucune session spécifique sélectionnée. Accès au programme complet.
+           </p>
+         </div>`
+      : templateType === 'original'
+      ? `<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+           <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+             🎯 Vos sessions sélectionnées
+           </h2>
+           <p style="color: #6b7280; margin: 0; font-style: italic;">
+             Aucune session spécifique sélectionnée. Vous aurez accès à l'ensemble du programme.
+           </p>
+         </div>`
+      : `<div style="margin: 30px 0;">
+           <h2 style="font-size: 18px; font-weight: 600; color: #2d3748; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+             Sessions
+           </h2>
+           <p style="color: #718096; margin: 0; font-style: italic;">
+             Aucune session sélectionnée - Accès au programme complet
+           </p>
+         </div>`;
+    
+    return noSessionsContent;
+  }
+
+  // Générer le conteneur selon le template
+  const containerStart = templateType === 'modern' 
+    ? `<div style="background: #f8f9ff; padding: 25px; border-radius: 15px; margin: 25px 0; border-left: 4px solid ${headerColor};">
+         <h2 style="font-size: 20px; font-weight: 600; color: #2d3748; margin: 0 0 15px 0; display: flex; align-items: center;">
+           <span style="font-size: 24px; margin-right: 10px;">🎯</span>
+           Vos sessions sélectionnées
+         </h2>`
+    : templateType === 'classic'
+    ? `<div style="background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; margin: 25px 0;">
+         <h2 style="margin: 0 0 20px 0; font-size: 18px; color: #2c3e50; border-bottom: 2px solid ${headerColor}; padding-bottom: 10px;">
+           VOS SESSIONS
+         </h2>`
+    : templateType === 'original'
+    ? `<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+         <h2 style="color: #1f2937; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">
+           🎯 Vos sessions sélectionnées
+         </h2>`
+    : `<div style="margin: 30px 0;">
+         <h2 style="font-size: 18px; font-weight: 600; color: #2d3748; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+           Sessions
+         </h2>`;
+
+  const containerEnd = '</div>';
+
+  const sessionsHtml = sessions.map((session, index) => {
+    const sessionDate = session.date ? new Date(session.date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    }) : 'Date à définir';
+
+    if (templateType === 'original') {
+      // Utiliser le même format que votre fonction generateSessionsHtml
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+      const borderColor = colors[index % colors.length];
+      
+      return `
+        <div style="border-left: 4px solid ${borderColor}; padding-left: 15px; margin-bottom: 20px;">
+          <h3 style="color: #1f2937; margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">
+            ${session.titre || 'Session sans titre'}
+          </h3>
+          <p style="color: #6b7280; margin: 0 0 5px 0; font-size: 14px;">
+            <span style="margin-right: 15px;">
+              🕒 ${sessionDate} - ${session.heure_debut || ''}${session.heure_fin ? ` à ${session.heure_fin}` : ''}
+            </span>
+            ${session.lieu ? `<span>📍 ${session.lieu}</span>` : ''}
+          </p>
+          ${session.intervenant ? `<p style="color: #6b7280; margin: 0 0 5px 0; font-size: 14px;"><strong>Intervenant:</strong> ${session.intervenant}</p>` : ''}
+          ${session.description ? `<p style="color: #6b7280; margin: 0; font-size: 14px;">${session.description}</p>` : ''}
+        </div>
+      `;
+    }
+
+    // Pour les autres templates
+    const formattedDate = session.date ? new Date(session.date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    }).replace(/^(.)|\s+(.)/g, c => c.toUpperCase()) : 'Date à définir';
+
+    const sessionItemStyle = templateType === 'modern'
+      ? `background: white; padding: 20px; margin: 15px 0; border-radius: 12px; border-left: 4px solid ${headerColor}; box-shadow: 0 2px 10px rgba(0,0,0,0.05);`
+      : templateType === 'classic'
+      ? `background: #ffffff; padding: 20px; margin: 15px 0; border: 1px solid #dee2e6; border-left: 4px solid ${headerColor};`
+      : `padding: 20px 0; border-bottom: 1px solid #f7fafc;`;
+
+    return `
+      <div style="${sessionItemStyle}">
+        <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 16px;">
+          ${session.titre || 'Session sans titre'}
+        </div>
+        <div style="color: #718096; font-size: 14px; margin-bottom: 5px;">
+          📅 ${formattedDate}${session.heure_debut ? ` - ${session.heure_debut}` : ''}${session.heure_fin ? ` à ${session.heure_fin}` : ''}
+        </div>
+        ${session.lieu ? `<div style="color: #718096; font-size: 14px; margin-bottom: 5px;">📍 ${session.lieu}</div>` : ''}
+        ${session.intervenant ? `<div style="color: #718096; font-size: 14px; margin-bottom: 5px;"><strong>Intervenant:</strong> ${session.intervenant}</div>` : ''}
+        ${session.description ? `<div style="color: #718096; font-size: 14px;">${session.description}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  // Ajouter le rappel important selon le template
+  const importantNote = templateType === 'modern'
+    ? `<div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-top: 15px;">
+         <p style="color: #1e40af; margin: 0; font-size: 14px;">
+           <strong>Rappel important :</strong> N'oubliez pas de vous présenter avec une pièce d'identité pour accéder au ministère de l'Intérieur.
+         </p>
+       </div>`
+    : templateType === 'classic'
+    ? `<div style="background: #e3f2fd; padding: 15px; border: 1px solid #bbdefb; margin-top: 15px;">
+         <p style="color: #1565c0; margin: 0; font-size: 14px; font-style: italic;">
+           <strong>Rappel :</strong> Munissez-vous d'une pièce d'identité pour l'accès au ministère.
+         </p>
+       </div>`
+    : templateType === 'original'
+    ? `<div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-top: 15px;">
+         <p style="color: #1e40af; margin: 0; font-size: 14px;">
+           <strong>Rappel important :</strong> N'oubliez pas de vous présenter avec une pièce d'identité pour accéder au ministère de l'Intérieur.
+         </p>
+       </div>`
+    : `<div style="padding: 15px; border-left: 3px solid #3b82f6; background: #f8fafc; margin-top: 15px;">
+         <p style="color: #1e40af; margin: 0; font-size: 14px;">
+           <strong>Important :</strong> Pièce d'identité requise pour l'accès.
+         </p>
+       </div>`;
+
+  return containerStart + sessionsHtml + importantNote + containerEnd;
 }
 
 async function generateDefaultEmailContent(event: any, participant: { nom: string; prenom: string; email: string }): Promise<string> {

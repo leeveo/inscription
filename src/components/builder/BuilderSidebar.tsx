@@ -42,6 +42,7 @@ import { Session } from './blocks/Session';
 import { TwoColumnSection } from './blocks/TwoColumnSection';
 import { ParticipantInfo } from './blocks/ParticipantInfo';
 import { FormulaireDynamique } from './blocks/FormulaireDynamique';
+import { PaymentWidget } from './blocks/PaymentWidget';
 
 interface BlockCategory {
   id: string;
@@ -63,6 +64,7 @@ const categories: BlockCategory[] = [
   { id: 'content', label: 'Contenu', icon: <FiType className="w-4 h-4" /> },
   { id: 'forms', label: 'Formulaires', icon: <FiMessageSquare className="w-4 h-4" /> },
   { id: 'event', label: 'Événement', icon: <FiCalendar className="w-4 h-4" /> },
+  { id: 'billing', label: 'Billetterie 💳', icon: <FiSquare className="w-4 h-4" /> },
   { id: 'session', label: 'Sessions', icon: <FiClock className="w-4 h-4" /> },
   { id: 'media', label: 'Média', icon: <FiImage className="w-4 h-4" /> },
 ];
@@ -97,6 +99,9 @@ const blocks: BlockItem[] = [
   { id: 'agenda', label: 'Agenda', icon: <FiCalendar />, categoryId: 'event', component: Agenda },
   { id: 'speakers', label: 'Intervenants', icon: <FiUsers />, categoryId: 'event', component: Speakers },
   { id: 'map', label: 'Carte', icon: <FiMapPin />, categoryId: 'event', component: Map },
+
+  // Billing blocks
+  { id: 'paymentWidget', label: 'Widget de Paiement 💳', icon: <FiSquare />, categoryId: 'billing', component: PaymentWidget, isCanvas: false },
 
   // Session blocks
   { id: 'session', label: 'Sessions', icon: <FiClock />, categoryId: 'session', component: Session },

@@ -7,6 +7,7 @@ type EmailTemplatePreviewProps = {
   eventId: string
   eventName: string
   onEditTemplate: () => void
+  refreshTrigger?: number
 }
 
 type EmailTemplate = {
@@ -15,7 +16,7 @@ type EmailTemplate = {
   updated_at: string
 }
 
-export default function EmailTemplatePreview({ eventId, eventName, onEditTemplate }: EmailTemplatePreviewProps) {
+export default function EmailTemplatePreview({ eventId, eventName, onEditTemplate, refreshTrigger }: EmailTemplatePreviewProps) {
   const [template, setTemplate] = useState<EmailTemplate | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +81,7 @@ export default function EmailTemplatePreview({ eventId, eventName, onEditTemplat
     }
 
     fetchTemplate()
-  }, [eventId, eventName])
+  }, [eventId, eventName, refreshTrigger])
 
   if (isLoading) {
     return (

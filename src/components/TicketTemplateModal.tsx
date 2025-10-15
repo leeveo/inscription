@@ -7,9 +7,10 @@ type TicketTemplateModalProps = {
   eventId: string
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void // Nouveau callback pour notifier le succès
 }
 
-export default function TicketTemplateModal({ eventId, isOpen, onClose }: TicketTemplateModalProps) {
+export default function TicketTemplateModal({ eventId, isOpen, onClose, onSuccess }: TicketTemplateModalProps) {
   if (!isOpen) return null
 
   return (
@@ -18,6 +19,7 @@ export default function TicketTemplateModal({ eventId, isOpen, onClose }: Ticket
         <TicketTemplateWizard
           eventId={eventId}
           onClose={onClose}
+          onSuccess={onSuccess}
         />
       </div>
     </div>

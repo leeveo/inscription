@@ -45,6 +45,9 @@ import { TwoColumnSection } from './blocks/TwoColumnSection';
 import { ParticipantInfo } from './blocks/ParticipantInfo';
 import { FormulaireDynamique } from './blocks/FormulaireDynamique';
 
+// Payment Block
+import { PaymentWidget } from './blocks/PaymentWidget';
+
 interface BuilderEditorProps {
   initialPage: BuilderPage;
 }
@@ -125,6 +128,7 @@ export default function BuilderEditor({ initialPage }: BuilderEditorProps) {
     TwoColumnSection,
     ParticipantInfo,
     FormulaireDynamique,
+    PaymentWidget,
   };
 
   // Show loading state if not mounted
