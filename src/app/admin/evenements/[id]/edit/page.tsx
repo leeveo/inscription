@@ -769,8 +769,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       .replace(/\{\{participant_email\}\}/g, participant.email)
       .replace(/\{\{participant_phone\}\}/g, participant.telephone || 'Non renseigné')
       .replace(/\{\{participant_profession\}\}/g, participant.profession || 'Non renseigné')
-      .replace(/\{\{participant_sessions\}\}/g, participant.sessions_selectionnees ? 
-        `<ul style="list-style: none; padding: 0;">${participant.sessions_selectionnees.split(',').map(session => 
+      .replace(/\{\{participant_sessions\}\}/g, (participant as any).sessions_selectionnees ? 
+        `<ul style="list-style: none; padding: 0;">${(participant as any).sessions_selectionnees.split(',').map((session: string) => 
           `<li style="padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">✅ ${session.trim()}</li>`
         ).join('')}</ul>` : 'Aucune session sélectionnée')
       .replace(/\{\{qr_code\}\}/g, `<img src="${qrCodeUrl}" alt="QR Code" class="qr-code" style="width: 80px; height: 80px; margin: 0 auto; display: block; border-radius: 4px;" />`)
