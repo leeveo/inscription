@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseApi } from '@/lib/supabase/server';
 import Stripe from 'stripe';
 
-// Initialiser Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
-});
+// Fonction pour initialiser Stripe de manière lazy
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-06-20',
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const stripe = getStripe();
     const supabase = supabaseApi();
     const body = await request.json();
 

@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter, Roboto, Poppins, Playfair_Display, Montserrat, Lato, Open_Sans, Raleway, Ubuntu, Bebas_Neue } from 'next/font/google'
-import Sidebar from '@/components/Sidebar'
+import Sidebar from '../components/Sidebar'
+import UploadThingStyles from '../components/UploadThingStyles'
 import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -54,6 +55,7 @@ export default async function RootLayout({
     return (
       <html lang="fr" className={`${inter.variable} ${roboto.variable} ${poppins.variable} ${playfair.variable} ${montserrat.variable} ${lato.variable} ${opensans.variable} ${raleway.variable} ${ubuntu.variable} ${bebas.variable}`}>
         <body className={`${inter.className} min-h-screen`}>
+          <UploadThingStyles />
           {children}
         </body>
       </html>
@@ -64,7 +66,7 @@ export default async function RootLayout({
     <html lang="fr" className={`${inter.variable} ${roboto.variable} ${poppins.variable} ${playfair.variable} ${montserrat.variable} ${lato.variable} ${opensans.variable} ${raleway.variable} ${ubuntu.variable} ${bebas.variable}`}>
       <body className={`${inter.className} flex h-screen bg-gray-50`}>
         {/* Sidebar - fixed on desktop, sliding on mobile */}
-        <div className="hidden md:block md:w-64 shrink-0">
+        <div className="block md:w-64 w-48 shrink-0 bg-red-500">
           <Sidebar />
         </div>
 

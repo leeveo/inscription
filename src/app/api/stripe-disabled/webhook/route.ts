@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseApi } from '@/lib/supabase/server';
-import { stripeUtils } from '@/lib/stripe/server';
+import { stripeUtils } from '@/lib/stripe/server-simple';
 import { headers } from 'next/headers';
 
 /**

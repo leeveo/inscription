@@ -1,10 +1,15 @@
 import Stripe from 'stripe';
 
-// Configuration Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
-  typescript: true,
-});
+// Fonction pour initialiser Stripe de manière lazy
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not defined');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-11-20.acacia',
+    typescript: true,
+  });
+}
 
 // Types pour les métadonnées Stripe
 export interface StripePaymentMetadata {
@@ -279,4 +284,29 @@ export const stripeUtils = {
   retrieveCheckoutSession,
 };
 
-export default stripe;
+// Export lazy stripe utils
+export const stripeUtils = {
+  async verifyWebhookSignature(payload: string, signature: string, secret: string) {
+    const stripe = getStripe();
+    return stripe.webhooks.constructEvent(payload, signature, secret);
+  },
+  
+  async createPaymentIntent(amount: number, currency: string = 'eur', metadata: any) {
+    const stripe = getStripe();
+    return stripe.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency,
+      metadata,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+  },
+  
+  async retrievePaymentIntent(paymentIntentId: string) {
+    const stripe = getStripe();
+    return stripe.paymentIntents.retrieve(paymentIntentId);
+  }
+};
+
+export default stripeUtils;
