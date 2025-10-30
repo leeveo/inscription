@@ -1,8 +1,19 @@
 {
+  "name": "nexjs-inscriptions",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd event-admin && npm install && npm run build",
+    "start": "cd event-admin && npm start",
+    "dev": "cd event-admin && npm run dev",
+    "install": "cd event-admin && npm install"
+  },
   "dependencies": {
-    "nodemailer": "^7.0.3"
+    "next": "14.2.24",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/nodemailer": "^6.4.17"
+    "@types/node": "^20",
+    "typescript": "^5"
   }
 }
