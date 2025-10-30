@@ -128,6 +128,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         }
 
         console.log('Event fetched successfully:', data);
+        
+        if (!data) {
+          throw new Error('Aucun événement trouvé avec cet identifiant');
+        }
+        
         setEvenement(data as Evenement);
 
         // Si c'est un salon, charger les données associées
