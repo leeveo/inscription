@@ -1,0 +1,42 @@
+{
+  "env": {
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.6"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"d:\\NEXJS-INSCRIPTIONS\\event-admin\\src\\components\\landing-templates\")",
+      "Bash(del /f srccomponentslanding-templatesNeomorphismTemplate.tsx)",
+      "Bash(del /f srccomponentslanding-templatesParallax3DTemplate.tsx)",
+      "Bash(del /f srccomponentslanding-templatesOnepageScrollTemplate.tsx)",
+      "Bash(npm run build:*)",
+      "Bash(npm run clean:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(PORT=3001 npm run dev)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c:*)",
+      "Bash(set PORT=3001)",
+      "Bash(timeout:*)",
+      "Bash(tasklist)",
+      "Bash(cat:*)",
+      "Bash(del /f \"d:\\NEXJS-INSCRIPTIONS\\event-admin\\src\\app\\admin\\check-in\\[eventId]\\[participantId]\\page.js\")",
+      "Bash(set PORT=3000)",
+      "Bash(npx shadcn@latest add:*)",
+      "Read(//d/**)",
+      "Bash(npx tsc:*)",
+      "Bash(del:*)",
+      "Bash(tasklist:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

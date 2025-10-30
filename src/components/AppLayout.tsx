@@ -1,0 +1,3 @@
+import React from 'react'; // Ajoutez cette ligne pour importer le namespace JSX
+
+// ...existing code...
