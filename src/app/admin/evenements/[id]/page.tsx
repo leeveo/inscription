@@ -133,10 +133,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           throw new Error('Aucun événement trouvé avec cet identifiant');
         }
         
-        setEvenement(data as Evenement);
+        const eventData = data as Evenement;
+        setEvenement(eventData);
 
         // Si c'est un salon, charger les données associées
-        if (data.type_evenement === 'salon') {
+        if (eventData.type_evenement === 'salon') {
           await fetchSalonData(eventId);
         }
       } catch (err: Error | unknown) {
