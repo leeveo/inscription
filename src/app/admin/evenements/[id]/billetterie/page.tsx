@@ -22,8 +22,7 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  Users,
-  Smartphone
+  Users
 } from 'lucide-react';
 import TicketTypeManager from '@/components/billing/TicketTypeManager';
 import QuotaTracker from '@/components/billing/QuotaTracker';

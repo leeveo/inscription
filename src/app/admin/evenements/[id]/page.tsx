@@ -128,16 +128,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         }
 
         console.log('Event fetched successfully:', data);
-        
-        if (!data) {
-          throw new Error('Aucun événement trouvé avec cet identifiant');
-        }
-        
-        const eventData = data as Evenement;
-        setEvenement(eventData);
+        setEvenement(data as Evenement);
 
         // Si c'est un salon, charger les données associées
-        if (eventData.type_evenement === 'salon') {
+        if (data.type_evenement === 'salon') {
           await fetchSalonData(eventId);
         }
       } catch (err: Error | unknown) {
