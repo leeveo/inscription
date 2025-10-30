@@ -340,9 +340,9 @@ export default function WizardSalonPage() {
       heure_debut: '',
       heure_fin: '',
       lieu_session: '',
-      intervenant: '',
+      intervenant_ids: [],
       capacite_max: '',
-      type_session: 'conference'
+      type_session: 'conference' as 'conference' | 'workshop' | 'table-ronde' | 'presentation' | 'atelier'
     }]);
   };
 
