@@ -1,12 +1,3 @@
 {
-  "buildCommand": "cd event-admin && npm run build",
-  "outputDirectory": "event-admin/.next",
-  "installCommand": "cd event-admin && npm install",
-  "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/event-admin/$1"
-    }
-  ]
+  "rootDirectory": "event-admin"
 }
