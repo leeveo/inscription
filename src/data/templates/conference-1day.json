@@ -1,0 +1,290 @@
+{
+  "id": "template-conference-1day",
+  "name": "Conférence 1 Jour",
+  "description": "Template complet pour une conférence d'une journée avec agenda, speakers et inscription",
+  "category": "event",
+  "preview_image": "/templates/conference-1day-preview.png",
+  "tree": {
+    "ROOT": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "min-h-screen"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "hidden": false,
+      "nodes": ["hero-section", "countdown-section", "agenda-section", "speakers-section", "map-section", "faq-section", "footer-section"],
+      "linkedNodes": {}
+    },
+    "hero-section": {
+      "type": {
+        "resolvedName": "Hero"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Conférence Annuelle 2025",
+        "subtitle": "Rejoignez-nous pour une journée d'apprentissage et de networking",
+        "backgroundImage": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920&q=80",
+        "ctaText": "Réserver ma place",
+        "ctaLink": "#inscription",
+        "alignment": "center",
+        "height": "large",
+        "overlay": true,
+        "overlayOpacity": 60
+      },
+      "displayName": "Hero",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "countdown-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "bg-gradient-to-r from-blue-600 to-purple-600 py-12"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["countdown"],
+      "linkedNodes": {}
+    },
+    "countdown": {
+      "type": {
+        "resolvedName": "Countdown"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Commence dans",
+        "targetDate": "2025-06-15T09:00:00",
+        "showDays": true,
+        "showHours": true,
+        "showMinutes": true,
+        "showSeconds": true,
+        "textColor": "#FFFFFF",
+        "numberColor": "#FFFFFF",
+        "backgroundColor": "transparent"
+      },
+      "displayName": "Countdown",
+      "custom": {},
+      "parent": "countdown-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "agenda-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-gray-50"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["agenda"],
+      "linkedNodes": {}
+    },
+    "agenda": {
+      "type": {
+        "resolvedName": "Agenda"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Programme de la journée",
+        "groupBy": "none",
+        "showSpeakers": true,
+        "allowEnrollment": false
+      },
+      "displayName": "Agenda",
+      "custom": {},
+      "parent": "agenda-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {},
+      "dataBinding": {
+        "table": "inscription_sessions",
+        "select": ["*"],
+        "where": [],
+        "orderBy": [
+          {
+            "column": "heure_debut",
+            "ascending": true
+          }
+        ],
+        "runtime": "build"
+      }
+    },
+    "speakers-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-white"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["speakers"],
+      "linkedNodes": {}
+    },
+    "speakers": {
+      "type": {
+        "resolvedName": "Speakers"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Nos Intervenants",
+        "layout": "grid",
+        "columns": 3,
+        "showBio": true,
+        "showSocial": true
+      },
+      "displayName": "Speakers",
+      "custom": {},
+      "parent": "speakers-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "map-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-gray-50"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["map"],
+      "linkedNodes": {}
+    },
+    "map": {
+      "type": {
+        "resolvedName": "Map"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Lieu de l'événement",
+        "address": "Centre de Congrès, 123 Avenue Principale, Paris, France",
+        "latitude": 48.8566,
+        "longitude": 2.3522,
+        "zoom": 15,
+        "height": 400,
+        "showDirections": true
+      },
+      "displayName": "Map",
+      "custom": {},
+      "parent": "map-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "faq-section": {
+      "type": {
+        "resolvedName": "Container"
+      },
+      "isCanvas": true,
+      "props": {
+        "className": "py-16 px-4 bg-white"
+      },
+      "displayName": "Container",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": ["faq"],
+      "linkedNodes": {}
+    },
+    "faq": {
+      "type": {
+        "resolvedName": "FAQ"
+      },
+      "isCanvas": false,
+      "props": {
+        "title": "Questions Fréquentes",
+        "items": [
+          {
+            "question": "À quelle heure commence la conférence ?",
+            "answer": "La conférence commence à 9h00. Nous vous recommandons d'arriver 30 minutes à l'avance pour l'enregistrement."
+          },
+          {
+            "question": "Le déjeuner est-il inclus ?",
+            "answer": "Oui, le déjeuner et les pauses café sont inclus dans votre inscription."
+          },
+          {
+            "question": "Y a-t-il un parking disponible ?",
+            "answer": "Oui, un parking gratuit est disponible pour tous les participants sur présentation de votre badge."
+          },
+          {
+            "question": "Puis-je obtenir un remboursement ?",
+            "answer": "Les annulations sont acceptées jusqu'à 7 jours avant l'événement avec un remboursement complet."
+          }
+        ],
+        "accordion": true
+      },
+      "displayName": "FAQ",
+      "custom": {},
+      "parent": "faq-section",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    },
+    "footer-section": {
+      "type": {
+        "resolvedName": "Footer"
+      },
+      "isCanvas": false,
+      "props": {
+        "companyName": "EventPro",
+        "logo": "",
+        "description": "Votre partenaire pour des événements réussis",
+        "links": [
+          {
+            "title": "Navigation",
+            "items": [
+              { "label": "Accueil", "url": "#" },
+              { "label": "Programme", "url": "#agenda" },
+              { "label": "Intervenants", "url": "#speakers" },
+              { "label": "Contact", "url": "#contact" }
+            ]
+          },
+          {
+            "title": "Légal",
+            "items": [
+              { "label": "Mentions légales", "url": "/legal" },
+              { "label": "Politique de confidentialité", "url": "/privacy" },
+              { "label": "CGV", "url": "/terms" }
+            ]
+          }
+        ],
+        "socialLinks": [
+          { "platform": "LinkedIn", "url": "https://linkedin.com" },
+          { "platform": "Twitter", "url": "https://twitter.com" },
+          { "platform": "Facebook", "url": "https://facebook.com" }
+        ],
+        "copyright": "© 2025 EventPro. Tous droits réservés."
+      },
+      "displayName": "Footer",
+      "custom": {},
+      "parent": "ROOT",
+      "hidden": false,
+      "nodes": [],
+      "linkedNodes": {}
+    }
+  }
+}
