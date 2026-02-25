@@ -76,7 +76,16 @@ export async function POST(request: Request) {
       statut: 'publié',
       prix: eventData.prix ? parseFloat(eventData.prix) : null,
       couleur_header_email: eventData.couleurHeaderEmail,
-      objet_email_inscription: eventData.emailSubject
+      objet_email_inscription: eventData.emailSubject,
+      // Nouveaux champs du wizard
+      type_localisation: eventData.typeLocalisation,
+      invitation_email_template: eventData.invitationEmailTemplate,
+      registration_form_type: eventData.registrationFormType,
+      secteur_activite: eventData.secteurActivite,
+      ouverture_portes: eventData.ouverturePortes || null,
+      // Mapping intelligent pour l'édition
+      nom_lieu: eventData.typeLocalisation === 'lieu' ? eventData.lieu : null,
+      nom_organisation: eventData.organisateur
     }
 
     // Créer l'événement
@@ -94,31 +103,164 @@ export async function POST(request: Request) {
       )
     }
 
-    // Créer les sessions si elles existent
+    // 1. Créer les types de billets (Concert)
+    if (eventData.ticketTypes && eventData.ticketTypes.length > 0) {
+      const ticketsToInsert = eventData.ticketTypes.map((t: any) => ({
+        evenement_id: event.id,
+        nom: t.nom,
+        description: t.description,
+        prix: parseFloat(t.prix),
+        quantite_totale: t.quantite_totale ? parseInt(t.quantite_totale) : null,
+        emplacement: t.emplacement
+      }));
+
+      const { error: ticketsError } = await supabase
+        .from('inscription_ticket_types')
+        .insert(ticketsToInsert);
+
+      if (ticketsError) {
+        console.error('Erreur lors de la création des types de billets:', ticketsError);
+      }
+    }
+
+    // Map pour stocker la correspondance entre ID temporaire (frontend) et ID réel (DB)
+    const intervenantIdMap = new Map<number, string>();
+    const sessionIdMap = new Map<number, string>();
+
+    // 2. Créer les intervenants
+    if (eventData.intervenants && eventData.intervenants.length > 0) {
+      const intervenantsToInsert = eventData.intervenants.map((i: any) => ({
+        evenement_id: event.id,
+        nom: i.nom,
+        prenom: i.prenom,
+        email: i.email,
+        telephone: i.telephone,
+        entreprise: i.entreprise,
+        poste: i.poste,
+        bio: i.bio,
+        photo_url: i.photo_url,
+        linkedin: i.linkedin,
+        twitter: i.twitter
+      }));
+
+      const { data: createdIntervenants, error: intervenantsError } = await supabase
+        .from('inscription_intervenants')
+        .insert(intervenantsToInsert)
+        .select();
+
+      if (intervenantsError) {
+        console.error('Erreur lors de la création des intervenants:', intervenantsError);
+      } else if (createdIntervenants) {
+        // Remplir la map des IDs
+        createdIntervenants.forEach((createdIntervenant, index) => {
+          const originalId = eventData.intervenants[index].id;
+          intervenantIdMap.set(originalId, createdIntervenant.id);
+        });
+      }
+    }
+
+    // 3. Créer les sessions
     if (eventData.sessions && eventData.sessions.length > 0) {
-      const sessionsPayload = eventData.sessions
-        .filter((session: any) => session.titre) // Filtrer les sessions avec un titre
+      const sessionsToInsert = eventData.sessions
+        .filter((session: any) => session.titre)
         .map((session: any) => ({
           evenement_id: event.id,
           titre: session.titre,
           description: session.description,
-          date: eventData.dateDebut ? eventData.dateDebut.split('T')[0] : new Date().toISOString().split('T')[0], // Utiliser la date de l'événement
+          date: session.date || (eventData.dateDebut ? eventData.dateDebut.split('T')[0] : new Date().toISOString().split('T')[0]),
           heure_debut: session.heure_debut,
           heure_fin: session.heure_fin,
           lieu: session.lieu_session || eventData.lieu,
-          intervenant: session.intervenant,
           type: session.type_session,
           max_participants: session.capacite_max ? parseInt(session.capacite_max) : null
-        }))
+        }));
 
-      if (sessionsPayload.length > 0) {
-        const { error: sessionsError } = await supabase
-          .from('inscription_sessions')
-          .insert(sessionsPayload)
+      const { data: createdSessions, error: sessionsError } = await supabase
+        .from('inscription_sessions')
+        .insert(sessionsToInsert)
+        .select();
 
-        if (sessionsError) {
-          console.error('Erreur lors de la création des sessions:', sessionsError)
+      if (sessionsError) {
+        console.error('Erreur lors de la création des sessions:', sessionsError);
+      } else if (createdSessions) {
+        // Remplir la map des IDs
+        // Attention: on a filtré les sessions, il faut s'assurer de mapper correctement
+        let createdIndex = 0;
+        eventData.sessions.forEach((session: any) => {
+          if (session.titre) {
+            if (createdSessions[createdIndex]) {
+              sessionIdMap.set(session.id, createdSessions[createdIndex].id);
+              createdIndex++;
+            }
+          }
+        });
+
+        // 3. Lier les intervenants aux sessions
+        const sessionIntervenantsLinks: any[] = [];
+        
+        eventData.sessions.forEach((session: any) => {
+          if (session.titre && session.intervenant_ids && session.intervenant_ids.length > 0) {
+            const realSessionId = sessionIdMap.get(session.id);
+            
+            if (realSessionId) {
+              session.intervenant_ids.forEach((tempIntervenantId: number) => {
+                const realIntervenantId = intervenantIdMap.get(tempIntervenantId);
+                
+                if (realIntervenantId) {
+                  sessionIntervenantsLinks.push({
+                    session_id: realSessionId,
+                    intervenant_id: realIntervenantId
+                  });
+                }
+              });
+            }
+          }
+        });
+
+        if (sessionIntervenantsLinks.length > 0) {
+          const { error: linksError } = await supabase
+            .from('inscription_session_intervenants')
+            .insert(sessionIntervenantsLinks);
+
+          if (linksError) {
+            console.error('Erreur lors de la liaison sessions-intervenants:', linksError);
+          }
         }
+      }
+    }
+
+    // 4. Créer les exposants (Salon)
+    if (eventData.exposants && eventData.exposants.length > 0) {
+      const exposantsToInsert = eventData.exposants.map((e: any) => ({
+        evenement_id: event.id,
+        nom_societe: e.nom,
+        description: e.activite,
+        secteur_activite: e.categorie,
+        site_web: e.site_web,
+        email_contact: e.email,
+        telephone_contact: e.telephone,
+        adresse: e.adresse,
+        ville: e.ville,
+        code_postal: e.code_postal,
+        pays: e.pays,
+        nom_representant: e.nom_representant,
+        prenom_representant: e.prenom_representant,
+        fonction_representant: e.fonction_representant,
+        email_representant: e.email_representant,
+        telephone_representant: e.telephone_representant,
+        stand_emplacement: e.stand_emplacement,
+        stand_taille: e.stand_taille,
+        besoins_electriques: e.besoins_electriques,
+        besoins_internet: e.besoins_internet,
+        statut: 'confirmé' // Par défaut
+      }));
+
+      const { error: exposantsError } = await supabase
+        .from('inscription_exposants')
+        .insert(exposantsToInsert);
+
+      if (exposantsError) {
+        console.error('Erreur lors de la création des exposants:', exposantsError);
       }
     }
 
@@ -131,6 +273,8 @@ export async function POST(request: Request) {
         email: participant.email,
         telephone: participant.telephone,
         profession: participant.profession,
+        entreprise: participant.entreprise,
+        commentaires: participant.commentaires,
         site_web: participant.site_web,
         checked_in: false,
         ticket_sent: false

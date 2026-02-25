@@ -358,7 +358,7 @@ async function generateInvitationEmail(params: {
                 
                 <!-- Header élégant -->
                 <div style="background: linear-gradient(135deg, ${headerColor} 0%, #9333ea 100%); color: white; padding: 50px 30px; text-align: center; position: relative;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 100%; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><defs><pattern id=\"grain\" width=\"100\" height=\"100\" patternUnits=\"userSpaceOnUse\"><circle cx=\"50\" cy=\"50\" r=\"0.5\" fill=\"white\" opacity=\"0.1\"/></pattern></defs><rect width=\"100\" height=\"100\" fill=\"url(%23grain)\"/></svg>'); opacity: 0.3;"></div>
+                   
                     <div style="position: relative; z-index: 1;">
                         <h1 style="margin: 0 0 15px 0; font-size: 32px; font-weight: 300; letter-spacing: -1px;">
                             Invitation Exclusive

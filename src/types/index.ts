@@ -6,6 +6,7 @@ export interface Participant {
   telephone?: string;
   entreprise?: string; // Nouveau champ entreprise
   profession?: string;
+  commentaires?: string; // Nouveau champ commentaires
   site_web?: string;
   date_naissance?: string;
   url_linkedin?: string;

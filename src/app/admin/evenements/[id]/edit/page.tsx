@@ -27,6 +27,7 @@ import PageBuilderSelector from '@/components/PageBuilderSelector';
 import BasicPageSelector from '@/components/BasicPageSelector';
 import DomainManager from '@/components/DomainManager';
 import IntervenantsManager from '@/components/IntervenantsManager';
+import ExposantsManager from '@/components/ExposantsManager';
 import EmailTemplateSelector from '@/components/EmailTemplateSelector';
 import EmailTemplateDropdown from '@/components/EmailTemplateDropdown';
 import PagesManager from '@/components/PagesManagerSimple';
@@ -35,7 +36,7 @@ import BadgeCustomizationTabNew from '@/components/badges/BadgeCustomizationTabN
 import { exportParticipantsToCSV, exportSelectedParticipantsToCSV } from '@/utils/csvExport';
 import { exportParticipantsToExcel, exportSelectedParticipantsToExcel } from '@/utils/excelExport';
 import { useSessionsStats } from '@/hooks/useSessionsStats';
-import { FiMail, FiEdit3 } from 'react-icons/fi';
+import { FiMail, FiEdit3, FiCheckCircle, FiAlertCircle, FiMusic, FiCalendar, FiMapPin, FiMonitor } from 'react-icons/fi';
 import TicketTypeManager from '@/components/billing/TicketTypeManager';
 import QuotaTracker from '@/components/billing/QuotaTracker';
 
@@ -75,6 +76,9 @@ type Evenement = {
   representant_legal_nom?: string
   representant_legal_prenom?: string
   representant_legal_fonction?: string
+  secteur_activite?: string
+  config_badge?: any
+  ouverture_portes?: string
 }
 
 type Participant = {
@@ -90,6 +94,7 @@ type Participant = {
   checked_in?: boolean
   checked_in_at?: string
   token_landing_page?: string | null
+  sessions_selectionnees?: string
 }
 
 type Session = {
@@ -114,7 +119,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'participants' | 'sessions' | 'intervenants' | 'tickets' | 'checkin' | 'landing-page' | 'participant-urls' | 'page-builder' | 'billetterie'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'participants' | 'sessions' | 'intervenants' | 'exposants' | 'tickets' | 'checkin' | 'landing-page' | 'participant-urls' | 'page-builder' | 'billetterie'>('details');
   const [ticketSubTab, setTicketSubTab] = useState<'ticket' | 'badge'>('ticket');
   const [showEmailTemplateEditor, setShowEmailTemplateEditor] = useState(false);
   const [showParticipantEmailManager, setShowParticipantEmailManager] = useState(false);
@@ -128,6 +133,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [showDetailedStatsModal, setShowDetailedStatsModal] = useState(false);
   const [showLandingLinkForm, setShowLandingLinkForm] = useState(false);
   const [landingLinkTarget, setLandingLinkTarget] = useState<{ id: string; email: string; name: string } | null>(null);
+  const [ticketCount, setTicketCount] = useState(0);
   
   // Hook pour récupérer les statistiques des sessions - seulement quand l'onglet sessions est actif
   const { data: sessionsStatsData, isLoading: isLoadingStats, error: statsError, refetch: refetchStats } = useSessionsStats(activeTab === 'sessions' ? eventId : '');
@@ -149,6 +155,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [statut, setStatut] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [codeAcces, setCodeAcces] = useState('');
+  const [secteurActivite, setSecteurActivite] = useState('');
+  const [ouverturePortes, setOuverturePortes] = useState('');
   
   // Nouveaux champs pour la localisation
   const [typeLocalisation, setTypeLocalisation] = useState<'lieu' | 'en_ligne' | 'non_applicable'>('lieu');
@@ -274,13 +282,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         try {
           const result = await supabase
             .from('inscription_evenements')
-            .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription, email_template_id')
+            .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription, email_template_id, secteur_activite')
             .eq('id', eventId)
             .single();
           data = result.data;
           error = result.error;
         } catch (err) {
-          console.warn('Colonnes email_template_id non disponibles, essai sans elle');
+          console.warn('Colonnes email_template_id ou secteur_activite non disponibles, essai sans elle');
           try {
             const result = await supabase
               .from('inscription_evenements')
@@ -319,6 +327,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setTelephoneContact(event.telephone_contact || '');
           setEmailEnvoi(event.email_envoi || '');
           setTypeEvenement(event.type_evenement || '');
+          // Ouverture des portes est un champ TIME, on le garde tel quel
+          setOuverturePortes(event.ouverture_portes || '');
           
           // Initialiser les nouveaux champs de localisation
           setTypeLocalisation((event.type_localisation as 'lieu' | 'en_ligne' | 'non_applicable') || 'lieu');
@@ -326,6 +336,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setAdresseEvenement(event.adresse_evenement || '');
           setSiteInternet(event.site_internet || '');
           setPlateforme(event.plateforme || '');
+          
+          // Initialiser les champs organisateur
+          setNomOrganisation(event.nom_organisation || '');
           
           // Colonnes d'organisateur supprimées - non disponibles dans le schéma
           setStatut(event.statut || '');
@@ -335,6 +348,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           setObjetEmailInscription(event.objet_email_inscription || ''); // Load email subject
           setEmailTemplateId((event as any).email_template_id || ''); // Load email template
           setBuilderPageId(event.builder_page_id || null); // Load builder page ID
+          setSecteurActivite(event.secteur_activite || ''); // Load secteur activite
                   }
 
         // Load landing page configuration
@@ -391,6 +405,20 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     fetchEvent();
     fetchBuilderPages();
   }, [eventId]);
+
+  // Fetch ticket count for completion status
+  useEffect(() => {
+    if (!eventId) return;
+    const fetchTicketCount = async () => {
+      const supabase = supabaseBrowser();
+      const { count } = await supabase
+        .from('inscription_ticket_types')
+        .select('*', { count: 'exact', head: true })
+        .eq('evenement_id', eventId);
+      setTicketCount(count || 0);
+    };
+    fetchTicketCount();
+  }, [eventId, activeTab]); // Refresh when tab changes (e.g. coming back from ticketing)
 
   // Refetch builder pages when landing-page tab becomes active
   useEffect(() => {
@@ -665,6 +693,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         lieu: typeLocalisation === 'lieu' ? `${nomLieu} - ${adresseEvenement}` : (typeLocalisation === 'en_ligne' ? siteInternet : ''),
         date_debut: dateDebut,
         date_fin: dateFin,
+        ouverture_portes: ouverturePortes || null,
         prix: prix === '' ? null : prix,
         places_disponibles: placesDisponibles === '' ? null : placesDisponibles,
         evenement_payant: evenementPayant,
@@ -688,6 +717,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         ...baseUpdateData,
         couleur_header_email: couleurHeaderEmail || '#667eea',
         objet_email_inscription: objetEmailInscription || '',
+        secteur_activite: secteurActivite || null,
+        nom_organisation: nomOrganisation || null,
       };
 
       // Ajouter email_template_id seulement si la colonne existe
@@ -868,6 +899,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             padding: 1px 0 !important;
           }
           @media print {
+            @page {
+              margin: 0;
+              size: auto;
+            }
             body {
               margin: 0 !important;
               padding: 0 !important;
@@ -1380,6 +1415,26 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     window.open(previewUrl, '_blank');
   };
 
+  // Calcul de la complétion
+  const getCompletionStatus = () => {
+    // Détails : Vérifie les champs obligatoires
+    const detailsComplete = !!(nom && dateDebut && dateFin && organisateur && emailContact &&
+      (typeLocalisation === 'lieu' ? (nomLieu && adresseEvenement) :
+       typeLocalisation === 'en_ligne' ? siteInternet : true));
+
+    // Sessions (si applicable)
+    const sessionsComplete = typeEvenement === 'conference' || typeEvenement === 'salon_professionnel'
+      ? (sessionsStatsData?.totalSessions || 0) > 0
+      : true; // Non applicable ou optionnel
+
+    // Billetterie
+    const ticketingComplete = evenementPayant ? ticketCount > 0 : true;
+
+    return { detailsComplete, sessionsComplete, ticketingComplete };
+  };
+  
+  const completion = getCompletionStatus();
+
   if (isLoading) {
     return (
       <div className="max-w-8xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -1439,6 +1494,52 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Modern Navigation Tabs */}
+      
+      {/* Résumé de la configuration */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-lg ${evenementPayant ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+             {typeEvenement === 'concert' ? <FiMusic className="w-6 h-6" /> : <FiCalendar className="w-6 h-6" />}
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+              {nom || 'Nouvel événement'}
+              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                {typeEvenement === 'concert' ? 'Concert' : typeEvenement === 'salon_professionnel' ? 'Salon' : 'Événement'}
+              </span>
+            </h3>
+            <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+              <span className="flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${statut === 'actif' || statut === 'publié' ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                {statut === 'actif' || statut === 'publié' ? 'Publié' : 'Brouillon'}
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="font-medium text-gray-700">{evenementPayant ? 'Payant' : 'Gratuit'}</span>
+              <span className="text-gray-300">|</span>
+              <span className="flex items-center gap-1">
+                {typeLocalisation === 'lieu' ? <FiMapPin className="w-3 h-3" /> : <FiMonitor className="w-3 h-3" />}
+                {typeLocalisation === 'lieu' ? 'Présentiel' : typeLocalisation === 'en_ligne' ? 'En ligne' : 'Hybride'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6 bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
+           <div className="flex flex-col items-end">
+              <span className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Configuration</span>
+              <div className="flex gap-1.5">
+                <div title={`Détails: ${completion.detailsComplete ? 'Complet' : 'Incomplet'}`} className={`w-8 h-1.5 rounded-full transition-colors ${completion.detailsComplete ? 'bg-green-500' : 'bg-orange-400'}`}></div>
+                {(typeEvenement === 'conference' || typeEvenement === 'salon_professionnel') && (
+                  <div title={`Sessions: ${completion.sessionsComplete ? 'Complet' : 'Vide'}`} className={`w-8 h-1.5 rounded-full transition-colors ${completion.sessionsComplete ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                )}
+                {evenementPayant && (
+                  <div title={`Billetterie: ${completion.ticketingComplete ? 'Configurée' : 'Non configurée'}`} className={`w-8 h-1.5 rounded-full transition-colors ${completion.ticketingComplete ? 'bg-green-500' : 'bg-orange-400'}`}></div>
+                )}
+              </div>
+           </div>
+        </div>
+      </div>
+
       <div className="mb-8">
         <div className="bg-white p-2 rounded-2xl shadow-lg border-2 border-gray-200">
           <nav className="flex flex-wrap gap-2">
@@ -1456,6 +1557,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>Détails</span>
+              {completion.detailsComplete ? (
+                 <span className="ml-1 text-green-400" title="Complet">●</span>
+              ) : (
+                 <span className="ml-1 text-orange-400" title="Incomplet">●</span>
+              )}
             </button>
 
             {/* 2. Intervenants */}
@@ -1474,6 +1580,24 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               <span>Intervenants</span>
             </button>
 
+            {/* 2.5 Exposants (Salon uniquement) */}
+            {typeEvenement === 'salon_professionnel' && (
+              <button
+                onClick={() => setActiveTab('exposants')}
+                title="Gestion des exposants du salon"
+                className={`group relative px-5 py-2.5 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                  activeTab === 'exposants'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Exposants</span>
+              </button>
+            )}
+
             {/* 3. Sessions */}
             <button
               onClick={() => setActiveTab('sessions')}
@@ -1488,6 +1612,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>Sessions</span>
+              {(typeEvenement === 'conference' || typeEvenement === 'salon_professionnel') && (
+                completion.sessionsComplete ? (
+                   <span className="ml-1 text-green-400" title="Sessions configurées">●</span>
+                ) : (
+                   <span className="ml-1 text-gray-300" title="Aucune session">●</span>
+                )
+              )}
             </button>
 
             {/* 4. Landing Page & Email */}
@@ -1592,6 +1723,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2zm0 8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>Billetterie</span>
+              {evenementPayant && (
+                completion.ticketingComplete ? (
+                   <span className="ml-1 text-green-400" title="Billetterie configurée">●</span>
+                ) : (
+                   <span className="ml-1 text-orange-400" title="Billetterie à configurer">●</span>
+                )
+              )}
             </button>
 
             {/* 10. Check-in */}
@@ -1809,6 +1947,39 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                           )}
                         </div>
 
+                        {/* Ouverture des portes (Concert uniquement) */}
+                        {typeEvenement === 'concert' && (
+                          <div>
+                            <label htmlFor="ouverturePortes" className="block text-sm font-medium text-gray-700 mb-2">
+                              Ouverture des portes (Heure)
+                            </label>
+                            <input
+                              type="time"
+                              id="ouverturePortes"
+                              value={ouverturePortes}
+                              onChange={(e) => setOuverturePortes(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            />
+                          </div>
+                        )}
+
+                        {/* Secteur d'activité (Salon uniquement) */}
+                        {typeEvenement === 'salon_professionnel' && (
+                          <div>
+                            <label htmlFor="secteurActivite" className="block text-sm font-medium text-gray-700 mb-2">
+                              Secteur d'activité
+                            </label>
+                            <input
+                              type="text"
+                              id="secteurActivite"
+                              value={secteurActivite}
+                              onChange={(e) => setSecteurActivite(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Ex: Technologie, Agroalimentaire, BTP..."
+                            />
+                          </div>
+                        )}
+
                         {/* Date de début */}
                         <div>
                           <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700 mb-2">
@@ -1892,10 +2063,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                               </p>
                               {evenementPayant && (
                                 <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                  <p className="text-sm text-green-800">
+                                  <p className="text-sm text-green-800 mb-2">
                                     ✅ La billetterie est activée pour cet événement.
-                                    Configurez les types de billets et les quotas dans l'onglet "Billetterie".
                                   </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveTab('billetterie')}
+                                    className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors shadow-sm"
+                                  >
+                                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                                    </svg>
+                                    Configurer les billets maintenant
+                                  </button>
                                 </div>
                               )}
                             </div>
@@ -1950,6 +2130,23 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                             </select>
                           </div>
                         </div>
+
+                        {/* Secteur d'activité (Salon uniquement) */}
+                        {typeEvenement === 'salon_professionnel' && (
+                          <div>
+                            <label htmlFor="secteurActivite" className="block text-sm font-medium text-gray-700 mb-2">
+                              Secteur d'activité
+                            </label>
+                            <input
+                              type="text"
+                              id="secteurActivite"
+                              value={secteurActivite}
+                              onChange={(e) => setSecteurActivite(e.target.value)}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="Ex: Technologie, Agriculture, Mode..."
+                            />
+                          </div>
+                        )}
 
                         {/* Organisateur */}
                         <div>
@@ -2970,6 +3167,25 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <IntervenantsManager eventId={eventId} />
+          </div>
+        </div>
+      )}
+
+      {/* Exposants Tab */}
+      {activeTab === 'exposants' && (
+        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-500 bg-clip-text text-transparent">
+                  Gestion des exposants
+                </h2>
+                <p className="text-gray-600 font-medium">
+                  Gérez les exposants de votre salon professionnel
+                </p>
+              </div>
+            </div>
+            <ExposantsManager eventId={eventId} />
           </div>
         </div>
       )}
