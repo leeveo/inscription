@@ -26,10 +26,18 @@ export default function EvenementsPage() {
         setIsLoading(true)
         const supabase = supabaseBrowser()
         
-        console.log('Fetching events...')
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setError('Utilisateur non authentifié')
+          return
+        }
+        
+        console.log('Fetching events for user:', user.id)
         const { data, error } = await supabase
           .from('inscription_evenements')
           .select('*')
+          .eq('admin_id', user.id)
           .order('date_debut', { ascending: false })
           
         if (error) {

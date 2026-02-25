@@ -277,14 +277,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         setIsLoading(true);
         const supabase = supabaseBrowser();
         
+        // Récupérer l'utilisateur connecté pour vérifier l'appartenance
+        const { data: { user } } = await supabase.auth.getUser();
+        
         // Essayer d'abord avec les nouveaux champs, fallback si ils n'existent pas
         let data, error;
         try {
-          const result = await supabase
+          const query = supabase
             .from('inscription_evenements')
             .select('*, code_acces, builder_page_id, couleur_header_email, objet_email_inscription, email_template_id, secteur_activite')
             .eq('id', eventId)
-            .single();
+          if (user) query.eq('admin_id', user.id)
+          const result = await query.single();
           data = result.data;
           error = result.error;
         } catch (err) {

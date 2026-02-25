@@ -68,6 +68,9 @@ export default function CreateEventPage() {
 
       const supabase = supabaseBrowser()
 
+      // Récupérer l'utilisateur connecté
+      const { data: { user } } = await supabase.auth.getUser()
+
       // Ensure capacity is properly handled
       const formattedData = {
         ...data,
@@ -76,7 +79,8 @@ export default function CreateEventPage() {
         date_debut: new Date(data.date_debut),
         date_fin: new Date(data.date_fin),
         // If capacite is empty string, set to null to avoid NaN
-        capacite: data.capacite === '' ? null : data.capacite
+        capacite: data.capacite === '' ? null : data.capacite,
+        admin_id: user?.id || null
       }
 
       const { error } = await (supabase as any)

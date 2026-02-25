@@ -37,12 +37,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         setIsLoading(true);
         const supabase = supabaseBrowser();
         
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser();
+        
         console.log('Fetching event with ID:', eventId);
-        const { data, error } = await supabase
+        let query = supabase
           .from('inscription_evenements')
           .select('*')
           .eq('id', eventId)
-          .single();
+        
+        // Vérifier que l'événement appartient à cet admin
+        if (user) query = query.eq('admin_id', user.id)
+        
+        const { data, error } = await query.single();
           
         if (error) {
           console.error('Supabase error:', error);

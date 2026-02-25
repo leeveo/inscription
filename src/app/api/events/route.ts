@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server'
-import { supabaseApi } from '@/lib/supabase/server'
+import { supabaseAuthenticatedApi } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const supabase = supabaseApi()
+    const supabase = await supabaseAuthenticatedApi()
 
-    // Récupérer tous les événements
+    // Récupérer l'utilisateur connecté
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Non authentifié' },
+        { status: 401 }
+      )
+    }
+
+    // Récupérer uniquement les événements de cet administrateur
     const { data: events, error } = await supabase
       .from('inscription_evenements')
       .select(`
@@ -19,6 +28,7 @@ export async function GET() {
         type_evenement,
         created_at
       `)
+      .eq('admin_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -44,8 +54,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const supabase = supabaseApi()
+    const supabase = await supabaseAuthenticatedApi()
     const eventData = await request.json()
+
+    // Récupérer l'utilisateur connecté
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Non authentifié' },
+        { status: 401 }
+      )
+    }
 
     console.log('📝 Données reçues pour création événement:', JSON.stringify(eventData, null, 2));
 
@@ -85,7 +104,8 @@ export async function POST(request: Request) {
       ouverture_portes: eventData.ouverturePortes || null,
       // Mapping intelligent pour l'édition
       nom_lieu: eventData.typeLocalisation === 'lieu' ? eventData.lieu : null,
-      nom_organisation: eventData.organisateur
+      nom_organisation: eventData.organisateur,
+      admin_id: user.id
     }
 
     // Créer l'événement

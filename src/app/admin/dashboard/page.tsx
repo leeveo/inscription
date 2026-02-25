@@ -36,10 +36,15 @@ export default function DashboardPage() {
         setIsLoading(true)
         const supabase = supabaseBrowser()
         
-        // Fetch all events
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        
+        // Fetch events for this admin only
         const { data: eventsData, error: eventsError } = await supabase
           .from('inscription_evenements')
           .select('*')
+          .eq('admin_id', user.id)
           .order('date_debut', { ascending: true })
         
         if (eventsError) throw eventsError
@@ -62,21 +67,27 @@ export default function DashboardPage() {
         const typedEventsData = eventsData as EventData[] || [];
         const upcomingEvents = typedEventsData.filter(event => new Date(event.date_debut) >= now);
         
-        // Fetch participant stats
-        const { count: totalParticipants, error: countError } = await supabase
-          .from('inscription_participants')
-          .select('*', { count: 'exact', head: true })
+        // IDs des événements de cet admin
+        const adminEventIds = typedEventsData.map(e => e.id)
         
-        if (countError) throw countError
-        
-        // Get this month's participants
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-        const { count: monthParticipants, error: monthCountError } = await supabase
-          .from('inscription_participants')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', startOfMonth)
-        
-        if (monthCountError) throw monthCountError
+        // Fetch participant stats (uniquement pour les événements de cet admin)
+        let totalParticipants = 0
+        let monthParticipants = 0
+        if (adminEventIds.length > 0) {
+          const { count: totalCount } = await supabase
+            .from('inscription_participants')
+            .select('*', { count: 'exact', head: true })
+            .in('evenement_id', adminEventIds)
+          totalParticipants = totalCount || 0
+
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+          const { count: monthCount } = await supabase
+            .from('inscription_participants')
+            .select('*', { count: 'exact', head: true })
+            .in('evenement_id', adminEventIds)
+            .gte('created_at', startOfMonth)
+          monthParticipants = monthCount || 0
+        }
         
         setStats({
           totalEvents: eventsData?.length || 0,

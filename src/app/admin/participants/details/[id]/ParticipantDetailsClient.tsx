@@ -54,15 +54,23 @@ export default function ParticipantDetailsClient({ participantId }: ParticipantD
         setIsLoading(true);
         const supabase = supabaseBrowser();
         
-        // Fetch participant
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Fetch participant avec son événement (pour vérifier l'appartenance)
         const { data, error } = await supabase
           .from('inscription_participants')
-          .select('*')
+          .select('*, evenement:evenement_id(id, nom, admin_id)')
           .eq('id', participantId)
           .single();
         
         if (error) throw error;
         if (!data) throw new Error('Participant not found');
+        
+        // Vérifier que le participant appartient à un événement de cet admin
+        if (user && (data as any).evenement?.admin_id && (data as any).evenement.admin_id !== user.id) {
+          throw new Error('Accès non autorisé');
+        }
         
         // Use a two-step type assertion to fix the type error
         setParticipant(data as unknown as Participant);

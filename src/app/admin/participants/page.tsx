@@ -58,15 +58,25 @@ export default function ParticipantsPage() {
         setError(null)
         const supabase = supabaseBrowser()
         
-        // Fetch events for filter dropdown
-        const { data: eventsData, error: eventsError } = await supabase
+        // Récupérer l'utilisateur connecté
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        // Fetch events for filter dropdown (only this admin's events)
+        let eventsQuery = supabase
           .from('inscription_evenements')
           .select('id, nom')
           .order('date_debut', { ascending: false })
         
+        if (user) eventsQuery = eventsQuery.eq('admin_id', user.id)
+        
+        const { data: eventsData, error: eventsError } = await eventsQuery
+        
         if (eventsError) throw eventsError
         // Add a two-step type assertion to fix the type error
         setEvents(eventsData as unknown as Evenement[])
+        
+        // IDs des événements de cet admin (pour filtrer les participants)
+        const adminEventIds = (eventsData || []).map((e: any) => e.id)
         
         // Reset participants before new fetch
         setParticipants([])
@@ -86,12 +96,22 @@ export default function ParticipantsPage() {
             )
           `, { count: 'exact' })
         
-        // Apply event filter if selected - no need to convert strings
-        if (selectedEvent !== null) {
-          console.log(`Filtering by event ID: ${selectedEvent}`)
-          query = query.eq('evenement_id', selectedEvent)
+        // Toujours filtrer par les événements de l'admin connecté
+        if (adminEventIds.length === 0) {
+          // Cet admin n'a pas d'événements - aucun participant
+          query = query.in('evenement_id', ['00000000-0000-0000-0000-000000000000'])
+        } else if (selectedEvent !== null) {
+          // Vérifier que l'événement sélectionné appartient bien à cet admin (IDs = UUID strings)
+          if (adminEventIds.includes(selectedEvent)) {
+            query = query.eq('evenement_id', selectedEvent)
+          } else {
+            query = query.in('evenement_id', ['00000000-0000-0000-0000-000000000000'])
+          }
+        } else {
+          // Filtrer sur tous les événements de cet admin
+          query = query.in('evenement_id', adminEventIds)
         }
-        
+
         // Apply search filter if provided
         if (searchTerm) {
           query = query.or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
@@ -124,11 +144,12 @@ export default function ParticipantsPage() {
         setParticipants(data as unknown as Participant[] || [])
         setTotalCount(count || 0)
         
-        // Fetch total checked-in count
+        // Fetch total checked-in count (uniquement pour les événements de cet admin)
         let checkedInQuery = supabase
           .from('inscription_participants')
           .select('*', { count: 'exact' })
-          .eq('checked_in', true);
+          .eq('checked_in', true)
+          .in('evenement_id', adminEventIds.length > 0 ? adminEventIds : ['00000000-0000-0000-0000-000000000000']);
 
         // Apply event filter if selected
         if (selectedEvent !== null) {
