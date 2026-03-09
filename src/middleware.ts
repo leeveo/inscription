@@ -11,10 +11,7 @@ export async function middleware(req: NextRequest) {
   // Passer le pathname dans les headers pour le layout
   supabaseResponse.headers.set('x-pathname', req.nextUrl.pathname)
 
-  // Routes builder gèrent leur propre auth - skip middleware auth
-  if (req.nextUrl.pathname.startsWith('/admin/builder')) {
-    return supabaseResponse
-  }
+  // Note: builder routes are protected by the /admin route check below
 
   try {
     const supabase = createServerClient(

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { supabaseServer } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import BuilderEditor from '@/components/builder/BuilderEditor';
 
 interface EditPageProps {
@@ -11,8 +11,13 @@ interface EditPageProps {
 export default async function EditBuilderPage({ params }: EditPageProps) {
   const { pageId } = await params;
 
-  // Vérifier si la page existe
-  const supabase = await supabaseServer();
+  // Use service role to bypass RLS - authorization is handled by /admin middleware
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
   const { data: page, error } = await supabase
     .from('builder_pages')
     .select('*')
